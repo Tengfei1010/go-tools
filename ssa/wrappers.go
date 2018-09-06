@@ -22,7 +22,7 @@ package ssa
 import (
 	"fmt"
 
-	"go/types"
+	"honnef.co/go/tools/go/types"
 )
 
 // -- wrappers -----------------------------------------------------------

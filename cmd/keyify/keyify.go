@@ -1,3 +1,5 @@
+// +build ignore
+
 // keyify transforms unkeyed struct literals into a keyed ones.
 package main
 
@@ -6,21 +8,21 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go/ast"
 	"go/build"
 	"go/constant"
-	"go/printer"
 	"go/token"
-	"go/types"
 	"log"
 	"os"
 	"path/filepath"
 
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/version"
 
-	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
+	"honnef.co/go/tools/go/ast/astutil"
 )
 
 var (

@@ -1,5 +1,7 @@
 //+build go1.8
 
+// +build ignore
+
 package ssa_test
 
 import "testing"

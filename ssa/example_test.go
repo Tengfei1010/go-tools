@@ -2,20 +2,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build ignore
+
 package ssa_test
 
 import (
 	"fmt"
-	"go/ast"
 	"go/importer"
-	"go/parser"
 	"go/token"
-	"go/types"
 	"os"
 
-	"golang.org/x/tools/go/loader"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 const hello = `

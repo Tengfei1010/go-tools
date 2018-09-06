@@ -5,17 +5,19 @@
 // No testdata on Android.
 
 // +build !android
+// +build ignore
 
 package ssautil_test
 
 import (
-	"go/parser"
 	"strings"
 	"testing"
 
-	"golang.org/x/tools/go/loader"
+	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 func TestSwitches(t *testing.T) {

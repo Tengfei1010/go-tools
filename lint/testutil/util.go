@@ -9,7 +9,6 @@ package testutil // import "honnef.co/go/tools/lint/testutil"
 
 import (
 	"fmt"
-	"go/parser"
 	"go/token"
 	"io/ioutil"
 	"os"
@@ -20,8 +19,9 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/tools/go/packages"
 	"honnef.co/go/tools/config"
+	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/lint"
 )
 

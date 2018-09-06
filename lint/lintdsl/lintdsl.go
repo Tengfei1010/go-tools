@@ -5,13 +5,13 @@ package lintdsl
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
 	"go/constant"
-	"go/printer"
 	"go/token"
-	"go/types"
 	"strings"
 
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	"honnef.co/go/tools/ssa"
 )

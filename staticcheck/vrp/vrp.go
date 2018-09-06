@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"go/constant"
 	"go/token"
-	"go/types"
 	"math/big"
 	"sort"
 	"strings"
 
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 )
 

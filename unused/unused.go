@@ -2,18 +2,17 @@ package unused // import "honnef.co/go/tools/unused"
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
-	"go/types"
 	"io"
 	"path/filepath"
 	"strings"
 
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/typeutil"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
-
-	"golang.org/x/tools/go/packages"
-	"golang.org/x/tools/go/types/typeutil"
 )
 
 func NewLintChecker(c *Checker) *LintChecker {

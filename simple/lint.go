@@ -2,19 +2,18 @@
 package simple // import "honnef.co/go/tools/simple"
 
 import (
-	"go/ast"
 	"go/constant"
 	"go/token"
-	"go/types"
 	"reflect"
 	"strings"
 
 	. "honnef.co/go/tools/arg"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/typeutil"
 	"honnef.co/go/tools/internal/sharedcheck"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
-
-	"golang.org/x/tools/go/types/typeutil"
 )
 
 type Checker struct {

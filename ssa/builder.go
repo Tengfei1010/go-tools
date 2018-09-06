@@ -31,10 +31,10 @@ package ssa
 
 import (
 	"fmt"
-	"go/ast"
+	"honnef.co/go/tools/go/ast"
 	exact "go/constant"
 	"go/token"
-	"go/types"
+	"honnef.co/go/tools/go/types"
 	"os"
 	"sync"
 )

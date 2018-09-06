@@ -5,16 +5,14 @@
 // No testdata on Android.
 
 // +build !android
+// +build ignore
 
 package cha_test
 
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
-	"go/parser"
 	"go/token"
-	"go/types"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -22,8 +20,12 @@ import (
 
 	"honnef.co/go/tools/callgraph"
 	"honnef.co/go/tools/callgraph/cha"
-	"golang.org/x/tools/go/loader"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 var inputs = []string{

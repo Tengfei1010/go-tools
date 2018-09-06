@@ -1,11 +1,11 @@
 package functions
 
 import (
-	"go/types"
 	"sync"
 
 	"honnef.co/go/tools/callgraph"
 	"honnef.co/go/tools/callgraph/static"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/staticcheck/vrp"
 )

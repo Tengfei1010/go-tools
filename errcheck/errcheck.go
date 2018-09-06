@@ -1,9 +1,8 @@
 package errcheck
 
 import (
-	"go/types"
-
 	"honnef.co/go/tools/functions"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
 	"honnef.co/go/tools/ssa"

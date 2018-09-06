@@ -2,27 +2,30 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build ignore
+
 package ssa_test
 
 // This file defines tests of source-level debugging utilities.
 
 import (
 	"fmt"
-	"go/ast"
 	exact "go/constant"
-	"go/parser"
 	"go/token"
-	"go/types"
 	"os"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 
-	"golang.org/x/tools/go/ast/astutil"
-	"golang.org/x/tools/go/loader"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 func TestObjValueLookup(t *testing.T) {

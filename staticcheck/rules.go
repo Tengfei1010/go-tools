@@ -3,7 +3,6 @@ package staticcheck
 import (
 	"fmt"
 	"go/constant"
-	"go/types"
 	"net"
 	"net/url"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
 	"honnef.co/go/tools/ssa"

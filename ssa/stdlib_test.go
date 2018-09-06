@@ -5,6 +5,7 @@
 // Incomplete source tree on Android.
 
 // +build !android
+// +build ignore
 
 package ssa_test
 
@@ -14,12 +15,13 @@ package ssa_test
 // Run with "go test -cpu=8 to" set GOMAXPROCS.
 
 import (
-	"go/ast"
 	"go/build"
 	"go/token"
 	"runtime"
 	"testing"
 	"time"
+
+	"honnef.co/go/tools/go/ast"
 
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"

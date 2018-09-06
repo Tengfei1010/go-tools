@@ -2,6 +2,6 @@
 
 package ssa
 
-import "go/types"
+import "honnef.co/go/tools/go/types"
 
 var structTypesIdentical = types.IdenticalIgnoreTags

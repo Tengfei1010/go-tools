@@ -14,13 +14,14 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/types"
 	"log"
 	"os"
 	"strings"
 	"text/template"
+
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 )
 
 // FindTests returns the Test, Benchmark, and Example functions

@@ -3,10 +3,8 @@ package staticcheck // import "honnef.co/go/tools/staticcheck"
 
 import (
 	"fmt"
-	"go/ast"
 	"go/constant"
 	"go/token"
-	"go/types"
 	htmltemplate "html/template"
 	"net/http"
 	"regexp"
@@ -20,15 +18,16 @@ import (
 	. "honnef.co/go/tools/arg"
 	"honnef.co/go/tools/deprecated"
 	"honnef.co/go/tools/functions"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/internal/sharedcheck"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssautil"
 	"honnef.co/go/tools/staticcheck/vrp"
-
-	"golang.org/x/tools/go/ast/astutil"
-	"golang.org/x/tools/go/packages"
 )
 
 func validRegexp(call *Call) {

@@ -8,13 +8,13 @@ package ssa
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
-	"go/types"
 	"io"
 	"os"
 
-	"golang.org/x/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/types"
 )
 
 //// AST utilities

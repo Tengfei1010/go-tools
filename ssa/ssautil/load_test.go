@@ -2,17 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build ignore
+
 package ssautil_test
 
 import (
-	"go/ast"
 	"go/importer"
-	"go/parser"
 	"go/token"
-	"go/types"
 	"os"
 	"testing"
 
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa/ssautil"
 )
 

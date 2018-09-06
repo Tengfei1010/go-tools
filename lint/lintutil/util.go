@@ -23,11 +23,10 @@ import (
 	"time"
 
 	"honnef.co/go/tools/config"
+	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/lint"
 	"honnef.co/go/tools/lint/lintutil/format"
 	"honnef.co/go/tools/version"
-
-	"golang.org/x/tools/go/packages"
 )
 
 func usage(name string, flags *flag.FlagSet) func() {

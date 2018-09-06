@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
-	"go/types"
+	"honnef.co/go/tools/go/types"
 
 	"honnef.co/go/tools/ssa"
 )

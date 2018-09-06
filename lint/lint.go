@@ -3,9 +3,7 @@ package lint // import "honnef.co/go/tools/lint"
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
-	"go/types"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,8 +13,10 @@ import (
 	"time"
 	"unicode"
 
-	"golang.org/x/tools/go/packages"
 	"honnef.co/go/tools/config"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
 )

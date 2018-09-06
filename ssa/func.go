@@ -9,9 +9,9 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
+	"honnef.co/go/tools/go/ast"
 	"go/token"
-	"go/types"
+	"honnef.co/go/tools/go/types"
 	"io"
 	"os"
 	"strings"

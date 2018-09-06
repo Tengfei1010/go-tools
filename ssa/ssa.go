@@ -9,13 +9,13 @@ package ssa
 
 import (
 	"fmt"
-	"go/ast"
 	exact "go/constant"
 	"go/token"
-	"go/types"
 	"sync"
 
-	"golang.org/x/tools/go/types/typeutil"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/typeutil"
 )
 
 // A Program is a partial or complete Go program converted to SSA form.

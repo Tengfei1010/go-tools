@@ -7,12 +7,12 @@ package ssautil
 // This file defines utility functions for constructing programs in SSA form.
 
 import (
-	"go/ast"
 	"go/token"
-	"go/types"
 
-	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/go/packages"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
+
+	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/ssa"
 )
 
@@ -61,27 +61,6 @@ func Packages(initial []*packages.Package, mode ssa.BuilderMode) (*ssa.Program, 
 		ssapkgs = append(ssapkgs, create(p))
 	}
 	return prog, ssapkgs
-}
-
-// CreateProgram returns a new program in SSA form, given a program
-// loaded from source.  An SSA package is created for each transitively
-// error-free package of lprog.
-//
-// Code for bodies of functions is not built until Build is called
-// on the result.
-//
-// mode controls diagnostics and checking during SSA construction.
-//
-func CreateProgram(lprog *loader.Program, mode ssa.BuilderMode) *ssa.Program {
-	prog := ssa.NewProgram(lprog.Fset, mode)
-
-	for _, info := range lprog.AllPackages {
-		if info.TransitivelyErrorFree {
-			prog.CreatePackage(info.Pkg, info.Files, &info.Info, info.Importable)
-		}
-	}
-
-	return prog
 }
 
 // BuildPackage builds an SSA program with IR for a single package.

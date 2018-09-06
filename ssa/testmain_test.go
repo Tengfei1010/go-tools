@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build ignore
+
 package ssa_test
 
 // Tests of FindTests.  CreateTestMainPackage is tested via the interpreter.
@@ -12,9 +14,10 @@ import (
 	"sort"
 	"testing"
 
-	"golang.org/x/tools/go/loader"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 func create(t *testing.T, content string) *ssa.Package {

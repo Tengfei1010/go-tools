@@ -8,9 +8,9 @@ package ssa
 
 import (
 	"fmt"
-	"go/ast"
+	"honnef.co/go/tools/go/ast"
 	"go/token"
-	"go/types"
+	"honnef.co/go/tools/go/types"
 )
 
 // emitNew emits to f a new (heap Alloc) instruction allocating an

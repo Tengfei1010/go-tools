@@ -1,9 +1,8 @@
 package sharedcheck
 
 import (
-	"go/ast"
-	"go/types"
-
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
 	"honnef.co/go/tools/ssa"

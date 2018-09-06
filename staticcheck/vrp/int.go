@@ -3,9 +3,9 @@ package vrp
 import (
 	"fmt"
 	"go/token"
-	"go/types"
 	"math/big"
 
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 )
 

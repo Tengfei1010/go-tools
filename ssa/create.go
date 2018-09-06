@@ -9,13 +9,13 @@ package ssa
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
-	"go/types"
 	"os"
 	"sync"
 
-	"golang.org/x/tools/go/types/typeutil"
+	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/typeutil"
 )
 
 // NewProgram returns a new SSA Program.

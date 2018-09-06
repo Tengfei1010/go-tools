@@ -10,12 +10,12 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"go/types"
 	"io"
 	"reflect"
 	"sort"
 
-	"golang.org/x/tools/go/types/typeutil"
+	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/typeutil"
 )
 
 // relName returns the name of v relative to i.

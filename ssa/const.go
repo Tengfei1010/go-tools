@@ -10,7 +10,7 @@ import (
 	"fmt"
 	exact "go/constant"
 	"go/token"
-	"go/types"
+	"honnef.co/go/tools/go/types"
 	"strconv"
 )
 

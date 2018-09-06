@@ -2,9 +2,9 @@ package functions
 
 import (
 	"go/token"
-	"go/types"
 
 	"honnef.co/go/tools/callgraph"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint/lintdsl"
 	"honnef.co/go/tools/ssa"
 )

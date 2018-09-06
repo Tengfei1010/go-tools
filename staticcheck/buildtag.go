@@ -1,9 +1,9 @@
 package staticcheck
 
 import (
-	"go/ast"
 	"strings"
 
+	"honnef.co/go/tools/go/ast"
 	. "honnef.co/go/tools/lint/lintdsl"
 )
 
