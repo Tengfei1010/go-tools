@@ -240,7 +240,7 @@ type (
 	Ident struct {
 		NamePos token.Pos // identifier position
 		Name    string    // identifier name
-		Obj     *Object   // denoted object; or nil
+		Obj     *ObjectA  // denoted object; or nil
 	}
 
 	// An Ellipsis node stands for the "..." type in a
@@ -988,7 +988,7 @@ type File struct {
 	Package    token.Pos       // position of "package" keyword
 	Name       *Ident          // package name
 	Decls      []Decl          // top-level declarations; or nil
-	Scope      *Scope          // package scope (this file only)
+	Scope      *ScopeA         // package scope (this file only)
 	Imports    []*ImportSpec   // imports in this file
 	Unresolved []*Ident        // unresolved identifiers in this file
 	Comments   []*CommentGroup // list of all comments in the source file
@@ -1002,15 +1002,15 @@ func (f *File) End() token.Pos {
 	return f.Name.End()
 }
 
-// A Package node represents a set of source files
+// A PackageA node represents a set of source files
 // collectively building a Go package.
 //
-type Package struct {
-	Name    string             // package name
-	Scope   *Scope             // package scope across all files
-	Imports map[string]*Object // map of package id -> package object
-	Files   map[string]*File   // Go source files by filename
+type PackageA struct {
+	Name    string              // package name
+	Scope   *ScopeA             // package scope across all files
+	Imports map[string]*ObjectA // map of package id -> package object
+	Files   map[string]*File    // Go source files by filename
 }
 
-func (p *Package) Pos() token.Pos { return token.NoPos }
-func (p *Package) End() token.Pos { return token.NoPos }
+func (p *PackageA) Pos() token.Pos { return token.NoPos }
+func (p *PackageA) End() token.Pos { return token.NoPos }

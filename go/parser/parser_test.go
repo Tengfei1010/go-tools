@@ -187,21 +187,21 @@ func f() { L: }
 	}
 
 	objects := map[string]ast.ObjKind{
-		"p":   ast.Bad, // not in a scope
-		"fmt": ast.Bad, // not resolved yet
-		"pi":  ast.Con,
-		"T":   ast.Typ,
-		"x":   ast.Var,
-		"int": ast.Bad, // not resolved yet
-		"f":   ast.Fun,
-		"L":   ast.Lbl,
+		"p":   ast.BadKind, // not in a scope
+		"fmt": ast.BadKind, // not resolved yet
+		"pi":  ast.ConKind,
+		"T":   ast.TypKind,
+		"x":   ast.VarKind,
+		"int": ast.BadKind, // not resolved yet
+		"f":   ast.FunKind,
+		"L":   ast.LblKind,
 	}
 
 	ast.Inspect(f, func(n ast.Node) bool {
 		if ident, ok := n.(*ast.Ident); ok {
 			obj := ident.Obj
 			if obj == nil {
-				if objects[ident.Name] != ast.Bad {
+				if objects[ident.Name] != ast.BadKind {
 					t.Errorf("no object for %s", ident.Name)
 				}
 				return true

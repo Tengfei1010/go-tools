@@ -12,26 +12,26 @@ import (
 	"go/token"
 )
 
-// A Scope maintains the set of named language entities declared
+// A ScopeA maintains the set of named language entities declared
 // in the scope and a link to the immediately surrounding (outer)
 // scope.
 //
-type Scope struct {
-	Outer   *Scope
-	Objects map[string]*Object
+type ScopeA struct {
+	Outer   *ScopeA
+	Objects map[string]*ObjectA
 }
 
-// NewScope creates a new scope nested in the outer scope.
-func NewScope(outer *Scope) *Scope {
+// NewScopeA creates a new scope nested in the outer scope.
+func NewScopeA(outer *ScopeA) *ScopeA {
 	const n = 4 // initial scope capacity
-	return &Scope{outer, make(map[string]*Object, n)}
+	return &ScopeA{outer, make(map[string]*ObjectA, n)}
 }
 
 // Lookup returns the object with the given name if it is
 // found in scope s, otherwise it returns nil. Outer scopes
 // are ignored.
 //
-func (s *Scope) Lookup(name string) *Object {
+func (s *ScopeA) Lookup(name string) *ObjectA {
 	return s.Objects[name]
 }
 
@@ -40,7 +40,7 @@ func (s *Scope) Lookup(name string) *Object {
 // Insert leaves the scope unchanged and returns alt. Otherwise
 // it inserts obj and returns nil.
 //
-func (s *Scope) Insert(obj *Object) (alt *Object) {
+func (s *ScopeA) Insert(obj *ObjectA) (alt *ObjectA) {
 	if alt = s.Objects[obj.Name]; alt == nil {
 		s.Objects[obj.Name] = obj
 	}
@@ -48,7 +48,7 @@ func (s *Scope) Insert(obj *Object) (alt *Object) {
 }
 
 // Debugging support
-func (s *Scope) String() string {
+func (s *ScopeA) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "scope %p {", s)
 	if s != nil && len(s.Objects) > 0 {
@@ -64,7 +64,7 @@ func (s *Scope) String() string {
 // ----------------------------------------------------------------------------
 // Objects
 
-// An Object describes a named language entity such as a package,
+// An ObjectA describes a named language entity such as a package,
 // constant, type, variable, function (incl. methods), or label.
 //
 // The Data fields contains object-specific data:
@@ -73,7 +73,7 @@ func (s *Scope) String() string {
 //	Pkg     *Scope            package scope
 //	Con     int               iota for the respective declaration
 //
-type Object struct {
+type ObjectA struct {
 	Kind ObjKind
 	Name string      // declared name
 	Decl interface{} // corresponding Field, XxxSpec, FuncDecl, LabeledStmt, AssignStmt, Scope; or nil
@@ -82,14 +82,14 @@ type Object struct {
 }
 
 // NewObj creates a new object of a given kind and name.
-func NewObj(kind ObjKind, name string) *Object {
-	return &Object{Kind: kind, Name: name}
+func NewObj(kind ObjKind, name string) *ObjectA {
+	return &ObjectA{Kind: kind, Name: name}
 }
 
 // Pos computes the source position of the declaration of an object name.
 // The result may be an invalid position if it cannot be computed
 // (obj.Decl may be nil or not correct).
-func (obj *Object) Pos() token.Pos {
+func (obj *ObjectA) Pos() token.Pos {
 	name := obj.Name
 	switch d := obj.Decl.(type) {
 	case *Field:
@@ -127,7 +127,7 @@ func (obj *Object) Pos() token.Pos {
 				return ident.Pos()
 			}
 		}
-	case *Scope:
+	case *ScopeA:
 		// predeclared object - nothing to do for now
 	}
 	return token.NoPos
@@ -138,23 +138,23 @@ type ObjKind int
 
 // The list of possible Object kinds.
 const (
-	Bad ObjKind = iota // for error handling
-	Pkg                // package
-	Con                // constant
-	Typ                // type
-	Var                // variable
-	Fun                // function or method
-	Lbl                // label
+	BadKind ObjKind = iota // for error handling
+	PkgKind                // package
+	ConKind                // constant
+	TypKind                // type
+	VarKind                // variable
+	FunKind                // function or method
+	LblKind                // label
 )
 
 var objKindStrings = [...]string{
-	Bad: "bad",
-	Pkg: "package",
-	Con: "const",
-	Typ: "type",
-	Var: "var",
-	Fun: "func",
-	Lbl: "label",
+	BadKind: "bad",
+	PkgKind: "package",
+	ConKind: "const",
+	TypKind: "type",
+	VarKind: "var",
+	FunKind: "func",
+	LblKind: "label",
 }
 
 func (kind ObjKind) String() string { return objKindStrings[kind] }

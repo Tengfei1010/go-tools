@@ -590,7 +590,7 @@ func NodeDescription(n ast.Node) string {
 		return "statement label"
 	case *ast.MapType:
 		return "map type"
-	case *ast.Package:
+	case *ast.PackageA:
 		return "package"
 	case *ast.ParenExpr:
 		return "parenthesized " + NodeDescription(n.X)

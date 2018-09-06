@@ -104,7 +104,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 			// *ast.File
 			f = &ast.File{
 				Name:  new(ast.Ident),
-				Scope: ast.NewScope(nil),
+				Scope: ast.NewScopeA(nil),
 			}
 		}
 
@@ -132,7 +132,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
 //
-func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
+func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.PackageA, first error) {
 	fd, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 		return nil, err
 	}
 
-	pkgs = make(map[string]*ast.Package)
+	pkgs = make(map[string]*ast.PackageA)
 	for _, d := range list {
 		if strings.HasSuffix(d.Name(), ".go") && (filter == nil || filter(d)) {
 			filename := filepath.Join(path, d.Name())
@@ -152,7 +152,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 				name := src.Name.Name
 				pkg, found := pkgs[name]
 				if !found {
-					pkg = &ast.Package{
+					pkg = &ast.PackageA{
 						Name:  name,
 						Files: make(map[string]*ast.File),
 					}

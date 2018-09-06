@@ -36,7 +36,7 @@ func FileExports(src *File) bool {
 // PackageExports reports whether there are exported declarations;
 // it returns false otherwise.
 //
-func PackageExports(pkg *Package) bool {
+func PackageExports(pkg *PackageA) bool {
 	return filterPackage(pkg, exportFilter, true)
 }
 
@@ -282,11 +282,11 @@ func filterFile(src *File, f Filter, export bool) bool {
 // FilterPackage reports whether there are any top-level declarations
 // left after filtering.
 //
-func FilterPackage(pkg *Package, f Filter) bool {
+func FilterPackage(pkg *PackageA, f Filter) bool {
 	return filterPackage(pkg, f, false)
 }
 
-func filterPackage(pkg *Package, f Filter, export bool) bool {
+func filterPackage(pkg *PackageA, f Filter, export bool) bool {
 	hasDecls := false
 	for _, src := range pkg.Files {
 		if filterFile(src, f, export) {
@@ -341,7 +341,7 @@ var separator = &Comment{token.NoPos, "//"}
 // MergePackageFiles creates a file AST by merging the ASTs of the
 // files belonging to a package. The mode flags control merging behavior.
 //
-func MergePackageFiles(pkg *Package, mode MergeMode) *File {
+func MergePackageFiles(pkg *PackageA, mode MergeMode) *File {
 	// Count the number of package docs, comments and declarations across
 	// all package files. Also, compute sorted list of filenames, so that
 	// subsequent iterations can always iterate in the same order.

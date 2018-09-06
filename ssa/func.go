@@ -9,8 +9,8 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/ast"
 	"go/token"
+	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/types"
 	"io"
 	"os"
@@ -163,7 +163,7 @@ func (f *Function) labelledBlock(label *ast.Ident) *lblock {
 	if lb == nil {
 		lb = &lblock{_goto: f.newBasicBlock(label.Name)}
 		if f.lblocks == nil {
-			f.lblocks = make(map[*ast.Object]*lblock)
+			f.lblocks = make(map[*ast.ObjectA]*lblock)
 		}
 		f.lblocks[label.Obj] = lb
 	}

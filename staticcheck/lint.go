@@ -1609,7 +1609,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 		if body == nil {
 			return true
 		}
-		labels := map[*ast.Object]ast.Stmt{}
+		labels := map[*ast.ObjectA]ast.Stmt{}
 		ast.Inspect(body, func(node ast.Node) bool {
 			label, ok := node.(*ast.LabeledStmt)
 			if !ok {

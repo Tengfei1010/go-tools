@@ -26,7 +26,7 @@ func (p *pkgBuilder) errorf(pos token.Pos, format string, args ...interface{}) {
 	p.error(pos, fmt.Sprintf(format, args...))
 }
 
-func (p *pkgBuilder) declare(scope, altScope *Scope, obj *Object) {
+func (p *pkgBuilder) declare(scope, altScope *ScopeA, obj *ObjectA) {
 	alt := scope.Insert(obj)
 	if alt == nil && altScope != nil {
 		// see if there is a conflicting declaration in altScope
@@ -41,7 +41,7 @@ func (p *pkgBuilder) declare(scope, altScope *Scope, obj *Object) {
 	}
 }
 
-func resolve(scope *Scope, ident *Ident) bool {
+func resolve(scope *ScopeA, ident *Ident) bool {
 	for ; scope != nil; scope = scope.Outer {
 		if obj := scope.Lookup(ident.Name); obj != nil {
 			ident.Obj = obj
@@ -51,16 +51,16 @@ func resolve(scope *Scope, ident *Ident) bool {
 	return false
 }
 
-// An Importer resolves import paths to package Objects.
+// An ImporterA resolves import paths to package Objects.
 // The imports map records the packages already imported,
 // indexed by package id (canonical import path).
-// An Importer must determine the canonical import path and
+// An ImporterA must determine the canonical import path and
 // check the map to see if it is already present in the imports map.
-// If so, the Importer can return the map entry. Otherwise, the
-// Importer should load the package data for the given path into
+// If so, the ImporterA can return the map entry. Otherwise, the
+// ImporterA should load the package data for the given path into
 // a new *Object (pkg), record pkg in the imports map, and then
 // return pkg.
-type Importer func(imports map[string]*Object, path string) (pkg *Object, err error)
+type ImporterA func(imports map[string]*ObjectA, path string) (pkg *ObjectA, err error)
 
 // NewPackage creates a new Package node from a set of File nodes. It resolves
 // unresolved identifiers across files and updates each file's Unresolved list
@@ -71,13 +71,13 @@ type Importer func(imports map[string]*Object, path string) (pkg *Object, err er
 // different package names are reported and then ignored.
 // The result is a package node and a scanner.ErrorList if there were errors.
 //
-func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, universe *Scope) (*Package, error) {
+func NewPackage(fset *token.FileSet, files map[string]*File, importer ImporterA, universe *ScopeA) (*PackageA, error) {
 	var p pkgBuilder
 	p.fset = fset
 
 	// complete package scope
 	pkgName := ""
-	pkgScope := NewScope(universe)
+	pkgScope := NewScopeA(universe)
 	for _, file := range files {
 		// package names must match
 		switch name := file.Name.Name; {
@@ -95,7 +95,7 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 	}
 
 	// package global mapping of imported package ids to package objects
-	imports := make(map[string]*Object)
+	imports := make(map[string]*ObjectA)
 
 	// complete file scopes with imports and resolve identifiers
 	for _, file := range files {
@@ -107,7 +107,7 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 
 		// build file scope by processing all imports
 		importErrors := false
-		fileScope := NewScope(pkgScope)
+		fileScope := NewScopeA(pkgScope)
 		for _, spec := range file.Imports {
 			if importer == nil {
 				importErrors = true
@@ -133,7 +133,7 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 			// add import to file scope
 			if name == "." {
 				// merge imported scope with file scope
-				for _, obj := range pkg.Data.(*Scope).Objects {
+				for _, obj := range pkg.Data.(*ScopeA).Objects {
 					p.declare(fileScope, pkgScope, obj)
 				}
 			} else if name != "_" {
@@ -141,7 +141,7 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 				// (do not re-use pkg in the file scope but create
 				// a new object instead; the Decl field is different
 				// for different files)
-				obj := NewObj(Pkg, name)
+				obj := NewObj(PkgKind, name)
 				obj.Decl = spec
 				obj.Data = pkg.Data
 				p.declare(fileScope, pkgScope, obj)
@@ -170,5 +170,5 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 	}
 
 	p.errors.Sort()
-	return &Package{pkgName, pkgScope, imports, files}, p.errors.Err()
+	return &PackageA{pkgName, pkgScope, imports, files}, p.errors.Err()
 }

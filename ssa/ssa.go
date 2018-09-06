@@ -315,11 +315,11 @@ type Function struct {
 
 	// The following fields are set transiently during building,
 	// then cleared.
-	currentBlock *BasicBlock             // where to emit code
-	objects      map[types.Object]Value  // addresses of local variables
-	namedResults []*Alloc                // tuple of named results
-	targets      *targets                // linked stack of branch targets
-	lblocks      map[*ast.Object]*lblock // labelled blocks
+	currentBlock *BasicBlock              // where to emit code
+	objects      map[types.Object]Value   // addresses of local variables
+	namedResults []*Alloc                 // tuple of named results
+	targets      *targets                 // linked stack of branch targets
+	lblocks      map[*ast.ObjectA]*lblock // labelled blocks
 }
 
 // BasicBlock represents an SSA basic block.

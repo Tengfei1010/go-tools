@@ -111,7 +111,7 @@ func (c *Cursor) Replace(n ast.Node) {
 		if !ok {
 			panic("attempt to replace *ast.File with non-*ast.File")
 		}
-		c.parent.(*ast.Package).Files[c.name] = file
+		c.parent.(*ast.PackageA).Files[c.name] = file
 		return
 	}
 
@@ -128,7 +128,7 @@ func (c *Cursor) Replace(n ast.Node) {
 // Delete removes it from the package's Files map.
 func (c *Cursor) Delete() {
 	if _, ok := c.node.(*ast.File); ok {
-		delete(c.parent.(*ast.Package).Files, c.name)
+		delete(c.parent.(*ast.PackageA).Files, c.name)
 		return
 	}
 
@@ -426,7 +426,7 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		// Don't walk n.Comments; they have either been walked already if
 		// they are Doc comments, or they can be easily walked explicitly.
 
-	case *ast.Package:
+	case *ast.PackageA:
 		// collect and sort names for reproducible behavior
 		var names []string
 		for name := range n.Files {

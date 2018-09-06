@@ -355,7 +355,7 @@ func Walk(v Visitor, node Node) {
 		// visited already through the individual
 		// nodes
 
-	case *Package:
+	case *PackageA:
 		for _, f := range n.Files {
 			Walk(v, f)
 		}
