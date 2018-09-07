@@ -101,8 +101,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 			// ParseFile API and return a valid (but) empty
 			// *types.File
 			f = &types.File{
-				Name:  new(types.Ident),
-				Scope: types.NewScopeA(nil),
+				Name: new(types.Ident),
 			}
 		}
 
@@ -151,11 +150,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode M
 	// This is not needed for a correct expression x as the
 	// parser will be ok with a nil topScope, but be cautious
 	// in case of an erroneous x.
-	p.openScope()
-	p.pkgScope = p.topScope
 	e := p.parseRhsOrType()
-	p.closeScope()
-	assert(p.topScope == nil, "unbalanced scopes")
 
 	// If a semicolon was inserted, consume it;
 	// report an error if there's more tokens.

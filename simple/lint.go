@@ -658,7 +658,7 @@ func (c *Checker) LintSlicing(j *lint.Job) {
 			return true
 		}
 		s, ok := n.X.(*types.Ident)
-		if !ok || s.Obj == nil {
+		if !ok {
 			return true
 		}
 		call, ok := n.High.(*types.CallExpr)
@@ -673,7 +673,7 @@ func (c *Checker) LintSlicing(j *lint.Job) {
 			return true
 		}
 		arg, ok := call.Args[Arg("len.v")].(*types.Ident)
-		if !ok || arg.Obj != s.Obj {
+		if !ok || ObjectOf(j, arg) != ObjectOf(j, s) {
 			return true
 		}
 		j.Errorf(n, "should omit second index in slice, s[a:len(s)] is identical to s[a:]")
@@ -983,7 +983,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 				return true
 			}
 			// All fields must be initialized from the same object
-			if ident != nil && ident.Obj != id.Obj {
+			if ident != nil && ObjectOf(j, ident) != ObjectOf(j, id) {
 				return true
 			}
 			typ2, _ = t.(*types.Named)
@@ -1039,7 +1039,7 @@ func (c *Checker) LintTrim(j *lint.Job) {
 
 		switch node1 := node1.(type) {
 		case *types.Ident:
-			return node1.Obj == node2.(*types.Ident).Obj
+			return ObjectOf(j, node1) == ObjectOf(j, node2.(*types.Ident))
 		case *types.SelectorExpr:
 			return Render(j, node1) == Render(j, node2)
 		case *types.IndexExpr:
@@ -1363,7 +1363,7 @@ func (c *Checker) LintAssertNotNil(j *lint.Job) {
 			return false
 		}
 		xident, ok := xbinop.X.(*types.Ident)
-		if !ok || xident.Obj != ident.Obj {
+		if !ok || ObjectOf(j, xident) != ObjectOf(j, ident) {
 			return false
 		}
 		if !IsNil(j, xbinop.Y) {
@@ -1373,7 +1373,7 @@ func (c *Checker) LintAssertNotNil(j *lint.Job) {
 	}
 	isOKCheck := func(ident *types.Ident, expr types.Expr) bool {
 		yident, ok := expr.(*types.Ident)
-		if !ok || yident.Obj != ident.Obj {
+		if !ok || ObjectOf(j, yident) != ObjectOf(j, ident) {
 			return false
 		}
 		return true
@@ -1450,7 +1450,7 @@ func (c *Checker) LintDeclareAssign(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if vspec.Names[0].Obj != ident.Obj {
+			if ObjectOf(j, vspec.Names[0]) != ObjectOf(j, ident) {
 				continue
 			}
 
@@ -1633,7 +1633,7 @@ func (c *Checker) LintNilCheckAroundRange(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if ifXIdent.Obj != rangeXIdent.Obj {
+		if ObjectOf(j, ifXIdent) != ObjectOf(j, rangeXIdent) {
 			return true
 		}
 		switch TypeOf(j, rangeXIdent).(type) {

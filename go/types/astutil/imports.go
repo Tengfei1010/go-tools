@@ -344,39 +344,6 @@ func RewriteImport(fset *token.FileSet, f *types.File, oldPath, newPath string) 
 	return
 }
 
-// UsesImport reports whether a given import is used.
-func UsesImport(f *types.File, path string) (used bool) {
-	spec := importSpec(f, path)
-	if spec == nil {
-		return
-	}
-
-	name := spec.Name.String()
-	switch name {
-	case "<nil>":
-		// If the package name is not explicitly specified,
-		// make an educated guess. This is not guaranteed to be correct.
-		lastSlash := strings.LastIndex(path, "/")
-		if lastSlash == -1 {
-			name = path
-		} else {
-			name = path[lastSlash+1:]
-		}
-	case "_", ".":
-		// Not sure if this import is used - err on the side of caution.
-		return true
-	}
-
-	types.Walk(visitFn(func(n types.Node) {
-		sel, ok := n.(*types.SelectorExpr)
-		if ok && isTopName(sel.X, name) {
-			used = true
-		}
-	}), f)
-
-	return
-}
-
 type visitFn func(node types.Node)
 
 func (fn visitFn) Visit(node types.Node) types.Visitor {
@@ -433,12 +400,6 @@ func matchLen(x, y string) int {
 		}
 	}
 	return n
-}
-
-// isTopName returns true if n is a top-level unresolved identifier with the given name.
-func isTopName(n types.Expr, name string) bool {
-	id, ok := n.(*types.Ident)
-	return ok && id.Name == name && id.Obj == nil
 }
 
 // Imports returns the file imports grouped by paragraph.
