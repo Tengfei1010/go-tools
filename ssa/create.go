@@ -13,7 +13,6 @@ import (
 	"os"
 	"sync"
 
-	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 )
@@ -121,7 +120,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
-						memberFromObject(pkg, pkg.info.Defs[id], nil)
+						memberFromObject(pkg, id.Obj, nil)
 					}
 				}
 			}
@@ -130,7 +129,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
-						memberFromObject(pkg, pkg.info.Defs[id], spec)
+						memberFromObject(pkg, id.Obj, spec)
 					}
 				}
 			}
@@ -139,7 +138,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				id := spec.(*types.TypeSpec).Name
 				if !isBlankIdent(id) {
-					memberFromObject(pkg, pkg.info.Defs[id], nil)
+					memberFromObject(pkg, id.Obj, nil)
 				}
 			}
 		}
@@ -147,7 +146,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 	case *types.FuncDecl:
 		id := decl.Name
 		if !isBlankIdent(id) {
-			memberFromObject(pkg, pkg.info.Defs[id], decl)
+			memberFromObject(pkg, id.Obj, decl)
 		}
 	}
 }

@@ -29,7 +29,7 @@ package types
 import (
 	"bytes"
 	"fmt"
-	
+
 	"go/constant"
 	"go/token"
 )
@@ -136,43 +136,6 @@ type Config struct {
 // If the package has type errors, the collected information may
 // be incomplete.
 type Info struct {
-	// Types maps expressions to their types, and for constant
-	// expressions, also their values. Invalid expressions are
-	// omitted.
-	//
-	// For (possibly parenthesized) identifiers denoting built-in
-	// functions, the recorded signatures are call-site specific:
-	// if the call result is not a constant, the recorded type is
-	// an argument-specific signature. Otherwise, the recorded type
-	// is invalid.
-	//
-	// The Types map does not record the type of every identifier,
-	// only those that appear where an arbitrary expression is
-	// permitted. For instance, the identifier f in a selector
-	// expression x.f is found only in the Selections map, the
-	// identifier z in a variable declaration 'var z int' is found
-	// only in the Defs map, and identifiers denoting packages in
-	// qualified identifiers are collected in the Uses map.
-	Types map[Expr]TypeAndValue
-
-	// Defs maps identifiers to the objects they define (including
-	// package names, dots "." of dot-imports, and blank "_" identifiers).
-	// For identifiers that do not denote objects (e.g., the package name
-	// in package clauses, or symbolic variables t in t := x.(type) of
-	// type switch headers), the corresponding objects are nil.
-	//
-	// For an embedded field, Defs returns the field *Var it defines.
-	//
-	// Invariant: Defs[id] == nil || Defs[id].Pos() == id.Pos()
-	Defs map[*Ident]Object
-
-	// Uses maps identifiers to the objects they denote.
-	//
-	// For an embedded field, Uses returns the *TypeName it denotes.
-	//
-	// Invariant: Uses[id].Pos() != id.Pos()
-	Uses map[*Ident]Object
-
 	// Implicits maps nodes to their implicitly declared objects, if any.
 	// The following node and object types may appear:
 	//
@@ -183,10 +146,6 @@ type Info struct {
 	//     *Field         anonymous parameter *Var
 	//
 	Implicits map[Node]Object
-
-	// Selections maps selector expressions (excluding qualified identifiers)
-	// to their corresponding selections.
-	Selections map[*SelectorExpr]*Selection
 
 	// Scopes maps Nodes to the scopes they define. Package scopes are not
 	// associated with a specific node but with all files belonging to a package.
@@ -225,8 +184,8 @@ type Info struct {
 // Precondition: the Types, Uses and Defs maps are populated.
 //
 func (info *Info) TypeOf(e Expr) Type {
-	if t, ok := info.Types[e]; ok {
-		return t.Type
+	if e.TV().Type != nil {
+		return e.TV().Type
 	}
 	if id, _ := e.(*Ident); id != nil {
 		if obj := info.ObjectOf(id); obj != nil {
@@ -245,10 +204,7 @@ func (info *Info) TypeOf(e Expr) Type {
 // Precondition: the Uses and Defs maps are populated.
 //
 func (info *Info) ObjectOf(id *Ident) Object {
-	if obj := info.Defs[id]; obj != nil {
-		return obj
-	}
-	return info.Uses[id]
+	return id.Obj
 }
 
 // TypeAndValue reports the type and value (for constants)

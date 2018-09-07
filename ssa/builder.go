@@ -31,12 +31,13 @@ package ssa
 
 import (
 	"fmt"
-	
+
 	exact "go/constant"
 	"go/token"
-	"honnef.co/go/tools/go/types"
 	"os"
 	"sync"
+
+	"honnef.co/go/tools/go/types"
 )
 
 type opaqueType struct {
@@ -365,8 +366,8 @@ func (b *builder) addr(fn *Function, e types.Expr, escaping bool) lvalue {
 		return b.addr(fn, e.X, escaping)
 
 	case *types.SelectorExpr:
-		sel, ok := fn.Pkg.info.Selections[e]
-		if !ok {
+		sel := e.Selection
+		if sel == nil {
 			// qualified identifier
 			return b.addr(fn, e.Sel, escaping)
 		}
@@ -513,7 +514,7 @@ func (b *builder) assign(fn *Function, loc lvalue, e types.Expr, isZero bool, sb
 func (b *builder) expr(fn *Function, e types.Expr) Value {
 	e = unparen(e)
 
-	tv := fn.Pkg.info.Types[e]
+	tv := e.TV()
 
 	// Is expression a constant?
 	if tv.Value != nil {
@@ -567,7 +568,7 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		return emitTypeAssert(fn, b.expr(fn, e.X), tv.Type, e.Lparen)
 
 	case *types.CallExpr:
-		if fn.Pkg.info.Types[e.Fun].IsType() {
+		if e.Fun.TV().IsType() {
 			// Explicit type conversion, e.g. string(x) or big.Int(x)
 			x := b.expr(fn, e.Args[0])
 			y := emitConv(fn, x, tv.Type)
@@ -585,7 +586,7 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		}
 		// Call to "intrinsic" built-ins, e.g. new, make, panic.
 		if id, ok := unparen(e.Fun).(*types.Ident); ok {
-			if obj, ok := fn.Pkg.info.Uses[id].(*types.Builtin); ok {
+			if obj, ok := id.Obj.(*types.Builtin); ok {
 				if v := b.builtin(fn, obj, e.Args, tv.Type, e.Lparen); v != nil {
 					return v
 				}
@@ -672,7 +673,7 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		return fn.emit(v)
 
 	case *types.Ident:
-		obj := fn.Pkg.info.Uses[e]
+		obj := e.Obj
 		// Universal built-in or nil?
 		switch obj := obj.(type) {
 		case *types.Builtin:
@@ -691,8 +692,8 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		return emitLoad(fn, fn.lookup(obj, false)) // var (address)
 
 	case *types.SelectorExpr:
-		sel, ok := fn.Pkg.info.Selections[e]
-		if !ok {
+		sel := e.Selection
+		if sel == nil {
 			// qualified identifier
 			return b.expr(fn, e.Sel)
 		}
@@ -827,8 +828,8 @@ func (b *builder) setCallFunc(fn *Function, e *types.CallExpr, c *CallCommon) {
 
 	// Is this a method call?
 	if selector, ok := unparen(e.Fun).(*types.SelectorExpr); ok {
-		sel, ok := fn.Pkg.info.Selections[selector]
-		if ok && sel.Kind() == types.MethodVal {
+		sel := selector.Selection
+		if sel != nil && sel.Kind() == types.MethodVal {
 			obj := sel.Obj().(*types.Func)
 			recv := recvType(obj)
 			wantAddr := isPointer(recv)
@@ -1029,7 +1030,8 @@ func (b *builder) assignStmt(fn *Function, lhss, rhss []types.Expr, isDef bool) 
 		var lval lvalue = blank{}
 		if !isBlankIdent(lhs) {
 			if isDef {
-				if obj := fn.Pkg.info.Defs[lhs.(*types.Ident)]; obj != nil {
+				ident := lhs.(*types.Ident)
+				if obj := ident.Obj; obj != nil && ident.IsDef {
 					fn.addNamedLocal(obj)
 					isZero[i] = true
 				}
@@ -2215,7 +2217,7 @@ func (b *builder) buildFuncDecl(pkg *Package, decl *types.FuncDecl) {
 	if isBlankIdent(id) {
 		return // discard
 	}
-	fn := pkg.values[pkg.info.Defs[id]].(*Function)
+	fn := pkg.values[id.Obj].(*Function)
 	if decl.Recv == nil && id.Name == "init" {
 		var v Call
 		v.Call.Value = fn

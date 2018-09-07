@@ -19,7 +19,6 @@ import (
 	"strings"
 	"text/template"
 
-	
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 )
@@ -168,12 +167,8 @@ func (prog *Program) CreateTestMainPackage(pkg *Package) *Package {
 	}
 	files := []*types.File{f}
 	info := &types.Info{
-		Types:      make(map[types.Expr]types.TypeAndValue),
-		Defs:       make(map[*types.Ident]types.Object),
-		Uses:       make(map[*types.Ident]types.Object),
-		Implicits:  make(map[types.Node]types.Object),
-		Scopes:     make(map[types.Node]*types.Scope),
-		Selections: make(map[*types.SelectorExpr]*types.Selection),
+		Implicits: make(map[types.Node]types.Object),
+		Scopes:    make(map[types.Node]*types.Scope),
 	}
 	testmainPkg, err := conf.Check(path, prog.Fset, files, info)
 	if err != nil {

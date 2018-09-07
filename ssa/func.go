@@ -233,7 +233,7 @@ func (f *Function) createSyntacticParams(recv *types.FieldList, functype *types.
 	if recv != nil {
 		for _, field := range recv.List {
 			for _, n := range field.Names {
-				f.addSpilledParam(f.Pkg.info.Defs[n])
+				f.addSpilledParam(n.Obj)
 			}
 			// Anonymous receiver?  No need to spill.
 			if field.Names == nil {
@@ -247,7 +247,7 @@ func (f *Function) createSyntacticParams(recv *types.FieldList, functype *types.
 		n := len(f.Params) // 1 if has recv, 0 otherwise
 		for _, field := range functype.Params.List {
 			for _, n := range field.Names {
-				f.addSpilledParam(f.Pkg.info.Defs[n])
+				f.addSpilledParam(n.Obj)
 			}
 			// Anonymous parameter?  No need to spill.
 			if field.Names == nil {
@@ -408,7 +408,7 @@ func (f *Function) addNamedLocal(obj types.Object) *Alloc {
 }
 
 func (f *Function) addLocalForIdent(id *types.Ident) *Alloc {
-	return f.addNamedLocal(f.Pkg.info.Defs[id])
+	return f.addNamedLocal(id.Obj)
 }
 
 // addLocal creates an anonymous local variable of type typ, adds it

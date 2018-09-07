@@ -40,6 +40,8 @@ type Node interface {
 // All expression nodes implement the Expr interface.
 type Expr interface {
 	Node
+	TV() TypeAndValue
+	SetTV(tv TypeAndValue)
 	exprNode()
 }
 
@@ -234,12 +236,16 @@ type (
 	//
 	BadExpr struct {
 		From, To token.Pos // position range of bad expression
+		tv       TypeAndValue
 	}
 
 	// An Ident node represents an identifier.
 	Ident struct {
 		NamePos token.Pos // identifier position
 		Name    string    // identifier name
+		Obj     Object
+		IsDef   bool
+		tv      TypeAndValue
 	}
 
 	// An Ellipsis node stands for the "..." type in a
@@ -248,6 +254,7 @@ type (
 	Ellipsis struct {
 		Ellipsis token.Pos // position of "..."
 		Elt      Expr      // ellipsis element type (parameter lists only); or nil
+		tv       TypeAndValue
 	}
 
 	// A BasicLit node represents a literal of basic type.
@@ -255,12 +262,14 @@ type (
 		ValuePos token.Pos   // literal position
 		Kind     token.Token // token.INT, token.FLOAT, token.IMAG, token.CHAR, or token.STRING
 		Value    string      // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 'a', '\x7f', "foo" or `\m\n\o`
+		tv       TypeAndValue
 	}
 
 	// A FuncLit node represents a function literal.
 	FuncLit struct {
 		Type *FuncType  // function type
 		Body *BlockStmt // function body
+		tv   TypeAndValue
 	}
 
 	// A CompositeLit node represents a composite literal.
@@ -270,6 +279,7 @@ type (
 		Elts       []Expr    // list of composite elements; or nil
 		Rbrace     token.Pos // position of "}"
 		Incomplete bool      // true if (source) expressions are missing in the Elts list
+		tv         TypeAndValue
 	}
 
 	// A ParenExpr node represents a parenthesized expression.
@@ -277,12 +287,15 @@ type (
 		Lparen token.Pos // position of "("
 		X      Expr      // parenthesized expression
 		Rparen token.Pos // position of ")"
+		tv     TypeAndValue
 	}
 
 	// A SelectorExpr node represents an expression followed by a selector.
 	SelectorExpr struct {
-		X   Expr   // expression
-		Sel *Ident // field selector
+		X         Expr   // expression
+		Sel       *Ident // field selector
+		tv        TypeAndValue
+		Selection *Selection
 	}
 
 	// An IndexExpr node represents an expression followed by an index.
@@ -291,6 +304,7 @@ type (
 		Lbrack token.Pos // position of "["
 		Index  Expr      // index expression
 		Rbrack token.Pos // position of "]"
+		tv     TypeAndValue
 	}
 
 	// An SliceExpr node represents an expression followed by slice indices.
@@ -302,6 +316,7 @@ type (
 		Max    Expr      // maximum capacity of slice; or nil
 		Slice3 bool      // true if 3-index slice (2 colons present)
 		Rbrack token.Pos // position of "]"
+		tv     TypeAndValue
 	}
 
 	// A TypeAssertExpr node represents an expression followed by a
@@ -312,6 +327,7 @@ type (
 		Lparen token.Pos // position of "("
 		Type   Expr      // asserted type; nil means type switch X.(type)
 		Rparen token.Pos // position of ")"
+		tv     TypeAndValue
 	}
 
 	// A CallExpr node represents an expression followed by an argument list.
@@ -321,6 +337,7 @@ type (
 		Args     []Expr    // function arguments; or nil
 		Ellipsis token.Pos // position of "..." (token.NoPos if there is no "...")
 		Rparen   token.Pos // position of ")"
+		tv       TypeAndValue
 	}
 
 	// A StarExpr node represents an expression of the form "*" Expression.
@@ -329,6 +346,7 @@ type (
 	StarExpr struct {
 		Star token.Pos // position of "*"
 		X    Expr      // operand
+		tv   TypeAndValue
 	}
 
 	// A UnaryExpr node represents a unary expression.
@@ -338,6 +356,7 @@ type (
 		OpPos token.Pos   // position of Op
 		Op    token.Token // operator
 		X     Expr        // operand
+		tv    TypeAndValue
 	}
 
 	// A BinaryExpr node represents a binary expression.
@@ -346,6 +365,7 @@ type (
 		OpPos token.Pos   // position of Op
 		Op    token.Token // operator
 		Y     Expr        // right operand
+		tv    TypeAndValue
 	}
 
 	// A KeyValueExpr node represents (key : value) pairs
@@ -355,6 +375,7 @@ type (
 		Key   Expr
 		Colon token.Pos // position of ":"
 		Value Expr
+		tv    TypeAndValue
 	}
 )
 
@@ -368,6 +389,7 @@ type (
 		Lbrack token.Pos // position of "["
 		Len    Expr      // Ellipsis node for [...]T array types, nil for slice types
 		Elt    Expr      // element type
+		tv     TypeAndValue
 	}
 
 	// A StructType node represents a struct type.
@@ -375,6 +397,7 @@ type (
 		Struct     token.Pos  // position of "struct" keyword
 		Fields     *FieldList // list of field declarations
 		Incomplete bool       // true if (source) fields are missing in the Fields list
+		tv         TypeAndValue
 	}
 
 	// Pointer types are represented via StarExpr nodes.
@@ -384,6 +407,7 @@ type (
 		Func    token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
 		Params  *FieldList // (incoming) parameters; non-nil
 		Results *FieldList // (outgoing) results; or nil
+		tv      TypeAndValue
 	}
 
 	// An InterfaceType node represents an interface type.
@@ -391,6 +415,7 @@ type (
 		Interface  token.Pos  // position of "interface" keyword
 		Methods    *FieldList // list of methods
 		Incomplete bool       // true if (source) methods are missing in the Methods list
+		tv         TypeAndValue
 	}
 
 	// A MapType node represents a map type.
@@ -398,6 +423,7 @@ type (
 		Map   token.Pos // position of "map" keyword
 		Key   Expr
 		Value Expr
+		tv    TypeAndValue
 	}
 
 	// A ChanType node represents a channel type.
@@ -406,6 +432,7 @@ type (
 		Arrow token.Pos // position of "<-" (token.NoPos if there is no "<-")
 		Dir   ChanDir   // channel direction
 		Value Expr      // value type
+		tv    TypeAndValue
 	}
 )
 
@@ -477,6 +504,52 @@ func (x *InterfaceType) End() token.Pos { return x.Methods.End() }
 func (x *MapType) End() token.Pos       { return x.Value.End() }
 func (x *ChanType) End() token.Pos      { return x.Value.End() }
 
+func (expr *BadExpr) TV() TypeAndValue        { return expr.tv }
+func (expr *Ident) TV() TypeAndValue          { return expr.tv }
+func (expr *Ellipsis) TV() TypeAndValue       { return expr.tv }
+func (expr *BasicLit) TV() TypeAndValue       { return expr.tv }
+func (expr *FuncLit) TV() TypeAndValue        { return expr.tv }
+func (expr *CompositeLit) TV() TypeAndValue   { return expr.tv }
+func (expr *ParenExpr) TV() TypeAndValue      { return expr.tv }
+func (expr *SelectorExpr) TV() TypeAndValue   { return expr.tv }
+func (expr *IndexExpr) TV() TypeAndValue      { return expr.tv }
+func (expr *SliceExpr) TV() TypeAndValue      { return expr.tv }
+func (expr *TypeAssertExpr) TV() TypeAndValue { return expr.tv }
+func (expr *CallExpr) TV() TypeAndValue       { return expr.tv }
+func (expr *StarExpr) TV() TypeAndValue       { return expr.tv }
+func (expr *UnaryExpr) TV() TypeAndValue      { return expr.tv }
+func (expr *BinaryExpr) TV() TypeAndValue     { return expr.tv }
+func (expr *KeyValueExpr) TV() TypeAndValue   { return expr.tv }
+func (expr *ArrayType) TV() TypeAndValue      { return expr.tv }
+func (expr *StructType) TV() TypeAndValue     { return expr.tv }
+func (expr *FuncType) TV() TypeAndValue       { return expr.tv }
+func (expr *InterfaceType) TV() TypeAndValue  { return expr.tv }
+func (expr *MapType) TV() TypeAndValue        { return expr.tv }
+func (expr *ChanType) TV() TypeAndValue       { return expr.tv }
+
+func (expr *BadExpr) SetTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *Ident) SetTV(tv TypeAndValue)          { expr.tv = tv }
+func (expr *Ellipsis) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *BasicLit) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *FuncLit) SetTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *CompositeLit) SetTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *ParenExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *SelectorExpr) SetTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *IndexExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *SliceExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *TypeAssertExpr) SetTV(tv TypeAndValue) { expr.tv = tv }
+func (expr *CallExpr) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *StarExpr) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *UnaryExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *BinaryExpr) SetTV(tv TypeAndValue)     { expr.tv = tv }
+func (expr *KeyValueExpr) SetTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *ArrayType) SetTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *StructType) SetTV(tv TypeAndValue)     { expr.tv = tv }
+func (expr *FuncType) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *InterfaceType) SetTV(tv TypeAndValue)  { expr.tv = tv }
+func (expr *MapType) SetTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *ChanType) SetTV(tv TypeAndValue)       { expr.tv = tv }
+
 // exprNode() ensures that only expression/type nodes can be
 // assigned to an Expr.
 //
@@ -510,7 +583,7 @@ func (*ChanType) exprNode()      {}
 // NewIdent creates a new Ident without position.
 // Useful for ASTs generated by code other than the Go parser.
 //
-func NewIdent(name string) *Ident { return &Ident{token.NoPos, name} }
+func NewIdent(name string) *Ident { return &Ident{token.NoPos, name, nil, false, TypeAndValue{}} }
 
 // IsExported reports whether name is an exported Go symbol
 // (that is, whether it begins with an upper-case letter).

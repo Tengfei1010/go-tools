@@ -602,12 +602,8 @@ func (ld *loader) loadPackage(lpkg *loaderPackage) {
 	lpkg.Syntax = files
 
 	lpkg.TypesInfo = &types.Info{
-		Types:      make(map[types.Expr]types.TypeAndValue),
-		Defs:       make(map[*types.Ident]types.Object),
-		Uses:       make(map[*types.Ident]types.Object),
-		Implicits:  make(map[types.Node]types.Object),
-		Scopes:     make(map[types.Node]*types.Scope),
-		Selections: make(map[*types.SelectorExpr]*types.Selection),
+		Implicits: make(map[types.Node]types.Object),
+		Scopes:    make(map[types.Node]*types.Scope),
 	}
 
 	importer := importerFunc(func(path string) (*types.Package, error) {

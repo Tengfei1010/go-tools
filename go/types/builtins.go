@@ -7,7 +7,6 @@
 package types
 
 import (
-	
 	"go/constant"
 	"go/token"
 )
@@ -101,11 +100,9 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 				return
 			}
 			if isString(x.typ) {
-				if check.Types != nil {
-					sig := makeSig(S, S, x.typ)
-					sig.variadic = true
-					check.recordBuiltinType(call.Fun, sig)
-				}
+				sig := makeSig(S, S, x.typ)
+				sig.variadic = true
+				check.recordBuiltinType(call.Fun, sig)
 				x.mode = value
 				x.typ = S
 				break
@@ -129,9 +126,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 
 		x.mode = value
 		x.typ = S
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, sig)
-		}
+		check.recordBuiltinType(call.Fun, sig)
 
 	case _Cap, _Len:
 		// cap(x)
@@ -182,7 +177,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		x.mode = mode
 		x.typ = Typ[Int]
 		x.val = val
-		if check.Types != nil && mode != constant_ {
+		if mode != constant_ {
 			check.recordBuiltinType(call.Fun, makeSig(x.typ, typ))
 		}
 
@@ -199,9 +194,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 
 		x.mode = novalue
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, c))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(nil, c))
 
 	case _Complex:
 		// complex(x, y floatT) complexT
@@ -289,7 +282,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 		resTyp := Typ[res]
 
-		if check.Types != nil && x.mode != constant_ {
+		if x.mode != constant_ {
 			check.recordBuiltinType(call.Fun, makeSig(resTyp, x.typ, x.typ))
 		}
 
@@ -327,9 +320,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 			return
 		}
 
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(Typ[Int], x.typ, y.typ))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(Typ[Int], x.typ, y.typ))
 		x.mode = value
 		x.typ = Typ[Int]
 
@@ -351,9 +342,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 
 		x.mode = novalue
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, m, m.key))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(nil, m, m.key))
 
 	case _Imag, _Real:
 		// imag(complexT) floatT
@@ -411,7 +400,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 		resTyp := Typ[res]
 
-		if check.Types != nil && x.mode != constant_ {
+		if x.mode != constant_ {
 			check.recordBuiltinType(call.Fun, makeSig(resTyp, x.typ))
 		}
 
@@ -453,10 +442,8 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 		x.mode = value
 		x.typ = T
-		if check.Types != nil {
-			params := [...]Type{T, Typ[Int], Typ[Int]}
-			check.recordBuiltinType(call.Fun, makeSig(x.typ, params[:1+len(sizes)]...))
-		}
+		params := [...]Type{T, Typ[Int], Typ[Int]}
+		check.recordBuiltinType(call.Fun, makeSig(x.typ, params[:1+len(sizes)]...))
 
 	case _New:
 		// new(T)
@@ -468,9 +455,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 
 		x.mode = value
 		x.typ = &Pointer{base: T}
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(x.typ, T))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(x.typ, T))
 
 	case _Panic:
 		// panic(x)
@@ -493,9 +478,7 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 
 		x.mode = novalue
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, &emptyInterface))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(nil, &emptyInterface))
 
 	case _Print, _Println:
 		// print(x, y, ...)
@@ -517,17 +500,13 @@ func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool)
 		}
 
 		x.mode = novalue
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(nil, params...))
 
 	case _Recover:
 		// recover() interface{}
 		x.mode = value
 		x.typ = &emptyInterface
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(x.typ))
-		}
+		check.recordBuiltinType(call.Fun, makeSig(x.typ))
 
 	case _Alignof:
 		// unsafe.Alignof(x T) uintptr

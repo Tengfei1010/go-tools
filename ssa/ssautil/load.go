@@ -85,12 +85,8 @@ func BuildPackage(tc *types.Config, fset *token.FileSet, pkg *types.Package, fil
 	}
 
 	info := &types.Info{
-		Types:      make(map[types.Expr]types.TypeAndValue),
-		Defs:       make(map[*types.Ident]types.Object),
-		Uses:       make(map[*types.Ident]types.Object),
-		Implicits:  make(map[types.Node]types.Object),
-		Scopes:     make(map[types.Node]*types.Scope),
-		Selections: make(map[*types.SelectorExpr]*types.Selection),
+		Implicits: make(map[types.Node]types.Object),
+		Scopes:    make(map[types.Node]*types.Scope),
 	}
 	if err := types.NewChecker(tc, fset, pkg, info).Files(files); err != nil {
 		return nil, nil, err

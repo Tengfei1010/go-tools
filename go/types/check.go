@@ -7,7 +7,6 @@
 package types
 
 import (
-	
 	"go/constant"
 	"go/token"
 )
@@ -41,14 +40,14 @@ type exprInfo struct {
 
 // A context represents the context within which an object is type-checked.
 type context struct {
-	decl          *declInfo              // package-level declaration whose init expression/function body is checked
-	scope         *Scope                 // top-most scope for lookups
-	pos           token.Pos              // if valid, identifiers are looked up as if at position pos (used by Eval)
-	iota          constant.Value         // value of iota in a constant declaration; nil otherwise
-	sig           *Signature             // function signature if inside a function; nil otherwise
+	decl          *declInfo          // package-level declaration whose init expression/function body is checked
+	scope         *Scope             // top-most scope for lookups
+	pos           token.Pos          // if valid, identifiers are looked up as if at position pos (used by Eval)
+	iota          constant.Value     // value of iota in a constant declaration; nil otherwise
+	sig           *Signature         // function signature if inside a function; nil otherwise
 	isPanic       map[*CallExpr]bool // set of panic call expressions (used for termination check)
-	hasLabel      bool                   // set if a function makes use of labels (only ~1% of functions); unused outside functions
-	hasCallOrRecv bool                   // set if an expression contains a function call or channel receive operation
+	hasLabel      bool               // set if a function makes use of labels (only ~1% of functions); unused outside functions
+	hasCallOrRecv bool               // set if an expression contains a function call or channel receive operation
 }
 
 // lookup looks up name in the current context and returns the matching object, or nil.
@@ -82,13 +81,13 @@ type Checker struct {
 	// information collected during type-checking of a set of package files
 	// (initialized by Files, valid only for the duration of check.Files;
 	// maps and lists are allocated on demand)
-	files            []*File                       // package files
+	files            []*File                           // package files
 	unusedDotImports map[*Scope]map[*Package]token.Pos // positions of unused dot-imported packages for each file scope
 
 	firstErr   error                    // first error encountered
 	methods    map[*TypeName][]*Func    // maps package scope type names to associated non-blank, non-interface methods
 	interfaces map[*TypeName]*ifaceInfo // maps interface type names to corresponding interface infos
-	untyped    map[Expr]exprInfo    // map of expressions without final type
+	untyped    map[Expr]exprInfo        // map of expressions without final type
 	delayed    []func()                 // stack of delayed actions
 	objPath    []Object                 // path of object dependencies during type inference (for cycle reporting)
 
@@ -264,10 +263,6 @@ func (check *Checker) checkFiles(files []*File) (err error) {
 }
 
 func (check *Checker) recordUntyped() {
-	if !debug && check.Types == nil {
-		return // nothing to do
-	}
-
 	for x, info := range check.untyped {
 		if debug && isTyped(info.typ) {
 			check.dump("%v: %s (type %s) is typed", x.Pos(), x, info.typ)
@@ -288,9 +283,7 @@ func (check *Checker) recordTypeAndValue(x Expr, mode operandMode, typ Type, val
 		assert(val != nil)
 		assert(typ == Typ[Invalid] || isConstType(typ))
 	}
-	if m := check.Types; m != nil {
-		m[x] = TypeAndValue{mode, typ, val}
-	}
+	x.SetTV(TypeAndValue{mode, typ, val})
 }
 
 func (check *Checker) recordBuiltinType(f Expr, sig *Signature) {
@@ -317,39 +310,34 @@ func (check *Checker) recordCommaOkTypes(x Expr, a [2]Type) {
 		return
 	}
 	assert(isTyped(a[0]) && isTyped(a[1]) && isBoolean(a[1]))
-	if m := check.Types; m != nil {
-		for {
-			tv := m[x]
-			assert(tv.Type != nil) // should have been recorded already
-			pos := x.Pos()
-			tv.Type = NewTuple(
-				NewVar(pos, check.pkg, "", a[0]),
-				NewVar(pos, check.pkg, "", a[1]),
-			)
-			m[x] = tv
-			// if x is a parenthesized expression (p.X), update p.X
-			p, _ := x.(*ParenExpr)
-			if p == nil {
-				break
-			}
-			x = p.X
+	for {
+		tv := x.TV()
+		assert(tv.Type != nil) // should have been recorded already
+		pos := x.Pos()
+		tv.Type = NewTuple(
+			NewVar(pos, check.pkg, "", a[0]),
+			NewVar(pos, check.pkg, "", a[1]),
+		)
+		x.SetTV(tv)
+		// if x is a parenthesized expression (p.X), update p.X
+		p, _ := x.(*ParenExpr)
+		if p == nil {
+			break
 		}
+		x = p.X
 	}
 }
 
 func (check *Checker) recordDef(id *Ident, obj Object) {
 	assert(id != nil)
-	if m := check.Defs; m != nil {
-		m[id] = obj
-	}
+	id.Obj = obj
+	id.IsDef = true
 }
 
 func (check *Checker) recordUse(id *Ident, obj Object) {
 	assert(id != nil)
 	assert(obj != nil)
-	if m := check.Uses; m != nil {
-		m[id] = obj
-	}
+	id.Obj = obj
 }
 
 func (check *Checker) recordImplicit(node Node, obj Object) {
@@ -363,9 +351,7 @@ func (check *Checker) recordImplicit(node Node, obj Object) {
 func (check *Checker) recordSelection(x *SelectorExpr, kind SelectionKind, recv Type, obj Object, index []int, indirect bool) {
 	assert(obj != nil && (recv == nil || len(index) > 0))
 	check.recordUse(x.Sel, obj)
-	if m := check.Selections; m != nil {
-		m[x] = &Selection{kind, recv, obj, index, indirect}
-	}
+	x.Selection = &Selection{kind, recv, obj, index, indirect}
 }
 
 func (check *Checker) recordScope(node Node, scope *Scope) {
