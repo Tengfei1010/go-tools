@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"sort"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
@@ -33,7 +32,7 @@ func g(rune) (uint8, bool)
 	if err != nil {
 		panic(err)
 	}
-	pkg, err := new(types.Config).Check("P", fset, []*ast.File{f}, nil)
+	pkg, err := new(types.Config).Check("P", fset, []*types.File{f}, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -1032,7 +1032,7 @@ func (c *Checker) CheckEarlyDefer(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if ident.Obj != lhs.Obj {
+			if ObjectOf(j, ident) != ObjectOf(j, lhs) {
 				continue
 			}
 			if sel.Sel.Name != "Close" {
@@ -1478,7 +1478,7 @@ func (c *Checker) CheckLoopCondition(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if x.Obj != lhs.Obj {
+			if ObjectOf(j, x) != ObjectOf(j, lhs) {
 				return true
 			}
 			if _, ok := loop.Post.(*types.IncDecStmt); !ok {
@@ -1608,13 +1608,13 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 		if body == nil {
 			return true
 		}
-		labels := map[*types.ObjectA]types.Stmt{}
+		labels := map[types.Object]types.Stmt{}
 		types.Inspect(body, func(node types.Node) bool {
 			label, ok := node.(*types.LabeledStmt)
 			if !ok {
 				return true
 			}
-			labels[label.Label.Obj] = label.Stmt
+			labels[ObjectOf(j, label.Label)] = label.Stmt
 			return true
 		})
 
@@ -1650,11 +1650,11 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 				case *types.BranchStmt:
 					switch stmt.Tok {
 					case token.BREAK:
-						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
+						if stmt.Label == nil || labels[ObjectOf(j, stmt.Label)] == loop {
 							unconditionalExit = stmt
 						}
 					case token.CONTINUE:
-						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
+						if stmt.Label == nil || labels[ObjectOf(j, stmt.Label)] == loop {
 							unconditionalExit = nil
 							return false
 						}
@@ -1676,7 +1676,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 						unconditionalExit = nil
 						return false
 					case token.CONTINUE:
-						if branch.Label != nil && labels[branch.Label.Obj] != loop {
+						if branch.Label != nil && labels[ObjectOf(j, branch.Label)] != loop {
 							return true
 						}
 						unconditionalExit = nil

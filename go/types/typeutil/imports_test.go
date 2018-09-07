@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
@@ -42,7 +41,7 @@ func TestDependencies(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pkg, err := conf.Check(f.Name.Name, fset, []*ast.File{f}, nil)
+		pkg, err := conf.Check(f.Name.Name, fset, []*types.File{f}, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -16,9 +16,9 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast/astutil"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/astutil"
 )
 
 // pathToString returns a string containing the concrete types of the

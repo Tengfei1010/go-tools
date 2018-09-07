@@ -43,30 +43,6 @@ func nameFilter(filename string) bool {
 
 func dirFilter(f os.FileInfo) bool { return nameFilter(f.Name()) }
 
-func TestParseDir(t *testing.T) {
-	path := "."
-	pkgs, err := ParseDir(token.NewFileSet(), path, dirFilter, 0)
-	if err != nil {
-		t.Fatalf("ParseDir(%s): %v", path, err)
-	}
-	if n := len(pkgs); n != 1 {
-		t.Errorf("got %d packages; want 1", n)
-	}
-	pkg := pkgs["parser"]
-	if pkg == nil {
-		t.Errorf(`package "parser" not found`)
-		return
-	}
-	if n := len(pkg.Files); n != 3 {
-		t.Errorf("got %d package files; want 3", n)
-	}
-	for filename := range pkg.Files {
-		if !nameFilter(filename) {
-			t.Errorf("unexpected package file: %s", filename)
-		}
-	}
-}
-
 func TestParseExpr(t *testing.T) {
 	// just kicking the tires:
 	// a valid arithmetic expression
@@ -217,67 +193,6 @@ func f() { L: }
 		}
 		return true
 	})
-}
-
-func TestUnresolved(t *testing.T) {
-	f, err := ParseFile(token.NewFileSet(), "", `
-package p
-//
-func f1a(int)
-func f2a(byte, int, float)
-func f3a(a, b int, c float)
-func f4a(...complex)
-func f5a(a s1a, b ...complex)
-//
-func f1b(*int)
-func f2b([]byte, (int), *float)
-func f3b(a, b *int, c []float)
-func f4b(...*complex)
-func f5b(a s1a, b ...[]complex)
-//
-type s1a struct { int }
-type s2a struct { byte; int; s1a }
-type s3a struct { a, b int; c float }
-//
-type s1b struct { *int }
-type s2b struct { byte; int; *float }
-type s3b struct { a, b *s3b; c []float }
-`, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := "int " + // f1a
-		"byte int float " + // f2a
-		"int float " + // f3a
-		"complex " + // f4a
-		"complex " + // f5a
-		//
-		"int " + // f1b
-		"byte int float " + // f2b
-		"int float " + // f3b
-		"complex " + // f4b
-		"complex " + // f5b
-		//
-		"int " + // s1a
-		"byte int " + // s2a
-		"int float " + // s3a
-		//
-		"int " + // s1a
-		"byte int float " + // s2a
-		"float " // s3a
-
-	// collect unresolved identifiers
-	var buf bytes.Buffer
-	for _, u := range f.Unresolved {
-		buf.WriteString(u.Name)
-		buf.WriteByte(' ')
-	}
-	got := buf.String()
-
-	if got != want {
-		t.Errorf("\ngot:  %s\nwant: %s", got, want)
-	}
 }
 
 var imports = map[string]bool{

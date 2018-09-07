@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build ignore
+
 // To avoid a cyclic dependency with go/parser, this file is in a separate package.
 
 package types_test
 
 import (
 	"bytes"
-	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"

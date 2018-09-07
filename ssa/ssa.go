@@ -13,7 +13,6 @@ import (
 	"go/token"
 	"sync"
 
-	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 )
@@ -53,9 +52,9 @@ type Package struct {
 
 	// The following fields are set transiently, then cleared
 	// after building.
-	buildOnce sync.Once   // ensures package building occurs once
-	ninit     int32       // number of init functions
-	info      *types.Info // package type information
+	buildOnce sync.Once     // ensures package building occurs once
+	ninit     int32         // number of init functions
+	info      *types.Info   // package type information
 	files     []*types.File // package ASTs
 }
 
@@ -301,7 +300,7 @@ type Function struct {
 	pos       token.Pos
 
 	Synthetic string        // provenance of synthetic function; "" for true source functions
-	syntax    types.Node      // *types.Func{Decl,Lit}; replaced with simple types.Node after build, unless debug mode
+	syntax    types.Node    // *types.Func{Decl,Lit}; replaced with simple types.Node after build, unless debug mode
 	parent    *Function     // enclosing function if anon; nil if global
 	Pkg       *Package      // enclosing package; nil for shared funcs (wrappers and error.Error)
 	Prog      *Program      // enclosing program
@@ -319,7 +318,7 @@ type Function struct {
 	objects      map[types.Object]Value   // addresses of local variables
 	namedResults []*Alloc                 // tuple of named results
 	targets      *targets                 // linked stack of branch targets
-	lblocks      map[*types.ObjectA]*lblock // labelled blocks
+	lblocks      map[types.Object]*lblock // labelled blocks
 }
 
 // BasicBlock represents an SSA basic block.
@@ -900,7 +899,7 @@ type SelectState struct {
 	Chan      Value         // channel to use (for send or receive)
 	Send      Value         // value to send (for send)
 	Pos       token.Pos     // position of token.ARROW
-	DebugNode types.Node      // types.SendStmt or types.UnaryExpr(<-) [debug mode]
+	DebugNode types.Node    // types.SendStmt or types.UnaryExpr(<-) [debug mode]
 }
 
 // The Select instruction tests whether (or blocks until) one
@@ -1273,7 +1272,7 @@ type MapUpdate struct {
 //
 type DebugRef struct {
 	anInstruction
-	Expr   types.Expr     // the referring expression (never *types.ParenExpr)
+	Expr   types.Expr   // the referring expression (never *types.ParenExpr)
 	object types.Object // the identity of the source var/func
 	IsAddr bool         // Expr is addressable and X is the address it denotes
 	X      Value        // the value or address of Expr

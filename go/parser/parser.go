@@ -60,15 +60,13 @@ type parser struct {
 	inRhs   bool // if set, the parser is parsing a rhs expression
 
 	// Ordinary identifier scopes
-	pkgScope   *types.ScopeA       // pkgScope.Outer == nil
-	topScope   *types.ScopeA       // top-most scope; may be pkgScope
-	unresolved []*types.Ident      // unresolved identifiers
-	imports    []*types.ImportSpec // list of imports
+	pkgScope *types.ScopeA       // pkgScope.Outer == nil
+	topScope *types.ScopeA       // top-most scope; may be pkgScope
+	imports  []*types.ImportSpec // list of imports
 
 	// Label scopes
 	// (maintained by open/close LabelScope)
-	labelScope  *types.ScopeA    // label scope for current function
-	targetStack [][]*types.Ident // stack of unresolved labels
+	labelScope *types.ScopeA // label scope for current function
 }
 
 func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
@@ -99,21 +97,10 @@ func (p *parser) closeScope() {
 
 func (p *parser) openLabelScope() {
 	p.labelScope = types.NewScopeA(p.labelScope)
-	p.targetStack = append(p.targetStack, nil)
 }
 
 func (p *parser) closeLabelScope() {
-	// resolve labels
-	n := len(p.targetStack) - 1
-	scope := p.labelScope
-	for _, ident := range p.targetStack[n] {
-		ident.Obj = scope.Lookup(ident.Name)
-		if ident.Obj == nil && p.mode&DeclarationErrors != 0 {
-			p.error(ident.Pos(), fmt.Sprintf("label %s undefined", ident.Name))
-		}
-	}
 	// pop label scope
-	p.targetStack = p.targetStack[0:n]
 	p.labelScope = p.labelScope.Outer
 }
 
@@ -164,47 +151,6 @@ func (p *parser) shortVarDecl(decl *types.AssignStmt, list []types.Expr) {
 	if n == 0 && p.mode&DeclarationErrors != 0 {
 		p.error(list[0].Pos(), "no new variables on left side of :=")
 	}
-}
-
-// The unresolved object is a sentinel to mark identifiers that have been added
-// to the list of unresolved identifiers. The sentinel is only used for verifying
-// internal consistency.
-var unresolved = new(types.ObjectA)
-
-// If x is an identifier, tryResolve attempts to resolve x by looking up
-// the object it denotes. If no object is found and collectUnresolved is
-// set, x is marked as unresolved and collected in the list of unresolved
-// identifiers.
-//
-func (p *parser) tryResolve(x types.Expr, collectUnresolved bool) {
-	// nothing to do if x is not an identifier or the blank identifier
-	ident, _ := x.(*types.Ident)
-	if ident == nil {
-		return
-	}
-	assert(ident.Obj == nil, "identifier already declared or resolved")
-	if ident.Name == "_" {
-		return
-	}
-	// try to resolve the identifier
-	for s := p.topScope; s != nil; s = s.Outer {
-		if obj := s.Lookup(ident.Name); obj != nil {
-			ident.Obj = obj
-			return
-		}
-	}
-	// all local scopes are known, so any unresolved identifier
-	// must be found either in the file scope, package scope
-	// (perhaps in another file), or universe scope --- collect
-	// them so that they can be resolved later
-	if collectUnresolved {
-		ident.Obj = unresolved
-		p.unresolved = append(p.unresolved, ident)
-	}
-}
-
-func (p *parser) resolve(x types.Expr) {
-	p.tryResolve(x, true)
 }
 
 // ----------------------------------------------------------------------------
@@ -596,9 +542,6 @@ func (p *parser) parseLhsList() []types.Expr {
 		//   to resolve the identifier in that case
 	default:
 		// identifiers must be declared elsewhere
-		for _, x := range list {
-			p.resolve(x)
-		}
 	}
 	p.inRhs = old
 	return list
@@ -644,7 +587,6 @@ func (p *parser) parseTypeName() types.Expr {
 	if p.tok == token.PERIOD {
 		// ident is a package name
 		p.next()
-		p.resolve(ident)
 		sel := p.parseIdent()
 		return &types.SelectorExpr{X: ident, Sel: sel}
 	}
@@ -738,7 +680,6 @@ func (p *parser) parseFieldDecl(scope *types.ScopeA) *types.Field {
 
 	field := &types.Field{Doc: doc, Names: idents, Type: typ, Tag: tag, Comment: p.lineComment}
 	p.declare(field, nil, scope, types.VarKind, idents...)
-	p.resolve(typ)
 
 	return field
 }
@@ -788,7 +729,6 @@ func (p *parser) tryVarType(isParam bool) types.Expr {
 		p.next()
 		typ := p.tryIdentOrType() // don't use parseType so we can provide better error message
 		if typ != nil {
-			p.resolve(typ)
 		} else {
 			p.error(pos, "'...' parameter is missing type")
 			typ = &types.BadExpr{From: pos, To: p.pos}
@@ -838,7 +778,6 @@ func (p *parser) parseParameterList(scope *types.ScopeA, ellipsisOk bool) (param
 		// Go spec: The scope of an identifier denoting a function
 		// parameter or result variable is the function body.
 		p.declare(field, nil, scope, types.VarKind, idents...)
-		p.resolve(typ)
 		if !p.atComma("parameter list", token.RPAREN) {
 			return
 		}
@@ -851,7 +790,6 @@ func (p *parser) parseParameterList(scope *types.ScopeA, ellipsisOk bool) (param
 			// Go spec: The scope of an identifier denoting a function
 			// parameter or result variable is the function body.
 			p.declare(field, nil, scope, types.VarKind, idents...)
-			p.resolve(typ)
 			if !p.atComma("parameter list", token.RPAREN) {
 				break
 			}
@@ -863,7 +801,6 @@ func (p *parser) parseParameterList(scope *types.ScopeA, ellipsisOk bool) (param
 	// Type { "," Type } (anonymous parameters)
 	params = make([]*types.Field, len(list))
 	for i, typ := range list {
-		p.resolve(typ)
 		params[i] = &types.Field{Type: typ}
 	}
 	return
@@ -944,7 +881,6 @@ func (p *parser) parseMethodSpec(scope *types.ScopeA) *types.Field {
 	} else {
 		// embedded interface
 		typ = x
-		p.resolve(typ)
 	}
 	p.expectSemi() // call before accessing p.linecomment
 
@@ -1051,9 +987,6 @@ func (p *parser) tryIdentOrType() types.Expr {
 
 func (p *parser) tryType() types.Expr {
 	typ := p.tryIdentOrType()
-	if typ != nil {
-		p.resolve(typ)
-	}
 	return typ
 }
 
@@ -1135,9 +1068,6 @@ func (p *parser) parseOperand(lhs bool) types.Expr {
 	switch p.tok {
 	case token.IDENT:
 		x := p.parseIdent()
-		if !lhs {
-			p.resolve(x)
-		}
 		return x
 
 	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING:
@@ -1305,10 +1235,8 @@ func (p *parser) parseValue(keyOk bool) types.Expr {
 			// as unresolved identifier if it fails so that
 			// we don't get (possibly false) errors about
 			// undeclared names.
-			p.tryResolve(x, false)
 		} else {
 			// not a key
-			p.resolve(x)
 		}
 	}
 
@@ -1472,7 +1400,6 @@ L:
 		case token.PERIOD:
 			p.next()
 			if lhs {
-				p.resolve(x)
 			}
 			switch p.tok {
 			case token.IDENT:
@@ -1488,18 +1415,15 @@ L:
 			}
 		case token.LBRACK:
 			if lhs {
-				p.resolve(x)
 			}
 			x = p.parseIndexOrSlice(p.checkExpr(x))
 		case token.LPAREN:
 			if lhs {
-				p.resolve(x)
 			}
 			x = p.parseCallOrConversion(p.checkExprOrType(x))
 		case token.LBRACE:
 			if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
 				if lhs {
-					p.resolve(x)
 				}
 				x = p.parseLiteralValue(x)
 			} else {
@@ -1606,7 +1530,6 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) types.Expr {
 		}
 		pos := p.expect(op)
 		if lhs {
-			p.resolve(x)
 			lhs = false
 		}
 		y := p.parseBinaryExpr(false, oprec+1)
@@ -1801,9 +1724,6 @@ func (p *parser) parseBranchStmt(tok token.Token) *types.BranchStmt {
 	var label *types.Ident
 	if tok != token.FALLTHROUGH && p.tok == token.IDENT {
 		label = p.parseIdent()
-		// add to list of unresolved targets
-		n := len(p.targetStack) - 1
-		p.targetStack[n] = append(p.targetStack[n], label)
 	}
 	p.expectSemi()
 
@@ -2546,26 +2466,13 @@ func (p *parser) parseFile() *types.File {
 	assert(p.topScope == nil, "unbalanced scopes")
 	assert(p.labelScope == nil, "unbalanced label scopes")
 
-	// resolve global identifiers within the same file
-	i := 0
-	for _, ident := range p.unresolved {
-		// i <= index for current ident
-		assert(ident.Obj == unresolved, "object already resolved")
-		ident.Obj = p.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
-		if ident.Obj == nil {
-			p.unresolved[i] = ident
-			i++
-		}
-	}
-
 	return &types.File{
-		Doc:        doc,
-		Package:    pos,
-		Name:       ident,
-		Decls:      decls,
-		Scope:      p.pkgScope,
-		Imports:    p.imports,
-		Unresolved: p.unresolved[0:i],
-		Comments:   p.comments,
+		Doc:      doc,
+		Package:  pos,
+		Name:     ident,
+		Decls:    decls,
+		Scope:    p.pkgScope,
+		Imports:  p.imports,
+		Comments: p.comments,
 	}
 }

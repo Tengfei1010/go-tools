@@ -10,11 +10,12 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
-	
-	"honnef.co/go/tools/go/types"
+
 	"io"
 	"os"
 	"strings"
+
+	"honnef.co/go/tools/go/types"
 )
 
 // addEdge adds a control-flow graph edge from from to to.
@@ -159,13 +160,14 @@ type lblock struct {
 // specified label, creating it if needed.
 //
 func (f *Function) labelledBlock(label *types.Ident) *lblock {
-	lb := f.lblocks[label.Obj]
+	obj := f.Pkg.objectOf(label)
+	lb := f.lblocks[obj]
 	if lb == nil {
 		lb = &lblock{_goto: f.newBasicBlock(label.Name)}
 		if f.lblocks == nil {
-			f.lblocks = make(map[*types.ObjectA]*lblock)
+			f.lblocks = make(map[types.Object]*lblock)
 		}
-		f.lblocks[label.Obj] = lb
+		f.lblocks[obj] = lb
 	}
 	return lb
 }

@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 )
 
 const (
@@ -50,7 +50,7 @@ func format(src []byte, mode checkMode) ([]byte, error) {
 	// filter exports if necessary
 	if mode&export != 0 {
 		types.FileExports(f) // ignore result
-		f.Comments = nil   // don't print comments that are not in AST
+		f.Comments = nil     // don't print comments that are not in AST
 	}
 
 	// determine printer configuration
