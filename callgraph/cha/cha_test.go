@@ -20,7 +20,7 @@ import (
 
 	"honnef.co/go/tools/callgraph"
 	"honnef.co/go/tools/callgraph/cha"
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa/ssautil"
@@ -34,7 +34,7 @@ var inputs = []string{
 	"testdata/recv.go",
 }
 
-func expectation(f *ast.File) (string, token.Pos) {
+func expectation(f *types.File) (string, token.Pos) {
 	for _, c := range f.Comments {
 		text := strings.TrimSpace(c.Text())
 		if t := strings.TrimPrefix(text, "WANT:\n"); t != text {

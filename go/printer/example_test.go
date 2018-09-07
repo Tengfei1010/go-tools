@@ -11,19 +11,19 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/types"
 )
 
 // Dummy test function so that godoc does not use the entire file as example.
 func Test(*testing.T) {}
 
-func parseFunc(filename, functionname string) (fun *ast.FuncDecl, fset *token.FileSet) {
+func parseFunc(filename, functionname string) (fun *types.FuncDecl, fset *token.FileSet) {
 	fset = token.NewFileSet()
 	if file, err := parser.ParseFile(fset, filename, nil, 0); err == nil {
 		for _, d := range file.Decls {
-			if f, ok := d.(*ast.FuncDecl); ok && f.Name.Name == functionname {
+			if f, ok := d.(*types.FuncDecl); ok && f.Name.Name == functionname {
 				fun = f
 				return
 			}

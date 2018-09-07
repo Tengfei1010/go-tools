@@ -12,9 +12,9 @@ import (
 	"go/token"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/ast/astutil"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 )
 
 var rewriteTests = [...]struct {
@@ -34,7 +34,7 @@ var x int
 var t T
 `,
 		post: func(c *astutil.Cursor) bool {
-			if _, ok := c.Node().(*ast.ValueSpec); ok {
+			if _, ok := c.Node().(*types.ValueSpec); ok {
 				c.Replace(valspec("t", "T"))
 				return false
 			}
@@ -60,8 +60,8 @@ type T struct{}
 var x int
 `,
 		post: func(c *astutil.Cursor) bool {
-			if _, ok := c.Parent().(*ast.GenDecl); ok && c.Name() == "Doc" && c.Node() == nil {
-				c.Replace(&ast.CommentGroup{List: []*ast.Comment{{Text: "// a foo is a foo"}}})
+			if _, ok := c.Parent().(*types.GenDecl); ok && c.Name() == "Doc" && c.Node() == nil {
+				c.Replace(&types.CommentGroup{List: []*types.Comment{{Text: "// a foo is a foo"}}})
 			}
 			return true
 		},
@@ -77,14 +77,14 @@ const a = 1
 const a, b, c = 1, 2, 3
 `,
 		pre: func(c *astutil.Cursor) bool {
-			if _, ok := c.Parent().(*ast.ValueSpec); ok {
+			if _, ok := c.Parent().(*types.ValueSpec); ok {
 				switch c.Name() {
 				case "Names":
-					c.InsertAfter(ast.NewIdent("c"))
-					c.InsertAfter(ast.NewIdent("b"))
+					c.InsertAfter(types.NewIdent("c"))
+					c.InsertAfter(types.NewIdent("b"))
 				case "Values":
-					c.InsertAfter(&ast.BasicLit{Kind: token.INT, Value: "3"})
-					c.InsertAfter(&ast.BasicLit{Kind: token.INT, Value: "2"})
+					c.InsertAfter(&types.BasicLit{Kind: token.INT, Value: "3"})
+					c.InsertAfter(&types.BasicLit{Kind: token.INT, Value: "2"})
 				}
 			}
 			return true
@@ -112,7 +112,7 @@ var after2 int
 var after1 int
 `,
 		pre: func(c *astutil.Cursor) bool {
-			if _, ok := c.Node().(*ast.GenDecl); ok {
+			if _, ok := c.Node().(*types.GenDecl); ok {
 				c.InsertBefore(vardecl("before1", "int"))
 				c.InsertAfter(vardecl("after1", "int"))
 				c.InsertAfter(vardecl("after2", "int"))
@@ -136,7 +136,7 @@ var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
-			if d, ok := n.(*ast.GenDecl); ok && d.Specs[0].(*ast.ValueSpec).Names[0].Name == "x" {
+			if d, ok := n.(*types.GenDecl); ok && d.Specs[0].(*types.ValueSpec).Names[0].Name == "x" {
 				c.Delete()
 			}
 			return true
@@ -159,7 +159,7 @@ var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
-			if d, ok := n.(*ast.GenDecl); ok && d.Specs[0].(*ast.ValueSpec).Names[0].Name == "x" {
+			if d, ok := n.(*types.GenDecl); ok && d.Specs[0].(*types.ValueSpec).Names[0].Name == "x" {
 				c.InsertAfter(vardecl("x1", "int"))
 				c.Delete()
 			}
@@ -182,7 +182,7 @@ var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
-			if d, ok := n.(*ast.GenDecl); ok && d.Specs[0].(*ast.ValueSpec).Names[0].Name == "x" {
+			if d, ok := n.(*types.GenDecl); ok && d.Specs[0].(*types.ValueSpec).Names[0].Name == "x" {
 				c.Delete()
 				// The cursor is now effectively atop the 'var y int' node.
 				c.InsertAfter(vardecl("x1", "int"))
@@ -192,16 +192,16 @@ var z int
 	},
 }
 
-func valspec(name, typ string) *ast.ValueSpec {
-	return &ast.ValueSpec{Names: []*ast.Ident{ast.NewIdent(name)},
-		Type: ast.NewIdent(typ),
+func valspec(name, typ string) *types.ValueSpec {
+	return &types.ValueSpec{Names: []*types.Ident{types.NewIdent(name)},
+		Type: types.NewIdent(typ),
 	}
 }
 
-func vardecl(name, typ string) *ast.GenDecl {
-	return &ast.GenDecl{
+func vardecl(name, typ string) *types.GenDecl {
+	return &types.GenDecl{
 		Tok:   token.VAR,
-		Specs: []ast.Spec{valspec(name, typ)},
+		Specs: []types.Spec{valspec(name, typ)},
 	}
 }
 
@@ -230,7 +230,7 @@ func TestRewrite(t *testing.T) {
 	})
 }
 
-var sink ast.Node
+var sink types.Node
 
 func BenchmarkRewrite(b *testing.B) {
 	for _, test := range rewriteTests {

@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"sort"
 
-	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 )
 
 // An ApplyFunc is invoked by Apply for each node n, even if n is nil,
@@ -41,8 +41,8 @@ type ApplyFunc func(*Cursor) bool
 // respective node's struct definition. A package's files are
 // traversed in the filenames' alphabetical order.
 //
-func Apply(root ast.Node, pre, post ApplyFunc) (result ast.Node) {
-	parent := &struct{ ast.Node }{root}
+func Apply(root types.Node, pre, post ApplyFunc) (result types.Node) {
+	parent := &struct{ types.Node }{root}
 	defer func() {
 		if r := recover(); r != nil && r != abort {
 			panic(r)
@@ -70,20 +70,20 @@ var abort = new(int) // singleton, to signal termination of Apply
 // The methods Replace, Delete, InsertBefore, and InsertAfter
 // can be used to change the AST without disrupting Apply.
 type Cursor struct {
-	parent ast.Node
+	parent types.Node
 	name   string
 	iter   *iterator // valid if non-nil
-	node   ast.Node
+	node   types.Node
 }
 
 // Node returns the current Node.
-func (c *Cursor) Node() ast.Node { return c.node }
+func (c *Cursor) Node() types.Node { return c.node }
 
 // Parent returns the parent of the current Node.
-func (c *Cursor) Parent() ast.Node { return c.parent }
+func (c *Cursor) Parent() types.Node { return c.parent }
 
 // Name returns the name of the parent Node field that contains the current Node.
-// If the parent is a *ast.Package and the current Node is a *ast.File, Name returns
+// If the parent is a *types.Package and the current Node is a *types.File, Name returns
 // the filename for the current Node.
 func (c *Cursor) Name() string { return c.name }
 
@@ -105,13 +105,13 @@ func (c *Cursor) field() reflect.Value {
 
 // Replace replaces the current Node with n.
 // The replacement node is not walked by Apply.
-func (c *Cursor) Replace(n ast.Node) {
-	if _, ok := c.node.(*ast.File); ok {
-		file, ok := n.(*ast.File)
+func (c *Cursor) Replace(n types.Node) {
+	if _, ok := c.node.(*types.File); ok {
+		file, ok := n.(*types.File)
 		if !ok {
-			panic("attempt to replace *ast.File with non-*ast.File")
+			panic("attempt to replace *types.File with non-*types.File")
 		}
-		c.parent.(*ast.PackageA).Files[c.name] = file
+		c.parent.(*types.PackageA).Files[c.name] = file
 		return
 	}
 
@@ -127,8 +127,8 @@ func (c *Cursor) Replace(n ast.Node) {
 // As a special case, if the current node is a package file,
 // Delete removes it from the package's Files map.
 func (c *Cursor) Delete() {
-	if _, ok := c.node.(*ast.File); ok {
-		delete(c.parent.(*ast.PackageA).Files, c.name)
+	if _, ok := c.node.(*types.File); ok {
+		delete(c.parent.(*types.PackageA).Files, c.name)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (c *Cursor) Delete() {
 // InsertAfter inserts n after the current Node in its containing slice.
 // If the current Node is not part of a slice, InsertAfter panics.
 // Apply does not walk n.
-func (c *Cursor) InsertAfter(n ast.Node) {
+func (c *Cursor) InsertAfter(n types.Node) {
 	i := c.Index()
 	if i < 0 {
 		panic("InsertAfter node not contained in slice")
@@ -163,7 +163,7 @@ func (c *Cursor) InsertAfter(n ast.Node) {
 // InsertBefore inserts n before the current Node in its containing slice.
 // If the current Node is not part of a slice, InsertBefore panics.
 // Apply will not walk n.
-func (c *Cursor) InsertBefore(n ast.Node) {
+func (c *Cursor) InsertBefore(n types.Node) {
 	i := c.Index()
 	if i < 0 {
 		panic("InsertBefore node not contained in slice")
@@ -183,7 +183,7 @@ type application struct {
 	iter      iterator
 }
 
-func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.Node) {
+func (a *application) apply(parent types.Node, name string, iter *iterator, n types.Node) {
 	// convert typed nil into untyped nil
 	if v := reflect.ValueOf(n); v.Kind() == reflect.Ptr && v.IsNil() {
 		n = nil
@@ -208,210 +208,210 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		// nothing to do
 
 	// Comments and fields
-	case *ast.Comment:
+	case *types.Comment:
 		// nothing to do
 
-	case *ast.CommentGroup:
+	case *types.CommentGroup:
 		if n != nil {
 			a.applyList(n, "List")
 		}
 
-	case *ast.Field:
+	case *types.Field:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.applyList(n, "Names")
 		a.apply(n, "Type", nil, n.Type)
 		a.apply(n, "Tag", nil, n.Tag)
 		a.apply(n, "Comment", nil, n.Comment)
 
-	case *ast.FieldList:
+	case *types.FieldList:
 		a.applyList(n, "List")
 
 	// Expressions
-	case *ast.BadExpr, *ast.Ident, *ast.BasicLit:
+	case *types.BadExpr, *types.Ident, *types.BasicLit:
 		// nothing to do
 
-	case *ast.Ellipsis:
+	case *types.Ellipsis:
 		a.apply(n, "Elt", nil, n.Elt)
 
-	case *ast.FuncLit:
+	case *types.FuncLit:
 		a.apply(n, "Type", nil, n.Type)
 		a.apply(n, "Body", nil, n.Body)
 
-	case *ast.CompositeLit:
+	case *types.CompositeLit:
 		a.apply(n, "Type", nil, n.Type)
 		a.applyList(n, "Elts")
 
-	case *ast.ParenExpr:
+	case *types.ParenExpr:
 		a.apply(n, "X", nil, n.X)
 
-	case *ast.SelectorExpr:
+	case *types.SelectorExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Sel", nil, n.Sel)
 
-	case *ast.IndexExpr:
+	case *types.IndexExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Index", nil, n.Index)
 
-	case *ast.SliceExpr:
+	case *types.SliceExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Low", nil, n.Low)
 		a.apply(n, "High", nil, n.High)
 		a.apply(n, "Max", nil, n.Max)
 
-	case *ast.TypeAssertExpr:
+	case *types.TypeAssertExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Type", nil, n.Type)
 
-	case *ast.CallExpr:
+	case *types.CallExpr:
 		a.apply(n, "Fun", nil, n.Fun)
 		a.applyList(n, "Args")
 
-	case *ast.StarExpr:
+	case *types.StarExpr:
 		a.apply(n, "X", nil, n.X)
 
-	case *ast.UnaryExpr:
+	case *types.UnaryExpr:
 		a.apply(n, "X", nil, n.X)
 
-	case *ast.BinaryExpr:
+	case *types.BinaryExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Y", nil, n.Y)
 
-	case *ast.KeyValueExpr:
+	case *types.KeyValueExpr:
 		a.apply(n, "Key", nil, n.Key)
 		a.apply(n, "Value", nil, n.Value)
 
 	// Types
-	case *ast.ArrayType:
+	case *types.ArrayType:
 		a.apply(n, "Len", nil, n.Len)
 		a.apply(n, "Elt", nil, n.Elt)
 
-	case *ast.StructType:
+	case *types.StructType:
 		a.apply(n, "Fields", nil, n.Fields)
 
-	case *ast.FuncType:
+	case *types.FuncType:
 		a.apply(n, "Params", nil, n.Params)
 		a.apply(n, "Results", nil, n.Results)
 
-	case *ast.InterfaceType:
+	case *types.InterfaceType:
 		a.apply(n, "Methods", nil, n.Methods)
 
-	case *ast.MapType:
+	case *types.MapType:
 		a.apply(n, "Key", nil, n.Key)
 		a.apply(n, "Value", nil, n.Value)
 
-	case *ast.ChanType:
+	case *types.ChanType:
 		a.apply(n, "Value", nil, n.Value)
 
 	// Statements
-	case *ast.BadStmt:
+	case *types.BadStmt:
 		// nothing to do
 
-	case *ast.DeclStmt:
+	case *types.DeclStmt:
 		a.apply(n, "Decl", nil, n.Decl)
 
-	case *ast.EmptyStmt:
+	case *types.EmptyStmt:
 		// nothing to do
 
-	case *ast.LabeledStmt:
+	case *types.LabeledStmt:
 		a.apply(n, "Label", nil, n.Label)
 		a.apply(n, "Stmt", nil, n.Stmt)
 
-	case *ast.ExprStmt:
+	case *types.ExprStmt:
 		a.apply(n, "X", nil, n.X)
 
-	case *ast.SendStmt:
+	case *types.SendStmt:
 		a.apply(n, "Chan", nil, n.Chan)
 		a.apply(n, "Value", nil, n.Value)
 
-	case *ast.IncDecStmt:
+	case *types.IncDecStmt:
 		a.apply(n, "X", nil, n.X)
 
-	case *ast.AssignStmt:
+	case *types.AssignStmt:
 		a.applyList(n, "Lhs")
 		a.applyList(n, "Rhs")
 
-	case *ast.GoStmt:
+	case *types.GoStmt:
 		a.apply(n, "Call", nil, n.Call)
 
-	case *ast.DeferStmt:
+	case *types.DeferStmt:
 		a.apply(n, "Call", nil, n.Call)
 
-	case *ast.ReturnStmt:
+	case *types.ReturnStmt:
 		a.applyList(n, "Results")
 
-	case *ast.BranchStmt:
+	case *types.BranchStmt:
 		a.apply(n, "Label", nil, n.Label)
 
-	case *ast.BlockStmt:
+	case *types.BlockStmt:
 		a.applyList(n, "List")
 
-	case *ast.IfStmt:
+	case *types.IfStmt:
 		a.apply(n, "Init", nil, n.Init)
 		a.apply(n, "Cond", nil, n.Cond)
 		a.apply(n, "Body", nil, n.Body)
 		a.apply(n, "Else", nil, n.Else)
 
-	case *ast.CaseClause:
+	case *types.CaseClause:
 		a.applyList(n, "List")
 		a.applyList(n, "Body")
 
-	case *ast.SwitchStmt:
+	case *types.SwitchStmt:
 		a.apply(n, "Init", nil, n.Init)
 		a.apply(n, "Tag", nil, n.Tag)
 		a.apply(n, "Body", nil, n.Body)
 
-	case *ast.TypeSwitchStmt:
+	case *types.TypeSwitchStmt:
 		a.apply(n, "Init", nil, n.Init)
 		a.apply(n, "Assign", nil, n.Assign)
 		a.apply(n, "Body", nil, n.Body)
 
-	case *ast.CommClause:
+	case *types.CommClause:
 		a.apply(n, "Comm", nil, n.Comm)
 		a.applyList(n, "Body")
 
-	case *ast.SelectStmt:
+	case *types.SelectStmt:
 		a.apply(n, "Body", nil, n.Body)
 
-	case *ast.ForStmt:
+	case *types.ForStmt:
 		a.apply(n, "Init", nil, n.Init)
 		a.apply(n, "Cond", nil, n.Cond)
 		a.apply(n, "Post", nil, n.Post)
 		a.apply(n, "Body", nil, n.Body)
 
-	case *ast.RangeStmt:
+	case *types.RangeStmt:
 		a.apply(n, "Key", nil, n.Key)
 		a.apply(n, "Value", nil, n.Value)
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Body", nil, n.Body)
 
 	// Declarations
-	case *ast.ImportSpec:
+	case *types.ImportSpec:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.apply(n, "Name", nil, n.Name)
 		a.apply(n, "Path", nil, n.Path)
 		a.apply(n, "Comment", nil, n.Comment)
 
-	case *ast.ValueSpec:
+	case *types.ValueSpec:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.applyList(n, "Names")
 		a.apply(n, "Type", nil, n.Type)
 		a.applyList(n, "Values")
 		a.apply(n, "Comment", nil, n.Comment)
 
-	case *ast.TypeSpec:
+	case *types.TypeSpec:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.apply(n, "Name", nil, n.Name)
 		a.apply(n, "Type", nil, n.Type)
 		a.apply(n, "Comment", nil, n.Comment)
 
-	case *ast.BadDecl:
+	case *types.BadDecl:
 		// nothing to do
 
-	case *ast.GenDecl:
+	case *types.GenDecl:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.applyList(n, "Specs")
 
-	case *ast.FuncDecl:
+	case *types.FuncDecl:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.apply(n, "Recv", nil, n.Recv)
 		a.apply(n, "Name", nil, n.Name)
@@ -419,14 +419,14 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		a.apply(n, "Body", nil, n.Body)
 
 	// Files and packages
-	case *ast.File:
+	case *types.File:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.apply(n, "Name", nil, n.Name)
 		a.applyList(n, "Decls")
 		// Don't walk n.Comments; they have either been walked already if
 		// they are Doc comments, or they can be easily walked explicitly.
 
-	case *ast.PackageA:
+	case *types.PackageA:
 		// collect and sort names for reproducible behavior
 		var names []string
 		for name := range n.Files {
@@ -453,7 +453,7 @@ type iterator struct {
 	index, step int
 }
 
-func (a *application) applyList(parent ast.Node, name string) {
+func (a *application) applyList(parent types.Node, name string) {
 	// avoid heap-allocating a new iterator for each applyList call; reuse a.iter instead
 	saved := a.iter
 	a.iter.index = 0
@@ -465,9 +465,9 @@ func (a *application) applyList(parent ast.Node, name string) {
 		}
 
 		// element x may be nil in a bad AST - be cautious
-		var x ast.Node
+		var x types.Node
 		if e := v.Index(a.iter.index); e.IsValid() {
-			x = e.Interface().(ast.Node)
+			x = e.Interface().(types.Node)
 		}
 
 		a.iter.step = 1

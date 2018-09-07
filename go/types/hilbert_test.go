@@ -15,7 +15,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 
 	. "honnef.co/go/tools/go/types"
@@ -44,7 +44,7 @@ func TestHilbert(t *testing.T) {
 	// type-check file
 	DefPredeclaredTestFuncs() // define assert built-in
 	conf := Config{Importer: importer.Default()}
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, nil)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

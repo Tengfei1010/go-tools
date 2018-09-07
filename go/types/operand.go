@@ -8,7 +8,7 @@ package types
 
 import (
 	"bytes"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/constant"
 	"go/token"
 )
@@ -48,7 +48,7 @@ var operandModeString = [...]string{
 //
 type operand struct {
 	mode operandMode
-	expr ast.Expr
+	expr Expr
 	typ  Type
 	val  constant.Value
 	id   builtinId

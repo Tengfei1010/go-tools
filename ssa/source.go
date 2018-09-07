@@ -11,7 +11,7 @@ package ssa
 // the originating syntax, as specified.
 
 import (
-	"honnef.co/go/tools/go/ast"
+	
 	"go/token"
 	"honnef.co/go/tools/go/types"
 )
@@ -28,7 +28,7 @@ import (
 //      its SSA function has not been created yet
 //      (pkg.Build() has not yet been called).
 //
-func EnclosingFunction(pkg *Package, path []ast.Node) *Function {
+func EnclosingFunction(pkg *Package, path []types.Node) *Function {
 	// Start with package-level function...
 	fn := findEnclosingPackageLevelFunction(pkg, path)
 	if fn == nil {
@@ -39,7 +39,7 @@ func EnclosingFunction(pkg *Package, path []ast.Node) *Function {
 	n := len(path)
 outer:
 	for i := range path {
-		if lit, ok := path[n-1-i].(*ast.FuncLit); ok {
+		if lit, ok := path[n-1-i].(*types.FuncLit); ok {
 			for _, anon := range fn.AnonFuncs {
 				if anon.Pos() == lit.Type.Func {
 					fn = anon
@@ -66,23 +66,23 @@ outer:
 // used to quickly reject check inputs that will cause
 // EnclosingFunction to fail, prior to SSA building.
 //
-func HasEnclosingFunction(pkg *Package, path []ast.Node) bool {
+func HasEnclosingFunction(pkg *Package, path []types.Node) bool {
 	return findEnclosingPackageLevelFunction(pkg, path) != nil
 }
 
 // findEnclosingPackageLevelFunction returns the Function
 // corresponding to the package-level function enclosing path.
 //
-func findEnclosingPackageLevelFunction(pkg *Package, path []ast.Node) *Function {
+func findEnclosingPackageLevelFunction(pkg *Package, path []types.Node) *Function {
 	if n := len(path); n >= 2 { // [... {Gen,Func}Decl File]
 		switch decl := path[n-2].(type) {
-		case *ast.GenDecl:
+		case *types.GenDecl:
 			if decl.Tok == token.VAR && n >= 3 {
 				// Package-level 'var' initializer.
 				return pkg.init
 			}
 
-		case *ast.FuncDecl:
+		case *types.FuncDecl:
 			if decl.Recv == nil && decl.Name.Name == "init" {
 				// Explicit init() function.
 				for _, b := range pkg.init.Blocks {
@@ -150,11 +150,11 @@ func findNamedFunc(pkg *Package, pos token.Pos) *Function {
 // (modulo "untyped" bools resulting from comparisons).
 //
 // (Tip: to find the ssa.Value given a source position, use
-// importer.PathEnclosingInterval to locate the ast.Node, then
+// importer.PathEnclosingInterval to locate the types.Node, then
 // EnclosingFunction to locate the Function, then ValueForExpr to find
 // the ssa.Value.)
 //
-func (f *Function) ValueForExpr(e ast.Expr) (value Value, isAddr bool) {
+func (f *Function) ValueForExpr(e types.Expr) (value Value, isAddr bool) {
 	if f.debugInfo() { // (opt)
 		e = unparen(e)
 		for _, b := range f.Blocks {
@@ -208,7 +208,7 @@ func (prog *Program) FuncValue(obj *types.Func) *Function {
 //
 func (prog *Program) ConstValue(obj *types.Const) *Const {
 	// TODO(adonovan): opt: share (don't reallocate)
-	// Consts for const objects and constant ast.Exprs.
+	// Consts for const objects and constant types.Exprs.
 
 	// Universal constant? {true,false,nil}
 	if obj.Parent() == types.Universe {
@@ -228,7 +228,7 @@ func (prog *Program) ConstValue(obj *types.Const) *Const {
 // because its package was not built, the debug information was not
 // requested during SSA construction, or the value was optimized away.
 //
-// ref is the path to an ast.Ident (e.g. from PathEnclosingInterval),
+// ref is the path to an types.Ident (e.g. from PathEnclosingInterval),
 // and that ident must resolve to obj.
 //
 // pkg is the package enclosing the reference.  (A reference to a var
@@ -255,14 +255,14 @@ func (prog *Program) ConstValue(obj *types.Const) *Const {
 // during SSA code generation, such as registerization, constant
 // folding, avoidance of materialization of subexpressions, etc.
 //
-func (prog *Program) VarValue(obj *types.Var, pkg *Package, ref []ast.Node) (value Value, isAddr bool) {
+func (prog *Program) VarValue(obj *types.Var, pkg *Package, ref []types.Node) (value Value, isAddr bool) {
 	// All references to a var are local to some function, possibly init.
 	fn := EnclosingFunction(pkg, ref)
 	if fn == nil {
 		return // e.g. def of struct field; SSA not built?
 	}
 
-	id := ref[0].(*ast.Ident)
+	id := ref[0].(*types.Ident)
 
 	// Defining ident of a parameter?
 	if id.Pos() == obj.Pos() {

@@ -4,7 +4,7 @@
 
 // To avoid a cyclic dependency with go/parser, this file is in a separate package.
 
-package ast_test
+package types_test
 
 import (
 	"bytes"
@@ -33,7 +33,7 @@ func (t2) f2() {}
 func (x *t2) f2() {}
 `
 
-// Calling ast.MergePackageFiles with ast.FilterFuncDuplicates
+// Calling MergePackageFiles with FilterFuncDuplicates
 // keeps a duplicate entry with attached documentation in favor
 // of one without, and it favors duplicate entries appearing
 // later in the source over ones appearing earlier. This is why
@@ -64,14 +64,14 @@ func TestFilterDuplicates(t *testing.T) {
 	}
 
 	// create package
-	files := map[string]*ast.File{"": file}
-	pkg, err := ast.NewPackage(fset, files, nil, nil)
+	files := map[string]*File{"": file}
+	pkg, err := NewPackage(fset, files, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// filter
-	merged := ast.MergePackageFiles(pkg, ast.FilterFuncDuplicates)
+	merged := MergePackageFiles(pkg, FilterFuncDuplicates)
 
 	// pretty-print
 	var buf bytes.Buffer

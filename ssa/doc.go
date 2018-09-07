@@ -117,7 +117,7 @@
 //
 // TODO(adonovan): write a how-to document for all the various cases
 // of trying to determine corresponding elements across the four
-// domains of source locations, ast.Nodes, types.Objects,
+// domains of source locations, types.Nodes, types.Objects,
 // ssa.Values/Instructions.
 //
 package ssa // import "honnef.co/go/tools/ssa"

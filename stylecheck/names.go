@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
 )
@@ -35,7 +35,7 @@ func (c *Checker) CheckNames(j *lint.Job) {
 		return true
 	}
 
-	check := func(id *ast.Ident, thing string, initialisms map[string]bool) {
+	check := func(id *types.Ident, thing string, initialisms map[string]bool) {
 		if id.Name == "_" {
 			return
 		}
@@ -60,7 +60,7 @@ func (c *Checker) CheckNames(j *lint.Job) {
 		}
 		j.Errorf(id, "%s %s should be %s", thing, id.Name, should)
 	}
-	checkList := func(fl *ast.FieldList, thing string, initialisms map[string]bool) {
+	checkList := func(fl *types.FieldList, thing string, initialisms map[string]bool) {
 		if fl == nil {
 			return
 		}
@@ -85,18 +85,18 @@ func (c *Checker) CheckNames(j *lint.Job) {
 				j.Errorf(f, "should not use MixedCaps in package name; %s should be %s", f.Name.Name, strings.ToLower(f.Name.Name))
 			}
 
-			ast.Inspect(f, func(node ast.Node) bool {
+			types.Inspect(f, func(node types.Node) bool {
 				switch v := node.(type) {
-				case *ast.AssignStmt:
+				case *types.AssignStmt:
 					if v.Tok != token.DEFINE {
 						return true
 					}
 					for _, exp := range v.Lhs {
-						if id, ok := exp.(*ast.Ident); ok {
+						if id, ok := exp.(*types.Ident); ok {
 							check(id, "var", initialisms)
 						}
 					}
-				case *ast.FuncDecl:
+				case *types.FuncDecl:
 					// Functions with no body are defined elsewhere (in
 					// assembly, or via go:linkname). These are likely to
 					// be something very low level (such as the runtime),
@@ -120,7 +120,7 @@ func (c *Checker) CheckNames(j *lint.Job) {
 
 					checkList(v.Type.Params, thing+" parameter", initialisms)
 					checkList(v.Type.Results, thing+" result", initialisms)
-				case *ast.GenDecl:
+				case *types.GenDecl:
 					if v.Tok == token.IMPORT {
 						return true
 					}
@@ -135,36 +135,36 @@ func (c *Checker) CheckNames(j *lint.Job) {
 					}
 					for _, spec := range v.Specs {
 						switch s := spec.(type) {
-						case *ast.TypeSpec:
+						case *types.TypeSpec:
 							check(s.Name, thing, initialisms)
-						case *ast.ValueSpec:
+						case *types.ValueSpec:
 							for _, id := range s.Names {
 								check(id, thing, initialisms)
 							}
 						}
 					}
-				case *ast.InterfaceType:
+				case *types.InterfaceType:
 					// Do not check interface method names.
 					// They are often constrainted by the method names of concrete types.
 					for _, x := range v.Methods.List {
-						ft, ok := x.Type.(*ast.FuncType)
+						ft, ok := x.Type.(*types.FuncType)
 						if !ok { // might be an embedded interface name
 							continue
 						}
 						checkList(ft.Params, "interface method parameter", initialisms)
 						checkList(ft.Results, "interface method result", initialisms)
 					}
-				case *ast.RangeStmt:
+				case *types.RangeStmt:
 					if v.Tok == token.ASSIGN {
 						return true
 					}
-					if id, ok := v.Key.(*ast.Ident); ok {
+					if id, ok := v.Key.(*types.Ident); ok {
 						check(id, "range var", initialisms)
 					}
-					if id, ok := v.Value.(*ast.Ident); ok {
+					if id, ok := v.Value.(*types.Ident); ok {
 						check(id, "range var", initialisms)
 					}
-				case *ast.StructType:
+				case *types.StructType:
 					for _, f := range v.Fields.List {
 						for _, id := range f.Names {
 							check(id, "struct field", initialisms)
@@ -243,7 +243,7 @@ func lintName(name string, initialisms map[string]bool) (should string) {
 	return string(runes)
 }
 
-func isTechnicallyExported(f *ast.FuncDecl) bool {
+func isTechnicallyExported(f *types.FuncDecl) bool {
 	if f.Recv != nil || f.Doc == nil {
 		return false
 	}

@@ -1,11 +1,11 @@
 package astutil
 
-import "honnef.co/go/tools/go/ast"
+import "honnef.co/go/tools/go/types"
 
 // Unparen returns e with any enclosing parentheses stripped.
-func Unparen(e ast.Expr) ast.Expr {
+func Unparen(e types.Expr) types.Expr {
 	for {
-		p, ok := e.(*ast.ParenExpr)
+		p, ok := e.(*types.ParenExpr)
 		if !ok {
 			return e
 		}

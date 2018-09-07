@@ -605,9 +605,9 @@ func TestLoadTypes(t *testing.T) {
 		}
 		if (p.Syntax != nil) != test.wantSyntax {
 			if test.wantSyntax {
-				t.Errorf("missing ast.Files for %s", p)
+				t.Errorf("missing types.Files for %s", p)
 			} else {
-				t.Errorf("unexpected ast.Files for for %s", p)
+				t.Errorf("unexpected types.Files for for %s", p)
 			}
 		}
 	}
@@ -688,9 +688,9 @@ func TestLoadSyntaxOK(t *testing.T) {
 		}
 		if (p.Syntax != nil) != test.wantSyntax {
 			if test.wantSyntax {
-				t.Errorf("missing ast.Files for %s", p)
+				t.Errorf("missing types.Files for %s", p)
 			} else {
-				t.Errorf("unexpected ast.Files for for %s", p)
+				t.Errorf("unexpected types.Files for for %s", p)
 			}
 		}
 		if p.Errors != nil {
@@ -803,9 +803,9 @@ func TestLoadSyntaxError(t *testing.T) {
 		}
 		if (p.Syntax != nil) != test.wantSyntax {
 			if test.wantSyntax {
-				t.Errorf("missing ast.Files for %s", test.id)
+				t.Errorf("missing types.Files for %s", test.id)
 			} else {
-				t.Errorf("unexpected ast.Files for for %s", test.id)
+				t.Errorf("unexpected types.Files for for %s", test.id)
 			}
 		}
 		if p.IllTyped != test.wantIllTyped {
@@ -845,9 +845,9 @@ func TestLoadAllSyntaxOverlay(t *testing.T) {
 		{M{filepath.Join(tmp, "src/b/b.go"): `package b; import "d"; const B = "B" + d.D`}, `unknown`,
 			[]string{`could not import d (no metadata for d)`}},
 	} {
-		var parseFile func(fset *token.FileSet, filename string) (*ast.File, error)
+		var parseFile func(fset *token.FileSet, filename string) (*types.File, error)
 		if test.overlay != nil {
-			parseFile = func(fset *token.FileSet, filename string) (*ast.File, error) {
+			parseFile = func(fset *token.FileSet, filename string) (*types.File, error) {
 				var src interface{}
 				if content, ok := test.overlay[filename]; ok {
 					src = content
@@ -962,7 +962,7 @@ import (
 			t.Errorf("missing types.Package for %s", test.id)
 		}
 		if p.Syntax == nil {
-			t.Errorf("missing ast.Files for %s", test.id)
+			t.Errorf("missing types.Files for %s", test.id)
 		}
 		if !p.IllTyped {
 			t.Errorf("IllTyped was false for %s", test.id)

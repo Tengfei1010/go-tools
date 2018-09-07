@@ -9,7 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 	"honnef.co/go/tools/lint"
@@ -127,12 +127,12 @@ func (c *Checker) CheckBlankImports(j *lint.Job) {
 		//  import _ "bar"
 		//
 		// where only the first import should get flagged.
-		skip := map[ast.Spec]bool{}
-		ast.Inspect(f, func(node ast.Node) bool {
+		skip := map[types.Spec]bool{}
+		types.Inspect(f, func(node types.Node) bool {
 			switch node := node.(type) {
-			case *ast.File:
+			case *types.File:
 				return true
-			case *ast.GenDecl:
+			case *types.GenDecl:
 				if node.Tok != token.IMPORT {
 					return false
 				}
@@ -174,8 +174,8 @@ func (c *Checker) CheckIncDec(j *lint.Job) {
 	// 	x += 2
 	// 	...
 	// 	x += 1
-	fn := func(node ast.Node) bool {
-		assign, ok := node.(*ast.AssignStmt)
+	fn := func(node types.Node) bool {
+		assign, ok := node.(*types.AssignStmt)
 		if !ok || (assign.Tok != token.ADD_ASSIGN && assign.Tok != token.SUB_ASSIGN) {
 			return true
 		}
@@ -196,7 +196,7 @@ func (c *Checker) CheckIncDec(j *lint.Job) {
 		return true
 	}
 	for _, f := range j.Program.Files {
-		ast.Inspect(f, fn)
+		types.Inspect(f, fn)
 	}
 }
 
@@ -230,17 +230,17 @@ func (c *Checker) CheckUnexportedReturn(j *lint.Job) {
 		if fn.Synthetic != "" || fn.Parent() != nil {
 			continue
 		}
-		if !ast.IsExported(fn.Name()) || IsInMain(j, fn) || IsInTest(j, fn) {
+		if !types.IsExported(fn.Name()) || IsInMain(j, fn) || IsInTest(j, fn) {
 			continue
 		}
 		sig := fn.Type().(*types.Signature)
-		if sig.Recv() != nil && !ast.IsExported(Dereference(sig.Recv().Type()).(*types.Named).Obj().Name()) {
+		if sig.Recv() != nil && !types.IsExported(Dereference(sig.Recv().Type()).(*types.Named).Obj().Name()) {
 			continue
 		}
 		res := sig.Results()
 		for i := 0; i < res.Len(); i++ {
 			if named, ok := DereferenceR(res.At(i).Type()).(*types.Named); ok &&
-				!ast.IsExported(named.Obj().Name()) &&
+				!types.IsExported(named.Obj().Name()) &&
 				named != types.Universe.Lookup("error").Type() {
 				j.Errorf(fn, "should not return unexported type")
 			}
@@ -403,7 +403,7 @@ func (c *Checker) CheckTimeNames(j *lint.Job) {
 		"Usec", "Usecs", "Microseconds",
 		"MS", "Ms",
 	}
-	fn := func(T types.Type, names []*ast.Ident) {
+	fn := func(T types.Type, names []*types.Ident) {
 		if !IsType(T, "time.Duration") && !IsType(T, "*time.Duration") {
 			return
 		}
@@ -417,12 +417,12 @@ func (c *Checker) CheckTimeNames(j *lint.Job) {
 		}
 	}
 	for _, f := range j.Program.Files {
-		ast.Inspect(f, func(node ast.Node) bool {
+		types.Inspect(f, func(node types.Node) bool {
 			switch node := node.(type) {
-			case *ast.ValueSpec:
+			case *types.ValueSpec:
 				T := TypeOf(j, node.Type)
 				fn(T, node.Names)
-			case *ast.FieldList:
+			case *types.FieldList:
 				for _, field := range node.List {
 					T := TypeOf(j, field.Type)
 					fn(T, field.Names)
@@ -436,12 +436,12 @@ func (c *Checker) CheckTimeNames(j *lint.Job) {
 func (c *Checker) CheckErrorVarNames(j *lint.Job) {
 	for _, f := range j.Program.Files {
 		for _, decl := range f.Decls {
-			gen, ok := decl.(*ast.GenDecl)
+			gen, ok := decl.(*types.GenDecl)
 			if !ok || gen.Tok != token.VAR {
 				continue
 			}
 			for _, spec := range gen.Specs {
-				spec := spec.(*ast.ValueSpec)
+				spec := spec.(*types.ValueSpec)
 				if len(spec.Names) != len(spec.Values) {
 					continue
 				}
@@ -533,8 +533,8 @@ func (c *Checker) CheckHTTPStatusCodes(j *lint.Job) {
 		for _, code := range pkg.Config.HTTPStatusCodeWhitelist {
 			whitelist[code] = true
 		}
-		fn := func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
+		fn := func(node types.Node) bool {
+			call, ok := node.(*types.CallExpr)
 			if !ok {
 				return true
 			}
@@ -552,7 +552,7 @@ func (c *Checker) CheckHTTPStatusCodes(j *lint.Job) {
 			default:
 				return true
 			}
-			lit, ok := call.Args[arg].(*ast.BasicLit)
+			lit, ok := call.Args[arg].(*types.BasicLit)
 			if !ok {
 				return true
 			}
@@ -572,20 +572,20 @@ func (c *Checker) CheckHTTPStatusCodes(j *lint.Job) {
 			return true
 		}
 		for _, f := range pkg.Syntax {
-			ast.Inspect(f, fn)
+			types.Inspect(f, fn)
 		}
 	}
 }
 
 func (c *Checker) CheckDefaultCaseOrder(j *lint.Job) {
-	fn := func(node ast.Node) bool {
-		stmt, ok := node.(*ast.SwitchStmt)
+	fn := func(node types.Node) bool {
+		stmt, ok := node.(*types.SwitchStmt)
 		if !ok {
 			return true
 		}
 		list := stmt.Body.List
 		for i, c := range list {
-			if c.(*ast.CaseClause).List == nil && i != 0 && i != len(list)-1 {
+			if c.(*types.CaseClause).List == nil && i != 0 && i != len(list)-1 {
 				j.Errorf(c, "default case should be first or last in switch statement")
 				break
 			}
@@ -593,6 +593,6 @@ func (c *Checker) CheckDefaultCaseOrder(j *lint.Job) {
 		return true
 	}
 	for _, f := range j.Program.Files {
-		ast.Inspect(f, fn)
+		types.Inspect(f, fn)
 	}
 }

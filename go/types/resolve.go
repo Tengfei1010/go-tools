@@ -4,7 +4,7 @@
 
 // This file implements NewPackage.
 
-package ast
+package types
 
 import (
 	"fmt"
@@ -62,7 +62,7 @@ func resolve(scope *ScopeA, ident *Ident) bool {
 // return pkg.
 type ImporterA func(imports map[string]*ObjectA, path string) (pkg *ObjectA, err error)
 
-// NewPackage creates a new Package node from a set of File nodes. It resolves
+// NewPackageA creates a new Package node from a set of File nodes. It resolves
 // unresolved identifiers across files and updates each file's Unresolved list
 // accordingly. If a non-nil importer and universe scope are provided, they are
 // used to resolve identifiers not declared in any of the package files. Any
@@ -71,7 +71,7 @@ type ImporterA func(imports map[string]*ObjectA, path string) (pkg *ObjectA, err
 // different package names are reported and then ignored.
 // The result is a package node and a scanner.ErrorList if there were errors.
 //
-func NewPackage(fset *token.FileSet, files map[string]*File, importer ImporterA, universe *ScopeA) (*PackageA, error) {
+func NewPackageA(fset *token.FileSet, files map[string]*File, importer ImporterA, universe *ScopeA) (*PackageA, error) {
 	var p pkgBuilder
 	p.fset = fset
 

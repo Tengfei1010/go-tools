@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/ast/astutil"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
@@ -69,7 +69,7 @@ func TestObjValueLookup(t *testing.T) {
 	mainPkg.SetDebugMode(true)
 	mainPkg.Build()
 
-	var varIds []*ast.Ident
+	var varIds []*types.Ident
 	var varObjs []*types.Var
 	for id, obj := range mainInfo.Defs {
 		// Check invariants for func and const objects.
@@ -155,7 +155,7 @@ func checkConstValue(t *testing.T, prog *ssa.Program, obj *types.Const) {
 	}
 }
 
-func checkVarValue(t *testing.T, prog *ssa.Program, pkg *ssa.Package, ref []ast.Node, obj *types.Var, expKind string, wantAddr bool) {
+func checkVarValue(t *testing.T, prog *ssa.Program, pkg *ssa.Package, ref []types.Node, obj *types.Var, expKind string, wantAddr bool) {
 	// The prefix of all assertions messages.
 	prefix := fmt.Sprintf("VarValue(%s @ L%d)",
 		obj, prog.Fset.Position(ref[0].Pos()).Line)
@@ -195,7 +195,7 @@ func checkVarValue(t *testing.T, prog *ssa.Program, pkg *ssa.Package, ref []ast.
 }
 
 // Ensure that, in debug mode, we can determine the ssa.Value
-// corresponding to every ast.Expr.
+// corresponding to every types.Expr.
 func TestValueForExpr(t *testing.T) {
 	testValueForExpr(t, "testdata/valueforexpr.go")
 }
@@ -236,10 +236,10 @@ func testValueForExpr(t *testing.T, testfile string) {
 	}
 
 	// Find the actual AST node for each canonical position.
-	parenExprByPos := make(map[token.Pos]*ast.ParenExpr)
-	ast.Inspect(f, func(n ast.Node) bool {
+	parenExprByPos := make(map[token.Pos]*types.ParenExpr)
+	types.Inspect(f, func(n types.Node) bool {
 		if n != nil {
-			if e, ok := n.(*ast.ParenExpr); ok {
+			if e, ok := n.(*types.ParenExpr); ok {
 				parenExprByPos[e.Pos()] = e
 			}
 		}
@@ -255,7 +255,7 @@ func testValueForExpr(t *testing.T, testfile string) {
 		text = text[1:]
 		pos := c.End() + 1
 		position := prog.Fset.Position(pos)
-		var e ast.Expr
+		var e types.Expr
 		if target := parenExprByPos[pos]; target == nil {
 			t.Errorf("%s: annotation doesn't precede ParenExpr: %q", position, text)
 			continue
@@ -296,7 +296,7 @@ func testValueForExpr(t *testing.T, testfile string) {
 // the first occurrence of substr in input.  f==nil indicates failure;
 // an error has already been reported in that case.
 //
-func findInterval(t *testing.T, fset *token.FileSet, input, substr string) (f *ast.File, start, end token.Pos) {
+func findInterval(t *testing.T, fset *token.FileSet, input, substr string) (f *types.File, start, end token.Pos) {
 	f, err := parser.ParseFile(fset, "<input>", input, 0)
 	if err != nil {
 		t.Errorf("parse error: %s", err)

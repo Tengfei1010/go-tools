@@ -8,7 +8,7 @@ package ssa
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/token"
 	"honnef.co/go/tools/go/types"
 )
@@ -37,7 +37,7 @@ func emitLoad(f *Function, addr Value) *UnOp {
 // emitDebugRef emits to f a DebugRef pseudo-instruction associating
 // expression e with value v.
 //
-func emitDebugRef(f *Function, e ast.Expr, v Value, isAddr bool) {
+func emitDebugRef(f *Function, e types.Expr, v Value, isAddr bool) {
 	if !f.debugInfo() {
 		return // debugging not enabled
 	}
@@ -46,7 +46,7 @@ func emitDebugRef(f *Function, e ast.Expr, v Value, isAddr bool) {
 	}
 	var obj types.Object
 	e = unparen(e)
-	if id, ok := e.(*ast.Ident); ok {
+	if id, ok := e.(*types.Ident); ok {
 		if isBlankIdent(id) {
 			return
 		}
@@ -390,7 +390,7 @@ func emitImplicitSelections(f *Function, v Value, indices []int) Value {
 // field's value.
 // Ident id is used for position and debug info.
 //
-func emitFieldSelection(f *Function, v Value, index int, wantAddr bool, id *ast.Ident) Value {
+func emitFieldSelection(f *Function, v Value, index int, wantAddr bool, id *types.Ident) Value {
 	fld := deref(v.Type()).Underlying().(*types.Struct).Field(index)
 	if isPointer(v.Type()) {
 		instr := &FieldAddr{

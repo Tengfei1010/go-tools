@@ -14,7 +14,6 @@ import (
 	"unicode"
 
 	"honnef.co/go/tools/config"
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
@@ -111,11 +110,11 @@ type Program struct {
 	InitialFunctions []*ssa.Function
 	AllPackages      []*packages.Package
 	AllFunctions     []*ssa.Function
-	Files            []*ast.File
+	Files            []*types.File
 	GoVersion        int
 
-	tokenFileMap map[*token.File]*ast.File
-	astFileMap   map[*ast.File]*Pkg
+	tokenFileMap map[*token.File]*types.File
+	astFileMap   map[*types.File]*Pkg
 	packagesMap  map[string]*packages.Package
 
 	genMu        sync.RWMutex
@@ -205,11 +204,11 @@ func (l *Linter) ignore(p Problem) bool {
 	return false
 }
 
-func (prog *Program) File(node Positioner) *ast.File {
+func (prog *Program) File(node Positioner) *types.File {
 	return prog.tokenFileMap[prog.SSA.Fset.File(node.Pos())]
 }
 
-func (j *Job) File(node Positioner) *ast.File {
+func (j *Job) File(node Positioner) *types.File {
 	return j.Program.File(node)
 }
 
@@ -304,8 +303,8 @@ func (l *Linter) Lint(initial []*packages.Package, stats *PerfStats) []Problem {
 		InitialPackages: pkgs,
 		AllPackages:     allPkgs,
 		GoVersion:       l.GoVersion,
-		tokenFileMap:    map[*token.File]*ast.File{},
-		astFileMap:      map[*ast.File]*Pkg{},
+		tokenFileMap:    map[*token.File]*types.File{},
+		astFileMap:      map[*types.File]*Pkg{},
 		generatedMap:    map[string]bool{},
 	}
 	prog.packagesMap = map[string]*packages.Package{}
@@ -346,7 +345,7 @@ func (l *Linter) Lint(initial []*packages.Package, stats *PerfStats) []Problem {
 	l.automaticIgnores = nil
 	for _, pkg := range initial {
 		for _, f := range pkg.Syntax {
-			cm := ast.NewCommentMap(pkg.Fset, f, f.Comments)
+			cm := types.NewCommentMap(pkg.Fset, f, f.Comments)
 			for node, cgs := range cm {
 				for _, cg := range cgs {
 					for _, c := range cg.List {

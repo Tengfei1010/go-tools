@@ -7,7 +7,7 @@
 package types
 
 import (
-	"honnef.co/go/tools/go/ast"
+	
 	"go/constant"
 	"go/token"
 )
@@ -17,7 +17,7 @@ import (
 // but x.expr is not set. If the call is invalid, the result is
 // false, and *x is undefined.
 //
-func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ bool) {
+func (check *Checker) builtin(x *operand, call *CallExpr, id builtinId) (_ bool) {
 	// append is the only built-in that permits the use of ... for the last argument
 	bin := predeclaredFuncs[id]
 	if call.Ellipsis.IsValid() && id != _Append {
@@ -481,7 +481,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			p := check.isPanic
 			if p == nil {
 				// allocate lazily
-				p = make(map[*ast.CallExpr]bool)
+				p = make(map[*CallExpr]bool)
 				check.isPanic = p
 			}
 			p[call] = true
@@ -545,7 +545,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		// unsafe.Offsetof(x T) uintptr, where x must be a selector
 		// (no argument evaluated yet)
 		arg0 := call.Args[0]
-		selx, _ := unparen(arg0).(*ast.SelectorExpr)
+		selx, _ := unparen(arg0).(*SelectorExpr)
 		if selx == nil {
 			check.invalidArg(arg0.Pos(), "%s is not a selector expression", arg0)
 			check.use(arg0)
@@ -672,9 +672,9 @@ func implicitArrayDeref(typ Type) Type {
 }
 
 // unparen returns e with any enclosing parentheses stripped.
-func unparen(e ast.Expr) ast.Expr {
+func unparen(e Expr) Expr {
 	for {
-		p, ok := e.(*ast.ParenExpr)
+		p, ok := e.(*ParenExpr)
 		if !ok {
 			return e
 		}

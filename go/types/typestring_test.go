@@ -12,7 +12,7 @@ import (
 	"internal/testenv"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -27,7 +27,7 @@ func makePkg(src string) (*Package, error) {
 	}
 	// use the package name as package path
 	conf := Config{Importer: importer.Default()}
-	return conf.Check(file.Name.Name, fset, []*ast.File{file}, nil)
+	return conf.Check(file.Name.Name, fset, []*File{file}, nil)
 }
 
 type testEntry struct {

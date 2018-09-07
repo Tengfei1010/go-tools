@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"honnef.co/go/tools/go/ast"
+	
 
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
@@ -107,7 +107,7 @@ func TestStdlib(t *testing.T) {
 	// except for unexported ones (explained at (*Function).RelString).
 	byName := make(map[string]*ssa.Function)
 	for fn := range allFuncs {
-		if fn.Synthetic == "" || ast.IsExported(fn.Name()) {
+		if fn.Synthetic == "" || types.IsExported(fn.Name()) {
 			str := fn.String()
 			prev := byName[str]
 			byName[str] = fn

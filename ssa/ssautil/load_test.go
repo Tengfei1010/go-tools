@@ -38,7 +38,7 @@ func TestBuildPackage(t *testing.T) {
 	}
 
 	pkg := types.NewPackage("hello", "")
-	ssapkg, _, err := ssautil.BuildPackage(&types.Config{Importer: importer.Default()}, fset, pkg, []*ast.File{f}, 0)
+	ssapkg, _, err := ssautil.BuildPackage(&types.Config{Importer: importer.Default()}, fset, pkg, []*types.File{f}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestBuildPackage_MissingImport(t *testing.T) {
 	}
 
 	pkg := types.NewPackage("bad", "")
-	ssapkg, _, err := ssautil.BuildPackage(new(types.Config), fset, pkg, []*ast.File{f}, 0)
+	ssapkg, _, err := ssautil.BuildPackage(new(types.Config), fset, pkg, []*types.File{f}, 0)
 	if err == nil || ssapkg != nil {
 		t.Fatal("BuildPackage succeeded unexpectedly")
 	}

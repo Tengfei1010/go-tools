@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
@@ -590,7 +590,7 @@ func (c *Checker) processTypes(pkg *lint.Pkg) {
 }
 
 func (c *Checker) processSelections(pkg *lint.Pkg) {
-	fn := func(expr *ast.SelectorExpr, sel *types.Selection, offset int) {
+	fn := func(expr *types.SelectorExpr, sel *types.Selection, offset int) {
 		scope := pkg.Types.Scope().Innermost(expr.Pos())
 		c.graph.markUsedBy(expr.X, c.topmostScope(scope, pkg.Types))
 		c.graph.markUsedBy(sel.Obj(), expr.X)
@@ -623,8 +623,8 @@ func dereferenceType(typ types.Type) types.Type {
 }
 
 // processConversion marks fields as used if they're part of a type conversion.
-func (c *Checker) processConversion(pkg *lint.Pkg, node ast.Node) {
-	if node, ok := node.(*ast.CallExpr); ok {
+func (c *Checker) processConversion(pkg *lint.Pkg, node types.Node) {
+	if node, ok := node.(*types.CallExpr); ok {
 		callTyp := pkg.TypesInfo.TypeOf(node.Fun)
 		var typDst *types.Struct
 		var ok bool
@@ -681,9 +681,9 @@ func (c *Checker) processConversion(pkg *lint.Pkg, node ast.Node) {
 
 // processCompositeLiteral marks fields as used if the struct is used
 // in a composite literal.
-func (c *Checker) processCompositeLiteral(pkg *lint.Pkg, node ast.Node) {
+func (c *Checker) processCompositeLiteral(pkg *lint.Pkg, node types.Node) {
 	// XXX how does this actually work? wouldn't it match t{}?
-	if node, ok := node.(*ast.CompositeLit); ok {
+	if node, ok := node.(*types.CompositeLit); ok {
 		typ := pkg.TypesInfo.TypeOf(node)
 		if _, ok := typ.(*types.Named); ok {
 			typ = typ.Underlying()
@@ -700,8 +700,8 @@ func (c *Checker) processCompositeLiteral(pkg *lint.Pkg, node ast.Node) {
 
 // processCgoExported marks functions as used if they're being
 // exported to cgo.
-func (c *Checker) processCgoExported(pkg *lint.Pkg, node ast.Node) {
-	if node, ok := node.(*ast.FuncDecl); ok {
+func (c *Checker) processCgoExported(pkg *lint.Pkg, node types.Node) {
+	if node, ok := node.(*types.FuncDecl); ok {
 		if node.Doc == nil {
 			return
 		}
@@ -715,10 +715,10 @@ func (c *Checker) processCgoExported(pkg *lint.Pkg, node ast.Node) {
 	}
 }
 
-func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node ast.Node) {
-	if decl, ok := node.(*ast.GenDecl); ok {
+func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node types.Node) {
+	if decl, ok := node.(*types.GenDecl); ok {
 		for _, spec := range decl.Specs {
-			spec, ok := spec.(*ast.ValueSpec)
+			spec, ok := spec.(*types.ValueSpec)
 			if !ok {
 				continue
 			}
@@ -727,8 +727,8 @@ func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node ast.Node) {
 					break
 				}
 				value := spec.Values[i]
-				fn := func(node ast.Node) bool {
-					if node3, ok := node.(*ast.Ident); ok {
+				fn := func(node types.Node) bool {
+					if node3, ok := node.(*types.Ident); ok {
 						obj := pkg.TypesInfo.ObjectOf(node3)
 						if _, ok := obj.(*types.PkgName); ok {
 							return true
@@ -737,15 +737,15 @@ func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node ast.Node) {
 					}
 					return true
 				}
-				ast.Inspect(value, fn)
+				types.Inspect(value, fn)
 			}
 		}
 	}
 }
 
-func (c *Checker) processArrayConstants(pkg *lint.Pkg, node ast.Node) {
-	if decl, ok := node.(*ast.ArrayType); ok {
-		ident, ok := decl.Len.(*ast.Ident)
+func (c *Checker) processArrayConstants(pkg *lint.Pkg, node types.Node) {
+	if decl, ok := node.(*types.ArrayType); ok {
+		ident, ok := decl.Len.(*types.Ident)
 		if !ok {
 			return
 		}
@@ -753,17 +753,17 @@ func (c *Checker) processArrayConstants(pkg *lint.Pkg, node ast.Node) {
 	}
 }
 
-func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node ast.Node) {
-	call, ok := node.(*ast.CallExpr)
+func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node types.Node) {
+	call, ok := node.(*types.CallExpr)
 	if !ok {
 		return
 	}
-	sel, ok := call.Fun.(*ast.SelectorExpr)
+	sel, ok := call.Fun.(*types.SelectorExpr)
 	if !ok {
 		return
 	}
 	if !IsType(pkg.TypesInfo.TypeOf(sel.X), "*net/rpc.Server") {
-		x, ok := sel.X.(*ast.Ident)
+		x, ok := sel.X.(*types.Ident)
 		if !ok {
 			return
 		}
@@ -776,7 +776,7 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node ast.Node)
 		}
 	}
 
-	var arg ast.Expr
+	var arg types.Expr
 	switch sel.Sel.Name {
 	case "Register":
 		if len(call.Args) != 1 {
@@ -797,7 +797,7 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node ast.Node)
 }
 
 func (c *Checker) processAST(pkg *lint.Pkg) {
-	fn := func(node ast.Node) bool {
+	fn := func(node types.Node) bool {
 		c.processConversion(pkg, node)
 		c.processKnownReflectMethodCallers(pkg, node)
 		c.processCompositeLiteral(pkg, node)
@@ -807,13 +807,13 @@ func (c *Checker) processAST(pkg *lint.Pkg) {
 		return true
 	}
 	for _, file := range pkg.Syntax {
-		ast.Inspect(file, fn)
+		types.Inspect(file, fn)
 	}
 }
 
-func isBasicStruct(elts []ast.Expr) bool {
+func isBasicStruct(elts []types.Expr) bool {
 	for _, elt := range elts {
-		if _, ok := elt.(*ast.KeyValueExpr); !ok {
+		if _, ok := elt.(*types.KeyValueExpr); !ok {
 			return true
 		}
 	}

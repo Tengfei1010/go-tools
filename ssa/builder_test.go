@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/tools/go/loader"
 	"honnec.go/go/tools/go/parser"
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
@@ -60,7 +60,7 @@ func main() {
 	// Build an SSA program from the parsed file.
 	// Load its dependencies from gc binary export data.
 	mainPkg, _, err := ssautil.BuildPackage(&types.Config{Importer: importer.Default()}, fset,
-		types.NewPackage("main", ""), []*ast.File{f}, ssa.SanityCheckFunctions)
+		types.NewPackage("main", ""), []*types.File{f}, ssa.SanityCheckFunctions)
 	if err != nil {
 		t.Error(err)
 		return
@@ -229,7 +229,7 @@ func TestRuntimeTypes(t *testing.T) {
 		// Create a single-file main package.
 		// Load dependencies from gc binary export data.
 		ssapkg, _, err := ssautil.BuildPackage(&types.Config{Importer: importer.Default()}, fset,
-			types.NewPackage("p", ""), []*ast.File{f}, ssa.SanityCheckFunctions)
+			types.NewPackage("p", ""), []*types.File{f}, ssa.SanityCheckFunctions)
 		if err != nil {
 			t.Errorf("test %q: %s", test.input[:15], err)
 			continue

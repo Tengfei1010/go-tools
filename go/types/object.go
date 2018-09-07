@@ -7,7 +7,7 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/constant"
 	"go/token"
 )
@@ -59,7 +59,7 @@ type Object interface {
 // Id returns name if it is exported, otherwise it
 // returns the name qualified with the package path.
 func Id(pkg *Package, name string) string {
-	if ast.IsExported(name) {
+	if IsExported(name) {
 		return name
 	}
 	// unexported names need the package path for differentiation
@@ -139,7 +139,7 @@ func (obj *object) Type() Type { return obj.typ }
 // Exported reports whether the object is exported (starts with a capital letter).
 // It doesn't take into account whether the object is in a local (function) scope
 // or not.
-func (obj *object) Exported() bool { return ast.IsExported(obj.name) }
+func (obj *object) Exported() bool { return IsExported(obj.name) }
 
 // Id is a wrapper for Id(obj.Pkg(), obj.Name()).
 func (obj *object) Id() string { return Id(obj.pkg, obj.name) }

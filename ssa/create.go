@@ -13,7 +13,7 @@ import (
 	"os"
 	"sync"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 )
@@ -46,7 +46,7 @@ func NewProgram(fset *token.FileSet, mode BuilderMode) *Program {
 // tree (for funcs and vars only); it will be used during the build
 // phase.
 //
-func memberFromObject(pkg *Package, obj types.Object, syntax ast.Node) {
+func memberFromObject(pkg *Package, obj types.Object, syntax types.Node) {
 	name := obj.Name()
 	switch obj := obj.(type) {
 	case *types.Builtin:
@@ -113,13 +113,13 @@ func memberFromObject(pkg *Package, obj types.Object, syntax ast.Node) {
 // typechecker object (var, func, const or type) associated with the
 // specified decl.
 //
-func membersFromDecl(pkg *Package, decl ast.Decl) {
+func membersFromDecl(pkg *Package, decl types.Decl) {
 	switch decl := decl.(type) {
-	case *ast.GenDecl: // import, const, type or var
+	case *types.GenDecl: // import, const, type or var
 		switch decl.Tok {
 		case token.CONST:
 			for _, spec := range decl.Specs {
-				for _, id := range spec.(*ast.ValueSpec).Names {
+				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
 						memberFromObject(pkg, pkg.info.Defs[id], nil)
 					}
@@ -128,7 +128,7 @@ func membersFromDecl(pkg *Package, decl ast.Decl) {
 
 		case token.VAR:
 			for _, spec := range decl.Specs {
-				for _, id := range spec.(*ast.ValueSpec).Names {
+				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
 						memberFromObject(pkg, pkg.info.Defs[id], spec)
 					}
@@ -137,14 +137,14 @@ func membersFromDecl(pkg *Package, decl ast.Decl) {
 
 		case token.TYPE:
 			for _, spec := range decl.Specs {
-				id := spec.(*ast.TypeSpec).Name
+				id := spec.(*types.TypeSpec).Name
 				if !isBlankIdent(id) {
 					memberFromObject(pkg, pkg.info.Defs[id], nil)
 				}
 			}
 		}
 
-	case *ast.FuncDecl:
+	case *types.FuncDecl:
 		id := decl.Name
 		if !isBlankIdent(id) {
 			memberFromObject(pkg, pkg.info.Defs[id], decl)
@@ -162,7 +162,7 @@ func membersFromDecl(pkg *Package, decl ast.Decl) {
 // The real work of building SSA form for each function is not done
 // until a subsequent call to Package.Build().
 //
-func (prog *Program) CreatePackage(pkg *types.Package, files []*ast.File, info *types.Info, importable bool) *Package {
+func (prog *Program) CreatePackage(pkg *types.Package, files []*types.File, info *types.Info, importable bool) *Package {
 	p := &Package{
 		Prog:    prog,
 		Members: make(map[string]Member),

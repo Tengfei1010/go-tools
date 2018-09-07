@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -85,13 +85,13 @@ func runbench(t *testing.T, path string, ignoreFuncBodies bool) {
 	)
 }
 
-func pkgFiles(fset *token.FileSet, path string) ([]*ast.File, error) {
+func pkgFiles(fset *token.FileSet, path string) ([]*File, error) {
 	filenames, err := pkgFilenames(path) // from stdlib_test.go
 	if err != nil {
 		return nil, err
 	}
 
-	var files []*ast.File
+	var files []*File
 	for _, filename := range filenames {
 		file, err := parser.ParseFile(fset, filename, nil, 0)
 		if err != nil {

@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"strings"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/printer"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
@@ -71,7 +70,7 @@ func IsPointerLike(T types.Type) bool {
 	return false
 }
 
-func IsGenerated(f *ast.File) bool {
+func IsGenerated(f *types.File) bool {
 	comments := f.Comments
 	if len(comments) > 0 {
 		comment := comments[0].Text()
@@ -81,38 +80,38 @@ func IsGenerated(f *ast.File) bool {
 	return false
 }
 
-func IsIdent(expr ast.Expr, ident string) bool {
-	id, ok := expr.(*ast.Ident)
+func IsIdent(expr types.Expr, ident string) bool {
+	id, ok := expr.(*types.Ident)
 	return ok && id.Name == ident
 }
 
 // isBlank returns whether id is the blank identifier "_".
 // If id == nil, the answer is false.
-func IsBlank(id ast.Expr) bool {
-	ident, _ := id.(*ast.Ident)
+func IsBlank(id types.Expr) bool {
+	ident, _ := id.(*types.Ident)
 	return ident != nil && ident.Name == "_"
 }
 
-func IsIntLiteral(expr ast.Expr, literal string) bool {
-	lit, ok := expr.(*ast.BasicLit)
+func IsIntLiteral(expr types.Expr, literal string) bool {
+	lit, ok := expr.(*types.BasicLit)
 	return ok && lit.Kind == token.INT && lit.Value == literal
 }
 
 // Deprecated: use IsIntLiteral instead
-func IsZero(expr ast.Expr) bool {
+func IsZero(expr types.Expr) bool {
 	return IsIntLiteral(expr, "0")
 }
 
-func TypeOf(j *lint.Job, expr ast.Expr) types.Type {
+func TypeOf(j *lint.Job, expr types.Expr) types.Type {
 	if expr == nil {
 		return nil
 	}
 	return j.NodePackage(expr).TypesInfo.TypeOf(expr)
 }
 
-func IsOfType(j *lint.Job, expr ast.Expr, name string) bool { return IsType(TypeOf(j, expr), name) }
+func IsOfType(j *lint.Job, expr types.Expr, name string) bool { return IsType(TypeOf(j, expr), name) }
 
-func ObjectOf(j *lint.Job, ident *ast.Ident) types.Object {
+func ObjectOf(j *lint.Job, ident *types.Ident) types.Object {
 	if ident == nil {
 		return nil
 	}
@@ -137,11 +136,11 @@ func IsInMain(j *lint.Job, node lint.Positioner) bool {
 	return pkg.Types.Name() == "main"
 }
 
-func SelectorName(j *lint.Job, expr *ast.SelectorExpr) string {
+func SelectorName(j *lint.Job, expr *types.SelectorExpr) string {
 	info := j.NodePackage(expr).TypesInfo
 	sel := info.Selections[expr]
 	if sel == nil {
-		if x, ok := expr.X.(*ast.Ident); ok {
+		if x, ok := expr.X.(*types.Ident); ok {
 			pkg, ok := info.ObjectOf(x).(*types.PkgName)
 			if !ok {
 				// This shouldn't happen
@@ -154,21 +153,21 @@ func SelectorName(j *lint.Job, expr *ast.SelectorExpr) string {
 	return fmt.Sprintf("(%s).%s", sel.Recv(), sel.Obj().Name())
 }
 
-func IsNil(j *lint.Job, expr ast.Expr) bool {
+func IsNil(j *lint.Job, expr types.Expr) bool {
 	return j.NodePackage(expr).TypesInfo.Types[expr].IsNil()
 }
 
-func BoolConst(j *lint.Job, expr ast.Expr) bool {
-	val := j.NodePackage(expr).TypesInfo.ObjectOf(expr.(*ast.Ident)).(*types.Const).Val()
+func BoolConst(j *lint.Job, expr types.Expr) bool {
+	val := j.NodePackage(expr).TypesInfo.ObjectOf(expr.(*types.Ident)).(*types.Const).Val()
 	return constant.BoolVal(val)
 }
 
-func IsBoolConst(j *lint.Job, expr ast.Expr) bool {
+func IsBoolConst(j *lint.Job, expr types.Expr) bool {
 	// We explicitly don't support typed bools because more often than
 	// not, custom bool types are used as binary enums and the
 	// explicit comparison is desired.
 
-	ident, ok := expr.(*ast.Ident)
+	ident, ok := expr.(*types.Ident)
 	if !ok {
 		return false
 	}
@@ -187,7 +186,7 @@ func IsBoolConst(j *lint.Job, expr ast.Expr) bool {
 	return true
 }
 
-func ExprToInt(j *lint.Job, expr ast.Expr) (int64, bool) {
+func ExprToInt(j *lint.Job, expr types.Expr) (int64, bool) {
 	tv := j.NodePackage(expr).TypesInfo.Types[expr]
 	if tv.Value == nil {
 		return 0, false
@@ -198,7 +197,7 @@ func ExprToInt(j *lint.Job, expr ast.Expr) (int64, bool) {
 	return constant.Int64Val(tv.Value)
 }
 
-func ExprToString(j *lint.Job, expr ast.Expr) (string, bool) {
+func ExprToString(j *lint.Job, expr types.Expr) (string, bool) {
 	val := j.NodePackage(expr).TypesInfo.Types[expr].Value
 	if val == nil {
 		return "", false
@@ -232,8 +231,8 @@ func IsGoVersion(j *lint.Job, minor int) bool {
 	return j.Program.GoVersion >= minor
 }
 
-func CallNameAST(j *lint.Job, call *ast.CallExpr) string {
-	sel, ok := call.Fun.(*ast.SelectorExpr)
+func CallNameAST(j *lint.Job, call *types.CallExpr) string {
+	sel, ok := call.Fun.(*types.SelectorExpr)
 	if !ok {
 		return ""
 	}
@@ -244,15 +243,15 @@ func CallNameAST(j *lint.Job, call *ast.CallExpr) string {
 	return fn.FullName()
 }
 
-func IsCallToAST(j *lint.Job, node ast.Node, name string) bool {
-	call, ok := node.(*ast.CallExpr)
+func IsCallToAST(j *lint.Job, node types.Node, name string) bool {
+	call, ok := node.(*types.CallExpr)
 	if !ok {
 		return false
 	}
 	return CallNameAST(j, call) == name
 }
 
-func IsCallToAnyAST(j *lint.Job, node ast.Node, names ...string) bool {
+func IsCallToAnyAST(j *lint.Job, node types.Node, names ...string) bool {
 	for _, name := range names {
 		if IsCallToAST(j, node, name) {
 			return true
@@ -270,7 +269,7 @@ func Render(j *lint.Job, x interface{}) string {
 	return buf.String()
 }
 
-func RenderArgs(j *lint.Job, args []ast.Expr) string {
+func RenderArgs(j *lint.Job, args []types.Expr) string {
 	var ss []string
 	for _, arg := range args {
 		ss = append(ss, Render(j, arg))
@@ -278,7 +277,7 @@ func RenderArgs(j *lint.Job, args []ast.Expr) string {
 	return strings.Join(ss, ", ")
 }
 
-func Preamble(f *ast.File) string {
+func Preamble(f *types.File) string {
 	cutoff := f.Package
 	if f.Doc != nil {
 		cutoff = f.Doc.Pos()
@@ -293,9 +292,9 @@ func Preamble(f *ast.File) string {
 	return strings.Join(out, "\n")
 }
 
-func Inspect(node ast.Node, fn func(node ast.Node) bool) {
+func Inspect(node types.Node, fn func(node types.Node) bool) {
 	if node == nil {
 		return
 	}
-	ast.Inspect(node, fn)
+	types.Inspect(node, fn)
 }

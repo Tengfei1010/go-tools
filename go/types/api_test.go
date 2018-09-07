@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -29,7 +29,7 @@ func pkgFor(path, source string, info *Info) (*Package, error) {
 		return nil, err
 	}
 	conf := Config{Importer: importer.Default()}
-	return conf.Check(f.Name.Name, fset, []*ast.File{f}, info)
+	return conf.Check(f.Name.Name, fset, []*File{f}, info)
 }
 
 func mustTypecheck(t *testing.T, path, source string, info *Info) string {
@@ -54,7 +54,7 @@ func mayTypecheck(t *testing.T, path, source string, info *Info) string {
 		Error:    func(err error) {},
 		Importer: importer.Default(),
 	}
-	pkg, _ := conf.Check(f.Name.Name, fset, []*ast.File{f}, info)
+	pkg, _ := conf.Check(f.Name.Name, fset, []*File{f}, info)
 	return pkg.Name()
 }
 
@@ -139,12 +139,12 @@ func TestValuesInfo(t *testing.T) {
 
 	for _, test := range tests {
 		info := Info{
-			Types: make(map[ast.Expr]TypeAndValue),
+			Types: make(map[Expr]TypeAndValue),
 		}
 		name := mustTypecheck(t, "ValuesInfo", test.src, &info)
 
 		// look for expression
-		var expr ast.Expr
+		var expr Expr
 		for e := range info.Types {
 			if ExprString(e) == test.expr {
 				expr = e
@@ -266,7 +266,7 @@ func TestTypesInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		info := Info{Types: make(map[ast.Expr]TypeAndValue)}
+		info := Info{Types: make(map[Expr]TypeAndValue)}
 		name := mayTypecheck(t, "TypesInfo", test.src, &info)
 
 		// look for expression type
@@ -313,7 +313,7 @@ func TestImplicitsInfo(t *testing.T) {
 
 	for _, test := range tests {
 		info := Info{
-			Implicits: make(map[ast.Node]Object),
+			Implicits: make(map[Node]Object),
 		}
 		name := mustTypecheck(t, "ImplicitsInfo", test.src, &info)
 
@@ -327,11 +327,11 @@ func TestImplicitsInfo(t *testing.T) {
 		var got string
 		for n, obj := range info.Implicits {
 			switch x := n.(type) {
-			case *ast.ImportSpec:
+			case *ImportSpec:
 				got = "importSpec"
-			case *ast.CaseClause:
+			case *CaseClause:
 				got = "caseClause"
-			case *ast.Field:
+			case *Field:
 				got = "field"
 			default:
 				t.Fatalf("package %s: unexpected %T", name, x)
@@ -440,7 +440,7 @@ func TestPredicatesInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		info := Info{Types: make(map[ast.Expr]TypeAndValue)}
+		info := Info{Types: make(map[Expr]TypeAndValue)}
 		name := mustTypecheck(t, "PredicatesInfo", test.src, &info)
 
 		// look for expression predicates
@@ -532,7 +532,7 @@ func TestScopesInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		info := Info{Scopes: make(map[ast.Node]*Scope)}
+		info := Info{Scopes: make(map[Node]*Scope)}
 		name := mustTypecheck(t, "ScopesInfo", test.src, &info)
 
 		// number of scopes must match
@@ -544,25 +544,25 @@ func TestScopesInfo(t *testing.T) {
 		for node, scope := range info.Scopes {
 			kind := "<unknown node kind>"
 			switch node.(type) {
-			case *ast.File:
+			case *File:
 				kind = "file"
-			case *ast.FuncType:
+			case *FuncType:
 				kind = "func"
-			case *ast.BlockStmt:
+			case *BlockStmt:
 				kind = "block"
-			case *ast.IfStmt:
+			case *IfStmt:
 				kind = "if"
-			case *ast.SwitchStmt:
+			case *SwitchStmt:
 				kind = "switch"
-			case *ast.TypeSwitchStmt:
+			case *TypeSwitchStmt:
 				kind = "type switch"
-			case *ast.CaseClause:
+			case *CaseClause:
 				kind = "case"
-			case *ast.CommClause:
+			case *CommClause:
 				kind = "comm"
-			case *ast.ForStmt:
+			case *ForStmt:
 				kind = "for"
-			case *ast.RangeStmt:
+			case *RangeStmt:
 				kind = "range"
 			}
 
@@ -742,7 +742,7 @@ func TestInitOrderInfo(t *testing.T) {
 
 func TestMultiFileInitOrder(t *testing.T) {
 	fset := token.NewFileSet()
-	mustParse := func(src string) *ast.File {
+	mustParse := func(src string) *File {
 		f, err := parser.ParseFile(fset, "main", src, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -757,11 +757,11 @@ func TestMultiFileInitOrder(t *testing.T) {
 	// order of the files, only on the presentation order to
 	// the type-checker.
 	for _, test := range []struct {
-		files []*ast.File
+		files []*File
 		want  string
 	}{
-		{[]*ast.File{fileA, fileB}, "[a = 1 b = 2]"},
-		{[]*ast.File{fileB, fileA}, "[b = 2 a = 1]"},
+		{[]*File{fileA, fileB}, "[a = 1 b = 2]"},
+		{[]*File{fileB, fileA}, "[b = 2 a = 1]"},
 	} {
 		var info Info
 		if _, err := new(Config).Check("main", fset, test.files, &info); err != nil {
@@ -793,7 +793,7 @@ func TestFiles(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := check.Files([]*ast.File{f}); err != nil {
+		if err := check.Files([]*File{f}); err != nil {
 			t.Error(err)
 		}
 	}
@@ -820,7 +820,7 @@ func (m testImporter) Import(path string) (*Package, error) {
 }
 
 func TestSelection(t *testing.T) {
-	selections := make(map[*ast.SelectorExpr]*Selection)
+	selections := make(map[*SelectorExpr]*Selection)
 
 	fset := token.NewFileSet()
 	imports := make(testImporter)
@@ -830,7 +830,7 @@ func TestSelection(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pkg, err := conf.Check(path, fset, []*ast.File{f}, &Info{Selections: selections})
+		pkg, err := conf.Check(path, fset, []*File{f}, &Info{Selections: selections})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -978,7 +978,7 @@ func main() {
 	}
 	// Assert that all wantOut entries were used exactly once.
 	for syntax := range wantOut {
-		t.Errorf("no ast.Selection found with syntax %q", syntax)
+		t.Errorf("no Selection found with syntax %q", syntax)
 	}
 }
 
@@ -994,7 +994,7 @@ func TestIssue8518(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pkg, _ := conf.Check(path, fset, []*ast.File{f}, nil) // errors logged via conf.Error
+		pkg, _ := conf.Check(path, fset, []*File{f}, nil) // errors logged via conf.Error
 		imports[path] = pkg
 	}
 
@@ -1096,7 +1096,7 @@ func TestScopeLookupParent(t *testing.T) {
 	fset := token.NewFileSet()
 	imports := make(testImporter)
 	conf := Config{Importer: imports}
-	mustParse := func(src string) *ast.File {
+	mustParse := func(src string) *File {
 		f, err := parser.ParseFile(fset, "dummy.go", src, parser.ParseComments)
 		if err != nil {
 			t.Fatal(err)
@@ -1104,7 +1104,7 @@ func TestScopeLookupParent(t *testing.T) {
 		return f
 	}
 	var info Info
-	makePkg := func(path string, files ...*ast.File) {
+	makePkg := func(path string, files ...*File) {
 		var err error
 		imports[path], err = conf.Check(path, fset, files, &info)
 		if err != nil {
@@ -1155,7 +1155,7 @@ func F(){
 /*main=undef*/
 `
 
-	info.Uses = make(map[*ast.Ident]Object)
+	info.Uses = make(map[*Ident]Object)
 	f := mustParse(mainSrc)
 	makePkg("main", f)
 	mainScope := imports["main"].Scope()
@@ -1247,11 +1247,11 @@ func TestIssue15305(t *testing.T) {
 		Error: func(err error) {}, // allow errors
 	}
 	info := &Info{
-		Types: make(map[ast.Expr]TypeAndValue),
+		Types: make(map[Expr]TypeAndValue),
 	}
-	conf.Check("p", fset, []*ast.File{f}, info) // ignore result
+	conf.Check("p", fset, []*File{f}, info) // ignore result
 	for e, tv := range info.Types {
-		if _, ok := e.(*ast.CallExpr); ok {
+		if _, ok := e.(*CallExpr); ok {
 			if tv.Type != Typ[Int16] {
 				t.Errorf("CallExpr has type %v, want int16", tv.Type)
 			}
@@ -1284,13 +1284,13 @@ func TestCompositeLitTypes(t *testing.T) {
 		}
 
 		info := &Info{
-			Types: make(map[ast.Expr]TypeAndValue),
+			Types: make(map[Expr]TypeAndValue),
 		}
-		if _, err = new(Config).Check("p", fset, []*ast.File{f}, info); err != nil {
+		if _, err = new(Config).Check("p", fset, []*File{f}, info); err != nil {
 			t.Fatalf("%s: %v", test.lit, err)
 		}
 
-		cmptype := func(x ast.Expr, want string) {
+		cmptype := func(x Expr, want string) {
 			tv, ok := info.Types[x]
 			if !ok {
 				t.Errorf("%s: no Types entry found", test.lit)
@@ -1306,11 +1306,11 @@ func TestCompositeLitTypes(t *testing.T) {
 		}
 
 		// test type of composite literal expression
-		rhs := f.Decls[0].(*ast.GenDecl).Specs[0].(*ast.ValueSpec).Values[0]
+		rhs := f.Decls[0].(*GenDecl).Specs[0].(*ValueSpec).Values[0]
 		cmptype(rhs, test.typ)
 
 		// test type of composite literal type expression
-		cmptype(rhs.(*ast.CompositeLit).Type, test.typ)
+		cmptype(rhs.(*CompositeLit).Type, test.typ)
 	}
 }
 
@@ -1345,9 +1345,9 @@ func f(x int) { y := x; print(y) }
 	}
 
 	info := &Info{
-		Defs: make(map[*ast.Ident]Object),
+		Defs: make(map[*Ident]Object),
 	}
-	if _, err = new(Config).Check("p", fset, []*ast.File{f}, info); err != nil {
+	if _, err = new(Config).Check("p", fset, []*File{f}, info); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1405,7 +1405,7 @@ func f(x T) T { return foo.F(x) }
 	if err != nil {
 		t.Fatal(err)
 	}
-	files := []*ast.File{f}
+	files := []*File{f}
 
 	// type-check using all possible importers
 	for _, compiler := range []string{"gc", "gccgo", "source"} {
@@ -1422,7 +1422,7 @@ func f(x T) T { return foo.F(x) }
 		}
 
 		info := &Info{
-			Uses: make(map[*ast.Ident]Object),
+			Uses: make(map[*Ident]Object),
 		}
 		pkg, _ := conf.Check("p", fset, files, info)
 		if pkg == nil {

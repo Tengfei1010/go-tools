@@ -12,20 +12,19 @@ import (
 	"io"
 	"os"
 
-	"honnef.co/go/tools/go/ast"
-	"honnef.co/go/tools/go/ast/astutil"
 	"honnef.co/go/tools/go/types"
+	"honnef.co/go/tools/go/types/astutil"
 )
 
 //// AST utilities
 
-func unparen(e ast.Expr) ast.Expr { return astutil.Unparen(e) }
+func unparen(e types.Expr) types.Expr { return astutil.Unparen(e) }
 
 // isBlankIdent returns true iff e is an Ident with name "_".
 // They have no associated types.Object, and thus no type.
 //
-func isBlankIdent(e ast.Expr) bool {
-	id, ok := e.(*ast.Ident)
+func isBlankIdent(e types.Expr) bool {
+	id, ok := e.(*types.Ident)
 	return ok && id.Name == "_"
 }
 

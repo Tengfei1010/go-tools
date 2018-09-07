@@ -81,7 +81,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/build"
 	"go/importer"
 	"go/parser"
@@ -179,18 +179,18 @@ func report(err error) {
 }
 
 // parse may be called concurrently
-func parse(filename string, src interface{}) (*ast.File, error) {
+func parse(filename string, src interface{}) (*File, error) {
 	if *verbose {
 		fmt.Println(filename)
 	}
 	file, err := parser.ParseFile(fset, filename, src, parserMode) // ok to access fset concurrently
 	if *printAST {
-		ast.Print(fset, file)
+		Print(fset, file)
 	}
 	return file, err
 }
 
-func parseStdin() (*ast.File, error) {
+func parseStdin() (*File, error) {
 	src, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		return nil, err
@@ -198,8 +198,8 @@ func parseStdin() (*ast.File, error) {
 	return parse("<standard input>", src)
 }
 
-func parseFiles(dir string, filenames []string) ([]*ast.File, error) {
-	files := make([]*ast.File, len(filenames))
+func parseFiles(dir string, filenames []string) ([]*File, error) {
+	files := make([]*File, len(filenames))
 	errors := make([]error, len(filenames))
 
 	var wg sync.WaitGroup
@@ -241,7 +241,7 @@ func parseFiles(dir string, filenames []string) ([]*ast.File, error) {
 	return files, first
 }
 
-func parseDir(dir string) ([]*ast.File, error) {
+func parseDir(dir string) ([]*File, error) {
 	ctxt := build.Default
 	pkginfo, err := ctxt.ImportDir(dir, 0)
 	if _, nogo := err.(*build.NoGoError); err != nil && !nogo {
@@ -259,14 +259,14 @@ func parseDir(dir string) ([]*ast.File, error) {
 	return parseFiles(dir, filenames)
 }
 
-func getPkgFiles(args []string) ([]*ast.File, error) {
+func getPkgFiles(args []string) ([]*File, error) {
 	if len(args) == 0 {
 		// stdin
 		file, err := parseStdin()
 		if err != nil {
 			return nil, err
 		}
-		return []*ast.File{file}, nil
+		return []*File{file}, nil
 	}
 
 	if len(args) == 1 {
@@ -285,7 +285,7 @@ func getPkgFiles(args []string) ([]*ast.File, error) {
 	return parseFiles("", args)
 }
 
-func checkPkgFiles(files []*ast.File) {
+func checkPkgFiles(files []*File) {
 	type bailout struct{}
 
 	// if checkPkgFiles is called multiple times, set up conf only once

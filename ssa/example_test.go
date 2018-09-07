@@ -12,7 +12,7 @@ import (
 	"go/token"
 	"os"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
@@ -59,7 +59,7 @@ func ExampleBuildPackage() {
 		fmt.Print(err) // parse error
 		return
 	}
-	files := []*ast.File{f}
+	files := []*types.File{f}
 
 	// Create the type-checker's package.
 	pkg := types.NewPackage("hello", "")

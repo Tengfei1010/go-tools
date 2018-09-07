@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -122,7 +122,7 @@ func testTestDir(t *testing.T, path string, ignore ...string) {
 		file, err := parser.ParseFile(fset, filename, nil, 0)
 		if err == nil {
 			conf := Config{Importer: stdLibImporter}
-			_, err = conf.Check(filename, fset, []*ast.File{file}, nil)
+			_, err = conf.Check(filename, fset, []*File{file}, nil)
 		}
 
 		if expectErrors {
@@ -197,7 +197,7 @@ func typecheck(t *testing.T, path string, filenames []string) {
 	fset := token.NewFileSet()
 
 	// parse package files
-	var files []*ast.File
+	var files []*File
 	for _, filename := range filenames {
 		file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
 		if err != nil {
@@ -227,7 +227,7 @@ func typecheck(t *testing.T, path string, filenames []string) {
 		Error:    func(err error) { t.Error(err) },
 		Importer: stdLibImporter,
 	}
-	info := Info{Uses: make(map[*ast.Ident]Object)}
+	info := Info{Uses: make(map[*Ident]Object)}
 	conf.Check(path, fset, files, &info)
 	pkgCount++
 

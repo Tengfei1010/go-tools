@@ -12,7 +12,7 @@ import (
 	"go/parser"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	. "honnef.co/go/tools/go/types"
 )
 
@@ -136,9 +136,9 @@ func testBuiltinSignature(t *testing.T, name, src0, want string) {
 	}
 
 	conf := Config{Importer: importer.Default()}
-	uses := make(map[*ast.Ident]Object)
-	types := make(map[ast.Expr]TypeAndValue)
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, &Info{Uses: uses, Types: types})
+	uses := make(map[*Ident]Object)
+	types := make(map[Expr]TypeAndValue)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, &Info{Uses: uses, Types: types})
 	if err != nil {
 		t.Errorf("%s: %s", src0, err)
 		return
@@ -146,9 +146,9 @@ func testBuiltinSignature(t *testing.T, name, src0, want string) {
 
 	// find called function
 	n := 0
-	var fun ast.Expr
+	var fun Expr
 	for x := range types {
-		if call, _ := x.(*ast.CallExpr); call != nil {
+		if call, _ := x.(*CallExpr); call != nil {
 			fun = call.Fun
 			n++
 		}
@@ -174,7 +174,7 @@ func testBuiltinSignature(t *testing.T, name, src0, want string) {
 		// called function must be a (possibly parenthesized, qualified)
 		// identifier denoting the expected built-in
 		switch p := fun.(type) {
-		case *ast.Ident:
+		case *Ident:
 			obj := uses[p]
 			if obj == nil {
 				t.Errorf("%s: no object found for %s", src0, p)
@@ -191,10 +191,10 @@ func testBuiltinSignature(t *testing.T, name, src0, want string) {
 			}
 			return // we're done
 
-		case *ast.ParenExpr:
+		case *ParenExpr:
 			fun = p.X // unpack
 
-		case *ast.SelectorExpr:
+		case *SelectorExpr:
 			// built-in from package unsafe - ignore details
 			return // we're done
 

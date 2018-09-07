@@ -364,7 +364,7 @@ func (s *DebugRef) String() string {
 	if s.object != nil {
 		descr = s.object // e.g. "var x int"
 	} else {
-		descr = reflect.TypeOf(s.Expr) // e.g. "*ast.CallExpr"
+		descr = reflect.TypeOf(s.Expr) // e.g. "*types.CallExpr"
 	}
 	var addr string
 	if s.IsAddr {

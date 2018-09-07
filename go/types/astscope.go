@@ -4,7 +4,7 @@
 
 // This file implements scopes and the objects they contain.
 
-package ast
+package types
 
 import (
 	"bytes"

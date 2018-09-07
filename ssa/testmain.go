@@ -19,7 +19,7 @@ import (
 	"strings"
 	"text/template"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 )
@@ -59,7 +59,7 @@ func FindTests(pkg *Package) (tests, benchmarks, examples []*Function, main *Fun
 	// TODO(adonovan): use a stable order, e.g. lexical.
 	for _, mem := range pkg.Members {
 		if f, ok := mem.(*Function); ok &&
-			ast.IsExported(f.Name()) &&
+			types.IsExported(f.Name()) &&
 			strings.HasSuffix(prog.Fset.Position(f.Pos()).Filename, "_test.go") {
 
 			switch {
@@ -99,7 +99,7 @@ func isTest(name, prefix string) bool {
 	if len(name) == len(prefix) { // "Test" is ok
 		return true
 	}
-	return ast.IsExported(name[len(prefix):])
+	return types.IsExported(name[len(prefix):])
 }
 
 // CreateTestMainPackage creates and returns a synthetic "testmain"
@@ -166,14 +166,14 @@ func (prog *Program) CreateTestMainPackage(pkg *Package) *Package {
 		DisableUnusedImportCheck: true,
 		Importer:                 importer{pkg},
 	}
-	files := []*ast.File{f}
+	files := []*types.File{f}
 	info := &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Defs:       make(map[*ast.Ident]types.Object),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Implicits:  make(map[ast.Node]types.Object),
-		Scopes:     make(map[ast.Node]*types.Scope),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		Types:      make(map[types.Expr]types.TypeAndValue),
+		Defs:       make(map[*types.Ident]types.Object),
+		Uses:       make(map[*types.Ident]types.Object),
+		Implicits:  make(map[types.Node]types.Object),
+		Scopes:     make(map[types.Node]*types.Scope),
+		Selections: make(map[*types.SelectorExpr]*types.Selection),
 	}
 	testmainPkg, err := conf.Check(path, prog.Fset, files, info)
 	if err != nil {

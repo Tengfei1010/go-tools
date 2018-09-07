@@ -3,11 +3,11 @@ package staticcheck
 import (
 	"strings"
 
-	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 	. "honnef.co/go/tools/lint/lintdsl"
 )
 
-func buildTags(f *ast.File) [][]string {
+func buildTags(f *types.File) [][]string {
 	var out [][]string
 	for _, line := range strings.Split(Preamble(f), "\n") {
 		if !strings.HasPrefix(line, "+build ") {

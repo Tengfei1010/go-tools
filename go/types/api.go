@@ -10,15 +10,15 @@
 //
 // Type-checking consists of several interdependent phases:
 //
-// Name resolution maps each identifier (ast.Ident) in the program to the
+// Name resolution maps each identifier (Ident) in the program to the
 // language object (Object) it denotes.
 // Use Info.{Defs,Uses,Implicits} for the results of name resolution.
 //
 // Constant folding computes the exact constant value (constant.Value)
-// for every expression (ast.Expr) that is a compile-time constant.
+// for every expression (Expr) that is a compile-time constant.
 // Use Info.Types[expr].Value for the results of constant folding.
 //
-// Type inference computes the type (Type) of every expression (ast.Expr)
+// Type inference computes the type (Type) of every expression (Expr)
 // and checks for compliance with the language specification.
 // Use Info.Types[expr].Type for the results of type inference.
 //
@@ -29,7 +29,7 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/constant"
 	"go/token"
 )
@@ -153,7 +153,7 @@ type Info struct {
 	// identifier z in a variable declaration 'var z int' is found
 	// only in the Defs map, and identifiers denoting packages in
 	// qualified identifiers are collected in the Uses map.
-	Types map[ast.Expr]TypeAndValue
+	Types map[Expr]TypeAndValue
 
 	// Defs maps identifiers to the objects they define (including
 	// package names, dots "." of dot-imports, and blank "_" identifiers).
@@ -164,31 +164,31 @@ type Info struct {
 	// For an embedded field, Defs returns the field *Var it defines.
 	//
 	// Invariant: Defs[id] == nil || Defs[id].Pos() == id.Pos()
-	Defs map[*ast.Ident]Object
+	Defs map[*Ident]Object
 
 	// Uses maps identifiers to the objects they denote.
 	//
 	// For an embedded field, Uses returns the *TypeName it denotes.
 	//
 	// Invariant: Uses[id].Pos() != id.Pos()
-	Uses map[*ast.Ident]Object
+	Uses map[*Ident]Object
 
 	// Implicits maps nodes to their implicitly declared objects, if any.
 	// The following node and object types may appear:
 	//
 	//     node               declared object
 	//
-	//     *ast.ImportSpec    *PkgName for imports without renames
-	//     *ast.CaseClause    type-specific *Var for each type switch case clause (incl. default)
-	//     *ast.Field         anonymous parameter *Var
+	//     *ImportSpec    *PkgName for imports without renames
+	//     *CaseClause    type-specific *Var for each type switch case clause (incl. default)
+	//     *Field         anonymous parameter *Var
 	//
-	Implicits map[ast.Node]Object
+	Implicits map[Node]Object
 
 	// Selections maps selector expressions (excluding qualified identifiers)
 	// to their corresponding selections.
-	Selections map[*ast.SelectorExpr]*Selection
+	Selections map[*SelectorExpr]*Selection
 
-	// Scopes maps ast.Nodes to the scopes they define. Package scopes are not
+	// Scopes maps Nodes to the scopes they define. Package scopes are not
 	// associated with a specific node but with all files belonging to a package.
 	// Thus, the package scope can be found in the type-checked Package object.
 	// Scopes nest, with the Universe scope being the outermost scope, enclosing
@@ -200,18 +200,18 @@ type Info struct {
 	//
 	// The following node types may appear in Scopes:
 	//
-	//     *ast.File
-	//     *ast.FuncType
-	//     *ast.BlockStmt
-	//     *ast.IfStmt
-	//     *ast.SwitchStmt
-	//     *ast.TypeSwitchStmt
-	//     *ast.CaseClause
-	//     *ast.CommClause
-	//     *ast.ForStmt
-	//     *ast.RangeStmt
+	//     *File
+	//     *FuncType
+	//     *BlockStmt
+	//     *IfStmt
+	//     *SwitchStmt
+	//     *TypeSwitchStmt
+	//     *CaseClause
+	//     *CommClause
+	//     *ForStmt
+	//     *RangeStmt
 	//
-	Scopes map[ast.Node]*Scope
+	Scopes map[Node]*Scope
 
 	// InitOrder is the list of package-level initializers in the order in which
 	// they must be executed. Initializers referring to variables related by an
@@ -224,11 +224,11 @@ type Info struct {
 // TypeOf returns the type of expression e, or nil if not found.
 // Precondition: the Types, Uses and Defs maps are populated.
 //
-func (info *Info) TypeOf(e ast.Expr) Type {
+func (info *Info) TypeOf(e Expr) Type {
 	if t, ok := info.Types[e]; ok {
 		return t.Type
 	}
-	if id, _ := e.(*ast.Ident); id != nil {
+	if id, _ := e.(*Ident); id != nil {
 		if obj := info.ObjectOf(id); obj != nil {
 			return obj.Type()
 		}
@@ -244,7 +244,7 @@ func (info *Info) TypeOf(e ast.Expr) Type {
 //
 // Precondition: the Uses and Defs maps are populated.
 //
-func (info *Info) ObjectOf(id *ast.Ident) Object {
+func (info *Info) ObjectOf(id *Ident) Object {
 	if obj := info.Defs[id]; obj != nil {
 		return obj
 	}
@@ -319,7 +319,7 @@ func (tv TypeAndValue) HasOk() bool {
 // expression.
 type Initializer struct {
 	Lhs []*Var // var Lhs = Rhs
-	Rhs ast.Expr
+	Rhs Expr
 }
 
 func (init *Initializer) String() string {
@@ -343,10 +343,10 @@ func (init *Initializer) String() string {
 // incomplete. See Config.Error for controlling behavior in the presence of
 // errors.
 //
-// The package is specified by a list of *ast.Files and corresponding
+// The package is specified by a list of *Files and corresponding
 // file set, and the package path the package is identified with.
 // The clean path must not be empty or dot (".").
-func (conf *Config) Check(path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package, error) {
+func (conf *Config) Check(path string, fset *token.FileSet, files []*File, info *Info) (*Package, error) {
 	pkg := NewPackage(path, "")
 	return pkg, NewChecker(conf, fset, pkg, info).Files(files)
 }

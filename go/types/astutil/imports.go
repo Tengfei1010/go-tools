@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package astutil contains common utilities for working with the Go AST.
-package astutil // import "honnef.co/go/tools/go/ast/astutil"
+package astutil // import "honnef.co/go/tools/go/types/astutil"
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 )
 
 // AddImport adds the import path to the file f, if absent.
-func AddImport(fset *token.FileSet, f *ast.File, ipath string) (added bool) {
+func AddImport(fset *token.FileSet, f *types.File, ipath string) (added bool) {
 	return AddNamedImport(fset, f, "", ipath)
 }
 
@@ -26,19 +26,19 @@ func AddImport(fset *token.FileSet, f *ast.File, ipath string) (added bool) {
 //	AddNamedImport(fset, f, "pathpkg", "path")
 // adds
 //	import pathpkg "path"
-func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added bool) {
+func AddNamedImport(fset *token.FileSet, f *types.File, name, ipath string) (added bool) {
 	if imports(f, ipath) {
 		return false
 	}
 
-	newImport := &ast.ImportSpec{
-		Path: &ast.BasicLit{
+	newImport := &types.ImportSpec{
+		Path: &types.BasicLit{
 			Kind:  token.STRING,
 			Value: strconv.Quote(ipath),
 		},
 	}
 	if name != "" {
-		newImport.Name = &ast.Ident{Name: name}
+		newImport.Name = &types.Ident{Name: name}
 	}
 
 	// Find an import decl to add to.
@@ -46,15 +46,15 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 	// whose import path has the longest shared
 	// prefix with ipath.
 	var (
-		bestMatch  = -1         // length of longest shared prefix
-		lastImport = -1         // index in f.Decls of the file's final import decl
-		impDecl    *ast.GenDecl // import decl containing the best match
-		impIndex   = -1         // spec index in impDecl containing the best match
+		bestMatch  = -1           // length of longest shared prefix
+		lastImport = -1           // index in f.Decls of the file's final import decl
+		impDecl    *types.GenDecl // import decl containing the best match
+		impIndex   = -1           // spec index in impDecl containing the best match
 
 		isThirdPartyPath = isThirdParty(ipath)
 	)
 	for i, decl := range f.Decls {
-		gen, ok := decl.(*ast.GenDecl)
+		gen, ok := decl.(*types.GenDecl)
 		if ok && gen.Tok == token.IMPORT {
 			lastImport = i
 			// Do not add to import "C", to avoid disrupting the
@@ -80,7 +80,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 			// See issue #19190.
 			seenAnyThirdParty := false
 			for j, spec := range gen.Specs {
-				impspec := spec.(*ast.ImportSpec)
+				impspec := spec.(*types.ImportSpec)
 				p := importPath(impspec)
 				n := matchLen(p, ipath)
 				if n > bestMatch || (bestMatch == 0 && !seenAnyThirdParty && isThirdPartyPath) {
@@ -95,7 +95,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 
 	// If no import decl found, add one after the last import.
 	if impDecl == nil {
-		impDecl = &ast.GenDecl{
+		impDecl = &types.GenDecl{
 			Tok: token.IMPORT,
 		}
 		if lastImport >= 0 {
@@ -135,7 +135,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 	if insertAt > 0 {
 		// If there is a comment after an existing import, preserve the comment
 		// position by adding the new import after the comment.
-		if spec, ok := impDecl.Specs[insertAt-1].(*ast.ImportSpec); ok && spec.Comment != nil {
+		if spec, ok := impDecl.Specs[insertAt-1].(*types.ImportSpec); ok && spec.Comment != nil {
 			pos = spec.Comment.End()
 		} else {
 			// Assign same position as the previous import,
@@ -165,10 +165,10 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 	}
 
 	// Merge all the import declarations into the first one.
-	var first *ast.GenDecl
+	var first *types.GenDecl
 	for i := 0; i < len(f.Decls); i++ {
 		decl := f.Decls[i]
-		gen, ok := decl.(*ast.GenDecl)
+		gen, ok := decl.(*types.GenDecl)
 		if !ok || gen.Tok != token.IMPORT || declImports(gen, "C") {
 			continue
 		}
@@ -181,7 +181,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, ipath string) (added
 		first.Lparen = first.Pos()
 		// Move the imports of the other import declaration to the first one.
 		for _, spec := range gen.Specs {
-			spec.(*ast.ImportSpec).Path.ValuePos = first.Pos()
+			spec.(*types.ImportSpec).Path.ValuePos = first.Pos()
 			first.Specs = append(first.Specs, spec)
 		}
 		f.Decls = append(f.Decls[:i], f.Decls[i+1:]...)
@@ -198,25 +198,25 @@ func isThirdParty(importPath string) bool {
 }
 
 // DeleteImport deletes the import path from the file f, if present.
-func DeleteImport(fset *token.FileSet, f *ast.File, path string) (deleted bool) {
+func DeleteImport(fset *token.FileSet, f *types.File, path string) (deleted bool) {
 	return DeleteNamedImport(fset, f, "", path)
 }
 
 // DeleteNamedImport deletes the import with the given name and path from the file f, if present.
-func DeleteNamedImport(fset *token.FileSet, f *ast.File, name, path string) (deleted bool) {
-	var delspecs []*ast.ImportSpec
-	var delcomments []*ast.CommentGroup
+func DeleteNamedImport(fset *token.FileSet, f *types.File, name, path string) (deleted bool) {
+	var delspecs []*types.ImportSpec
+	var delcomments []*types.CommentGroup
 
 	// Find the import nodes that import path, if any.
 	for i := 0; i < len(f.Decls); i++ {
 		decl := f.Decls[i]
-		gen, ok := decl.(*ast.GenDecl)
+		gen, ok := decl.(*types.GenDecl)
 		if !ok || gen.Tok != token.IMPORT {
 			continue
 		}
 		for j := 0; j < len(gen.Specs); j++ {
 			spec := gen.Specs[j]
-			impspec := spec.(*ast.ImportSpec)
+			impspec := spec.(*types.ImportSpec)
 			if impspec.Name == nil && name != "" {
 				continue
 			}
@@ -256,7 +256,7 @@ func DeleteNamedImport(fset *token.FileSet, f *ast.File, name, path string) (del
 					}
 				}
 
-				spec := gen.Specs[0].(*ast.ImportSpec)
+				spec := gen.Specs[0].(*types.ImportSpec)
 
 				// Move the documentation right after the import decl.
 				if spec.Doc != nil {
@@ -274,7 +274,7 @@ func DeleteNamedImport(fset *token.FileSet, f *ast.File, name, path string) (del
 				}
 			}
 			if j > 0 {
-				lastImpspec := gen.Specs[j-1].(*ast.ImportSpec)
+				lastImpspec := gen.Specs[j-1].(*types.ImportSpec)
 				lastLine := fset.Position(lastImpspec.Path.ValuePos).Line
 				line := fset.Position(impspec.Path.ValuePos).Line
 
@@ -331,7 +331,7 @@ func DeleteNamedImport(fset *token.FileSet, f *ast.File, name, path string) (del
 }
 
 // RewriteImport rewrites any import of path oldPath to path newPath.
-func RewriteImport(fset *token.FileSet, f *ast.File, oldPath, newPath string) (rewrote bool) {
+func RewriteImport(fset *token.FileSet, f *types.File, oldPath, newPath string) (rewrote bool) {
 	for _, imp := range f.Imports {
 		if importPath(imp) == oldPath {
 			rewrote = true
@@ -345,7 +345,7 @@ func RewriteImport(fset *token.FileSet, f *ast.File, oldPath, newPath string) (r
 }
 
 // UsesImport reports whether a given import is used.
-func UsesImport(f *ast.File, path string) (used bool) {
+func UsesImport(f *types.File, path string) (used bool) {
 	spec := importSpec(f, path)
 	if spec == nil {
 		return
@@ -367,8 +367,8 @@ func UsesImport(f *ast.File, path string) (used bool) {
 		return true
 	}
 
-	ast.Walk(visitFn(func(n ast.Node) {
-		sel, ok := n.(*ast.SelectorExpr)
+	types.Walk(visitFn(func(n types.Node) {
+		sel, ok := n.(*types.SelectorExpr)
 		if ok && isTopName(sel.X, name) {
 			used = true
 		}
@@ -377,21 +377,21 @@ func UsesImport(f *ast.File, path string) (used bool) {
 	return
 }
 
-type visitFn func(node ast.Node)
+type visitFn func(node types.Node)
 
-func (fn visitFn) Visit(node ast.Node) ast.Visitor {
+func (fn visitFn) Visit(node types.Node) types.Visitor {
 	fn(node)
 	return fn
 }
 
 // imports returns true if f imports path.
-func imports(f *ast.File, path string) bool {
+func imports(f *types.File, path string) bool {
 	return importSpec(f, path) != nil
 }
 
 // importSpec returns the import spec if f imports path,
 // or nil otherwise.
-func importSpec(f *ast.File, path string) *ast.ImportSpec {
+func importSpec(f *types.File, path string) *types.ImportSpec {
 	for _, s := range f.Imports {
 		if importPath(s) == path {
 			return s
@@ -402,7 +402,7 @@ func importSpec(f *ast.File, path string) *ast.ImportSpec {
 
 // importPath returns the unquoted import path of s,
 // or "" if the path is not properly quoted.
-func importPath(s *ast.ImportSpec) string {
+func importPath(s *types.ImportSpec) string {
 	t, err := strconv.Unquote(s.Path.Value)
 	if err == nil {
 		return t
@@ -411,12 +411,12 @@ func importPath(s *ast.ImportSpec) string {
 }
 
 // declImports reports whether gen contains an import of path.
-func declImports(gen *ast.GenDecl, path string) bool {
+func declImports(gen *types.GenDecl, path string) bool {
 	if gen.Tok != token.IMPORT {
 		return false
 	}
 	for _, spec := range gen.Specs {
-		impspec := spec.(*ast.ImportSpec)
+		impspec := spec.(*types.ImportSpec)
 		if importPath(impspec) == path {
 			return true
 		}
@@ -436,31 +436,31 @@ func matchLen(x, y string) int {
 }
 
 // isTopName returns true if n is a top-level unresolved identifier with the given name.
-func isTopName(n ast.Expr, name string) bool {
-	id, ok := n.(*ast.Ident)
+func isTopName(n types.Expr, name string) bool {
+	id, ok := n.(*types.Ident)
 	return ok && id.Name == name && id.Obj == nil
 }
 
 // Imports returns the file imports grouped by paragraph.
-func Imports(fset *token.FileSet, f *ast.File) [][]*ast.ImportSpec {
-	var groups [][]*ast.ImportSpec
+func Imports(fset *token.FileSet, f *types.File) [][]*types.ImportSpec {
+	var groups [][]*types.ImportSpec
 
 	for _, decl := range f.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
+		genDecl, ok := decl.(*types.GenDecl)
 		if !ok || genDecl.Tok != token.IMPORT {
 			break
 		}
 
-		group := []*ast.ImportSpec{}
+		group := []*types.ImportSpec{}
 
 		var lastLine int
 		for _, spec := range genDecl.Specs {
-			importSpec := spec.(*ast.ImportSpec)
+			importSpec := spec.(*types.ImportSpec)
 			pos := importSpec.Path.ValuePos
 			line := fset.Position(pos).Line
 			if lastLine > 0 && pos > 0 && line-lastLine > 1 {
 				groups = append(groups, group)
-				group = []*ast.ImportSpec{}
+				group = []*types.ImportSpec{}
 			}
 			group = append(group, importSpec)
 			lastLine = line

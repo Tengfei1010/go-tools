@@ -10,12 +10,13 @@ import (
 	"bytes"
 	"errors"
 	"go/token"
-	"honnef.co/go/tools/go/ast"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"honnef.co/go/tools/go/types"
 )
 
 // If src != nil, readSource converts src to a []byte if possible;
@@ -59,7 +60,7 @@ const (
 )
 
 // ParseFile parses the source code of a single Go source file and returns
-// the corresponding ast.File node. The source code may be provided via
+// the corresponding types.File node. The source code may be provided via
 // the filename of the source file, or via the src parameter.
 //
 // If src != nil, ParseFile parses the source from src and the filename is
@@ -73,11 +74,11 @@ const (
 //
 // If the source couldn't be read, the returned AST is nil and the error
 // indicates the specific failure. If the source was read but syntax
-// errors were found, the result is a partial AST (with ast.Bad* nodes
+// errors were found, the result is a partial AST (with types.Bad* nodes
 // representing the fragments of erroneous source code). Multiple errors
 // are returned via a scanner.ErrorList which is sorted by file position.
 //
-func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
+func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *types.File, err error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
@@ -101,10 +102,10 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 		if f == nil {
 			// source is not a valid Go source file - satisfy
 			// ParseFile API and return a valid (but) empty
-			// *ast.File
-			f = &ast.File{
-				Name:  new(ast.Ident),
-				Scope: ast.NewScopeA(nil),
+			// *types.File
+			f = &types.File{
+				Name:  new(types.Ident),
+				Scope: types.NewScopeA(nil),
 			}
 		}
 
@@ -132,7 +133,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
 //
-func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.PackageA, first error) {
+func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*types.PackageA, first error) {
 	fd, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -144,7 +145,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 		return nil, err
 	}
 
-	pkgs = make(map[string]*ast.PackageA)
+	pkgs = make(map[string]*types.PackageA)
 	for _, d := range list {
 		if strings.HasSuffix(d.Name(), ".go") && (filter == nil || filter(d)) {
 			filename := filepath.Join(path, d.Name())
@@ -152,9 +153,9 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 				name := src.Name.Name
 				pkg, found := pkgs[name]
 				if !found {
-					pkg = &ast.PackageA{
+					pkg = &types.PackageA{
 						Name:  name,
-						Files: make(map[string]*ast.File),
+						Files: make(map[string]*types.File),
 					}
 					pkgs[name] = pkg
 				}
@@ -173,7 +174,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 // be a valid Go (type or value) expression. Specifically, fset must not
 // be nil.
 //
-func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode Mode) (ast.Expr, error) {
+func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode Mode) (types.Expr, error) {
 	if fset == nil {
 		panic("parser.ParseExprFrom: no token.FileSet provided (fset == nil)")
 	}
@@ -227,6 +228,6 @@ func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode M
 // The position information recorded in the AST is undefined. The filename used
 // in error messages is the empty string.
 //
-func ParseExpr(x string) (ast.Expr, error) {
+func ParseExpr(x string) (types.Expr, error) {
 	return ParseExprFrom(token.NewFileSet(), "", []byte(x), 0)
 }

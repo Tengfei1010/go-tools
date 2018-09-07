@@ -4,7 +4,7 @@
 
 // To avoid a cyclic dependency with go/parser, this file is in a separate package.
 
-package ast_test
+package types_test
 
 import (
 	"bytes"
@@ -75,23 +75,23 @@ func f3() {
 // to the associated comments' text.
 //
 var res = map[string]string{
-	" 5: *ast.File":       "the very first comment\npackage p\n",
-	" 5: *ast.Ident":      " the name is p\n",
-	" 8: *ast.GenDecl":    "imports\n",
-	" 9: *ast.ImportSpec": "bytes\n",
-	"10: *ast.ImportSpec": "fmt\n",
-	"16: *ast.GenDecl":    "T\nalso associated with T\n",
-	"17: *ast.Field":      "associated with a, b, c\n",
-	"19: *ast.Field":      "associated with x, y\nfloat values\n",
-	"20: *ast.Field":      "complex value\n",
-	"25: *ast.GenDecl":    "x\nx = 0\nalso associated with x\n",
-	"29: *ast.FuncDecl":   "f1\nassociated with f1\nalso associated with f1\n",
-	"31: *ast.ExprStmt":   " associated with s1\nalso associated with s1\n",
-	"37: *ast.ExprStmt":   "associated with s2\nalso associated with s2\nline comment for s2\n",
-	"45: *ast.FuncDecl":   "associated with f2\nf2\n",
-	"49: *ast.AssignStmt": "addition\n",
-	"49: *ast.BasicLit":   " 1\n",
-	"50: *ast.Ident":      "the very last comment\n",
+	" 5: *File":       "the very first comment\npackage p\n",
+	" 5: *Ident":      " the name is p\n",
+	" 8: *GenDecl":    "imports\n",
+	" 9: *ImportSpec": "bytes\n",
+	"10: *ImportSpec": "fmt\n",
+	"16: *GenDecl":    "T\nalso associated with T\n",
+	"17: *Field":      "associated with a, b, c\n",
+	"19: *Field":      "associated with x, y\nfloat values\n",
+	"20: *Field":      "complex value\n",
+	"25: *GenDecl":    "x\nx = 0\nalso associated with x\n",
+	"29: *FuncDecl":   "f1\nassociated with f1\nalso associated with f1\n",
+	"31: *ExprStmt":   " associated with s1\nalso associated with s1\n",
+	"37: *ExprStmt":   "associated with s2\nalso associated with s2\nline comment for s2\n",
+	"45: *FuncDecl":   "associated with f2\nf2\n",
+	"49: *AssignStmt": "addition\n",
+	"49: *BasicLit":   " 1\n",
+	"50: *Ident":      "the very last comment\n",
 }
 
 func ctext(list []*CommentGroup) string {

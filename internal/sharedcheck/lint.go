@@ -1,7 +1,7 @@
 package sharedcheck
 
 import (
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
@@ -10,8 +10,8 @@ import (
 
 func CheckRangeStringRunes(j *lint.Job) {
 	for _, ssafn := range j.Program.InitialFunctions {
-		fn := func(node ast.Node) bool {
-			rng, ok := node.(*ast.RangeStmt)
+		fn := func(node types.Node) bool {
+			rng, ok := node.(*types.RangeStmt)
 			if !ok || !IsBlank(rng.Key) {
 				return true
 			}

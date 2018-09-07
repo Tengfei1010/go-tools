@@ -13,7 +13,7 @@ import (
 	"go/token"
 	"sync"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 )
@@ -56,7 +56,7 @@ type Package struct {
 	buildOnce sync.Once   // ensures package building occurs once
 	ninit     int32       // number of init functions
 	info      *types.Info // package type information
-	files     []*ast.File // package ASTs
+	files     []*types.File // package ASTs
 }
 
 // A Member is a member of a Go package, implemented by *NamedConst,
@@ -83,7 +83,7 @@ type Type struct {
 // A NamedConst is a Member of a Package representing a package-level
 // named constant.
 //
-// Pos() returns the position of the declaring ast.ValueSpec.Names[*]
+// Pos() returns the position of the declaring types.ValueSpec.Names[*]
 // identifier.
 //
 // NB: a NamedConst is not a Value; it contains a constant Value, which
@@ -145,14 +145,14 @@ type Value interface {
 	// associated with the operation that gave rise to this value,
 	// or token.NoPos if it was not explicit in the source.
 	//
-	// For each ast.Node type, a particular token is designated as
+	// For each types.Node type, a particular token is designated as
 	// the closest location for the expression, e.g. the Lparen
-	// for an *ast.CallExpr.  This permits a compact but
+	// for an *types.CallExpr.  This permits a compact but
 	// approximate mapping from Values to source positions for use
 	// in diagnostic messages, for example.
 	//
 	// (Do not use this position to determine which Value
-	// corresponds to an ast.Expr; use Function.ValueForExpr
+	// corresponds to an types.Expr; use Function.ValueForExpr
 	// instead.  NB: it requires that the function was built with
 	// debug information.)
 	Pos() token.Pos
@@ -217,16 +217,16 @@ type Instruction interface {
 	// instruction, or token.NoPos if it was not explicit in the
 	// source.
 	//
-	// For each ast.Node type, a particular token is designated as
+	// For each types.Node type, a particular token is designated as
 	// the closest location for the expression, e.g. the Go token
-	// for an *ast.GoStmt.  This permits a compact but approximate
+	// for an *types.GoStmt.  This permits a compact but approximate
 	// mapping from Instructions to source positions for use in
 	// diagnostic messages, for example.
 	//
 	// (Do not use this position to determine which Instruction
-	// corresponds to an ast.Expr; see the notes for Value.Pos.
+	// corresponds to an types.Expr; see the notes for Value.Pos.
 	// This position may be used to determine which non-Value
-	// Instruction corresponds to some ast.Stmts, but not all: If
+	// Instruction corresponds to some types.Stmts, but not all: If
 	// and Jump instructions have no Pos(), for example.)
 	Pos() token.Pos
 }
@@ -285,8 +285,8 @@ type Node interface {
 // For each one, Object().Name() returns "init" but Name() returns
 // "init#1", etc, in declaration order.
 //
-// Pos() returns the declaring ast.FuncLit.Type.Func or the position
-// of the ast.FuncDecl.Name, if the function was explicit in the
+// Pos() returns the declaring types.FuncLit.Type.Func or the position
+// of the types.FuncDecl.Name, if the function was explicit in the
 // source.  Synthetic wrappers, for which Synthetic != "", may share
 // the same position as the function they wrap.
 // Syntax.Pos() always returns the position of the declaring "func" token.
@@ -301,7 +301,7 @@ type Function struct {
 	pos       token.Pos
 
 	Synthetic string        // provenance of synthetic function; "" for true source functions
-	syntax    ast.Node      // *ast.Func{Decl,Lit}; replaced with simple ast.Node after build, unless debug mode
+	syntax    types.Node      // *types.Func{Decl,Lit}; replaced with simple types.Node after build, unless debug mode
 	parent    *Function     // enclosing function if anon; nil if global
 	Pkg       *Package      // enclosing package; nil for shared funcs (wrappers and error.Error)
 	Prog      *Program      // enclosing program
@@ -319,7 +319,7 @@ type Function struct {
 	objects      map[types.Object]Value   // addresses of local variables
 	namedResults []*Alloc                 // tuple of named results
 	targets      *targets                 // linked stack of branch targets
-	lblocks      map[*ast.ObjectA]*lblock // labelled blocks
+	lblocks      map[*types.ObjectA]*lblock // labelled blocks
 }
 
 // BasicBlock represents an SSA basic block.
@@ -423,7 +423,7 @@ type Const struct {
 // A Global is a named Value holding the address of a package-level
 // variable.
 //
-// Pos() returns the position of the ast.ValueSpec.Names[*]
+// Pos() returns the position of the types.ValueSpec.Names[*]
 // identifier.
 //
 type Global struct {
@@ -483,8 +483,8 @@ type Builtin struct {
 // the result of MakeSlice, MakeMap or MakeChan in that location to
 // instantiate these types.
 //
-// Pos() returns the ast.CompositeLit.Lbrace for a composite literal,
-// or the ast.CallExpr.Rparen for a call to new() or for a call that
+// Pos() returns the types.CompositeLit.Lbrace for a composite literal,
+// or the types.CallExpr.Rparen for a call to new() or for a call that
 // allocates a varargs slice.
 //
 // Example printed form:
@@ -549,7 +549,7 @@ type Phi struct {
 //
 // See CallCommon for generic function call documentation.
 //
-// Pos() returns the ast.CallExpr.Lparen, if explicit in the source.
+// Pos() returns the types.CallExpr.Lparen, if explicit in the source.
 //
 // Example printed form:
 // 	t2 = println(t0, t1)
@@ -563,7 +563,7 @@ type Call struct {
 
 // The BinOp instruction yields the result of binary operation X Op Y.
 //
-// Pos() returns the ast.BinaryExpr.OpPos, if explicit in the source.
+// Pos() returns the types.BinaryExpr.OpPos, if explicit in the source.
 //
 // Example printed form:
 // 	t1 = t0 + 1:int
@@ -589,9 +589,9 @@ type BinOp struct {
 // and a boolean indicating the success of the receive.  The
 // components of the tuple are accessed using Extract.
 //
-// Pos() returns the ast.UnaryExpr.OpPos, if explicit in the source.
+// Pos() returns the types.UnaryExpr.OpPos, if explicit in the source.
 // For receive operations (ARROW) implicit in ranging over a channel,
-// Pos() returns the ast.RangeStmt.For.
+// Pos() returns the types.RangeStmt.For.
 // For implicit memory loads (STAR), Pos() returns the position of the
 // most closely associated source-level construct; the details are not
 // specified.
@@ -619,7 +619,7 @@ type UnOp struct {
 //
 // This operation cannot fail dynamically.
 //
-// Pos() returns the ast.CallExpr.Lparen, if the instruction arose
+// Pos() returns the types.CallExpr.Lparen, if the instruction arose
 // from an explicit conversion in the source.
 //
 // Example printed form:
@@ -648,7 +648,7 @@ type ChangeType struct {
 // Conversions of untyped string/number/bool constants to a specific
 // representation are eliminated during SSA construction.
 //
-// Pos() returns the ast.CallExpr.Lparen, if the instruction arose
+// Pos() returns the types.CallExpr.Lparen, if the instruction arose
 // from an explicit conversion in the source.
 //
 // Example printed form:
@@ -663,8 +663,8 @@ type Convert struct {
 // value of another interface type known to be assignable to it.
 // This operation cannot fail.
 //
-// Pos() returns the ast.CallExpr.Lparen if the instruction arose from
-// an explicit T(e) conversion; the ast.TypeAssertExpr.Lparen if the
+// Pos() returns the types.CallExpr.Lparen if the instruction arose from
+// an explicit T(e) conversion; the types.TypeAssertExpr.Lparen if the
 // instruction arose from an explicit e.(T) operation; or token.NoPos
 // otherwise.
 //
@@ -685,7 +685,7 @@ type ChangeInterface struct {
 // To construct the zero value of an interface type T, use:
 // 	NewConst(exact.MakeNil(), T, pos)
 //
-// Pos() returns the ast.CallExpr.Lparen, if the instruction arose
+// Pos() returns the types.CallExpr.Lparen, if the instruction arose
 // from an explicit conversion in the source.
 //
 // Example printed form:
@@ -702,8 +702,8 @@ type MakeInterface struct {
 //
 // Type() returns a (possibly named) *types.Signature.
 //
-// Pos() returns the ast.FuncLit.Type.Func for a function literal
-// closure or the ast.SelectorExpr.Sel for a bound method closure.
+// Pos() returns the types.FuncLit.Type.Func for a function literal
+// closure or the types.SelectorExpr.Sel for a bound method closure.
 //
 // Example printed form:
 // 	t0 = make closure anon@1.2 [x y z]
@@ -720,8 +720,8 @@ type MakeClosure struct {
 //
 // Type() returns a (possibly named) *types.Map.
 //
-// Pos() returns the ast.CallExpr.Lparen, if created by make(map), or
-// the ast.CompositeLit.Lbrack if created by a literal.
+// Pos() returns the types.CallExpr.Lparen, if created by make(map), or
+// the types.CompositeLit.Lbrack if created by a literal.
 //
 // Example printed form:
 // 	t1 = make map[string]int t0
@@ -737,7 +737,7 @@ type MakeMap struct {
 //
 // Type() returns a (possibly named) *types.Chan.
 //
-// Pos() returns the ast.CallExpr.Lparen for the make(chan) that
+// Pos() returns the types.CallExpr.Lparen for the make(chan) that
 // created it.
 //
 // Example printed form:
@@ -759,7 +759,7 @@ type MakeChan struct {
 //
 // Type() returns a (possibly named) *types.Slice.
 //
-// Pos() returns the ast.CallExpr.Lparen for the make([]T) that
+// Pos() returns the types.CallExpr.Lparen for the make([]T) that
 // created it.
 //
 // Example printed form:
@@ -781,8 +781,8 @@ type MakeSlice struct {
 // Type() returns string if the type of X was string, otherwise a
 // *types.Slice with the same element type as X.
 //
-// Pos() returns the ast.SliceExpr.Lbrack if created by a x[:] slice
-// operation, the ast.CompositeLit.Lbrace if created by a literal, or
+// Pos() returns the types.SliceExpr.Lbrack if created by a x[:] slice
+// operation, the types.CompositeLit.Lbrace if created by a literal, or
 // NoPos if not explicit in the source (e.g. a variadic argument slice).
 //
 // Example printed form:
@@ -804,7 +804,7 @@ type Slice struct {
 //
 // Type() returns a (possibly named) *types.Pointer.
 //
-// Pos() returns the position of the ast.SelectorExpr.Sel for the
+// Pos() returns the position of the types.SelectorExpr.Sel for the
 // field, if explicit in the source.
 //
 // Example printed form:
@@ -822,7 +822,7 @@ type FieldAddr struct {
 // struct type of X; by using numeric indices we avoid ambiguity of
 // package-local identifiers and permit compact representations.
 //
-// Pos() returns the position of the ast.SelectorExpr.Sel for the
+// Pos() returns the position of the types.SelectorExpr.Sel for the
 // field, if explicit in the source.
 //
 // Example printed form:
@@ -845,7 +845,7 @@ type Field struct {
 //
 // Type() returns a (possibly named) *types.Pointer.
 //
-// Pos() returns the ast.IndexExpr.Lbrack for the index operation, if
+// Pos() returns the types.IndexExpr.Lbrack for the index operation, if
 // explicit in the source.
 //
 // Example printed form:
@@ -859,7 +859,7 @@ type IndexAddr struct {
 
 // The Index instruction yields element Index of array X.
 //
-// Pos() returns the ast.IndexExpr.Lbrack for the index operation, if
+// Pos() returns the types.IndexExpr.Lbrack for the index operation, if
 // explicit in the source.
 //
 // Example printed form:
@@ -879,7 +879,7 @@ type Index struct {
 // boolean indicating the result of a map membership test for the key.
 // The components of the tuple are accessed using Extract.
 //
-// Pos() returns the ast.IndexExpr.Lbrack, if explicit in the source.
+// Pos() returns the types.IndexExpr.Lbrack, if explicit in the source.
 //
 // Example printed form:
 // 	t2 = t0[t1]
@@ -900,7 +900,7 @@ type SelectState struct {
 	Chan      Value         // channel to use (for send or receive)
 	Send      Value         // value to send (for send)
 	Pos       token.Pos     // position of token.ARROW
-	DebugNode ast.Node      // ast.SendStmt or ast.UnaryExpr(<-) [debug mode]
+	DebugNode types.Node      // types.SendStmt or types.UnaryExpr(<-) [debug mode]
 }
 
 // The Select instruction tests whether (or blocks until) one
@@ -932,7 +932,7 @@ type SelectState struct {
 // is true iff the selected operation was a receive and the receive
 // successfully yielded a value.
 //
-// Pos() returns the ast.SelectStmt.Select.
+// Pos() returns the types.SelectStmt.Select.
 //
 // Example printed form:
 // 	t3 = select nonblocking [<-t0, t1<-t2]
@@ -951,7 +951,7 @@ type Select struct {
 //
 // Type() returns an opaque and degenerate "rangeIter" type.
 //
-// Pos() returns the ast.RangeStmt.For.
+// Pos() returns the types.RangeStmt.For.
 //
 // Example printed form:
 // 	t0 = range "hello":string
@@ -1010,10 +1010,10 @@ type Next struct {
 // Type() reflects the actual type of the result, possibly a
 // 2-types.Tuple; AssertedType is the asserted type.
 //
-// Pos() returns the ast.CallExpr.Lparen if the instruction arose from
-// an explicit T(e) conversion; the ast.TypeAssertExpr.Lparen if the
+// Pos() returns the types.CallExpr.Lparen if the instruction arose from
+// an explicit T(e) conversion; the types.TypeAssertExpr.Lparen if the
 // instruction arose from an explicit e.(T) operation; or the
-// ast.CaseClause.Case if the instruction arose from a case of a
+// types.CaseClause.Case if the instruction arose from a case of a
 // type-switch statement.
 //
 // Example printed form:
@@ -1091,7 +1091,7 @@ type If struct {
 // Return must be the last instruction of its containing BasicBlock.
 // Such a block has no successors.
 //
-// Pos() returns the ast.ReturnStmt.Return, if explicit in the source.
+// Pos() returns the types.ReturnStmt.Return, if explicit in the source.
 //
 // Example printed form:
 // 	return
@@ -1127,7 +1127,7 @@ type RunDefers struct {
 // NB: 'go panic(x)' and 'defer panic(x)' do not use this instruction;
 // they are treated as calls to a built-in function.
 //
-// Pos() returns the ast.CallExpr.Lparen if this panic was explicit
+// Pos() returns the types.CallExpr.Lparen if this panic was explicit
 // in the source.
 //
 // Example printed form:
@@ -1144,7 +1144,7 @@ type Panic struct {
 //
 // See CallCommon for generic function call documentation.
 //
-// Pos() returns the ast.GoStmt.Go.
+// Pos() returns the types.GoStmt.Go.
 //
 // Example printed form:
 // 	go println(t0, t1)
@@ -1162,7 +1162,7 @@ type Go struct {
 //
 // See CallCommon for generic function call documentation.
 //
-// Pos() returns the ast.DeferStmt.Defer.
+// Pos() returns the types.DeferStmt.Defer.
 //
 // Example printed form:
 // 	defer println(t0, t1)
@@ -1177,7 +1177,7 @@ type Defer struct {
 
 // The Send instruction sends X on channel Chan.
 //
-// Pos() returns the ast.SendStmt.Arrow, if explicit in the source.
+// Pos() returns the types.SendStmt.Arrow, if explicit in the source.
 //
 // Example printed form:
 // 	send t0 <- t1
@@ -1224,7 +1224,7 @@ type BlankStore struct {
 // The MapUpdate instruction updates the association of Map[Key] to
 // Value.
 //
-// Pos() returns the ast.KeyValueExpr.Colon or ast.IndexExpr.Lbrack,
+// Pos() returns the types.KeyValueExpr.Colon or types.IndexExpr.Lbrack,
 // if explicit in the source.
 //
 // Example printed form:
@@ -1249,7 +1249,7 @@ type MapUpdate struct {
 // documented at Value.Pos(). e.g. CallExpr.Pos() does not return the
 // position of the ("designated") Lparen token.
 //
-// If Expr is an *ast.Ident denoting a var or func, Object() returns
+// If Expr is an *types.Ident denoting a var or func, Object() returns
 // the object; though this information can be obtained from the type
 // checker, including it here greatly facilitates debugging.
 // For non-Ident expressions, Object() returns nil.
@@ -1258,22 +1258,22 @@ type MapUpdate struct {
 // enabled; see Package.SetDebugMode() and the GlobalDebug builder
 // mode flag.
 //
-// DebugRefs are not emitted for ast.Idents referring to constants or
+// DebugRefs are not emitted for types.Idents referring to constants or
 // predeclared identifiers, since they are trivial and numerous.
-// Nor are they emitted for ast.ParenExprs.
+// Nor are they emitted for types.ParenExprs.
 //
 // (By representing these as instructions, rather than out-of-band,
 // consistency is maintained during transformation passes by the
 // ordinary SSA renaming machinery.)
 //
 // Example printed form:
-//      ; *ast.CallExpr @ 102:9 is t5
+//      ; *types.CallExpr @ 102:9 is t5
 //      ; var x float64 @ 109:72 is x
-//      ; address of *ast.CompositeLit @ 216:10 is t0
+//      ; address of *types.CompositeLit @ 216:10 is t0
 //
 type DebugRef struct {
 	anInstruction
-	Expr   ast.Expr     // the referring expression (never *ast.ParenExpr)
+	Expr   types.Expr     // the referring expression (never *types.ParenExpr)
 	object types.Object // the identity of the source var/func
 	IsAddr bool         // Expr is addressable and X is the address it denotes
 	X      Value        // the value or address of Expr

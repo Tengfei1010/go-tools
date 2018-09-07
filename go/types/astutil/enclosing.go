@@ -11,7 +11,7 @@ import (
 	"go/token"
 	"sort"
 
-	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/types"
 )
 
 // PathEnclosingInterval returns the node that encloses the source
@@ -25,14 +25,14 @@ import (
 //                   <-A->
 //                  <----B----->
 //
-// the ast.BinaryExpr(+) node is considered to enclose interval B
+// the types.BinaryExpr(+) node is considered to enclose interval B
 // even though its [Pos()..End()) is actually only interval A.
 // This behaviour makes user interfaces more tolerant of imperfect
 // input.
 //
 // This function treats tokens as nodes, though they are not included
 // in the result. e.g. PathEnclosingInterval("+") returns the
-// enclosing ast.BinaryExpr("x + y").
+// enclosing types.BinaryExpr("x + y").
 //
 // If start==end, the 1-char interval following start is used instead.
 //
@@ -59,12 +59,12 @@ import (
 //
 // Postcondition: path is never nil; it always contains at least 'root'.
 //
-func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Node, exact bool) {
+func PathEnclosingInterval(root *types.File, start, end token.Pos) (path []types.Node, exact bool) {
 	// fmt.Printf("EnclosingInterval %d %d\n", start, end) // debugging
 
 	// Precondition: node.[Pos..End) and adjoining whitespace contain [start, end).
-	var visit func(node ast.Node) bool
-	visit = func(node ast.Node) bool {
+	var visit func(node types.Node) bool
+	visit = func(node types.Node) bool {
 		path = append(path, node)
 
 		nodePos := node.Pos()
@@ -151,14 +151,14 @@ func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Nod
 	} else {
 		// Selection lies within whitespace preceding the
 		// first (or following the last) declaration in the file.
-		// The result nonetheless always includes the ast.File.
+		// The result nonetheless always includes the types.File.
 		path = append(path, root)
 	}
 
 	return
 }
 
-// tokenNode is a dummy implementation of ast.Node for a single token.
+// tokenNode is a dummy implementation of types.Node for a single token.
 // They are used transiently by PathEnclosingInterval but never escape
 // this package.
 //
@@ -175,19 +175,19 @@ func (n tokenNode) End() token.Pos {
 	return n.end
 }
 
-func tok(pos token.Pos, len int) ast.Node {
+func tok(pos token.Pos, len int) types.Node {
 	return tokenNode{pos, pos + token.Pos(len)}
 }
 
-// childrenOf returns the direct non-nil children of ast.Node n.
-// It may include fake ast.Node implementations for bare tokens.
-// it is not safe to call (e.g.) ast.Walk on such nodes.
+// childrenOf returns the direct non-nil children of types.Node n.
+// It may include fake types.Node implementations for bare tokens.
+// it is not safe to call (e.g.) types.Walk on such nodes.
 //
-func childrenOf(n ast.Node) []ast.Node {
-	var children []ast.Node
+func childrenOf(n types.Node) []types.Node {
+	var children []types.Node
 
 	// First add nodes for all true subtrees.
-	ast.Inspect(n, func(node ast.Node) bool {
+	types.Inspect(n, func(node types.Node) bool {
 		if node == n { // push n
 			return true // recur
 		}
@@ -199,32 +199,32 @@ func childrenOf(n ast.Node) []ast.Node {
 
 	// Then add fake Nodes for bare tokens.
 	switch n := n.(type) {
-	case *ast.ArrayType:
+	case *types.ArrayType:
 		children = append(children,
 			tok(n.Lbrack, len("[")),
 			tok(n.Elt.End(), len("]")))
 
-	case *ast.AssignStmt:
+	case *types.AssignStmt:
 		children = append(children,
 			tok(n.TokPos, len(n.Tok.String())))
 
-	case *ast.BasicLit:
+	case *types.BasicLit:
 		children = append(children,
 			tok(n.ValuePos, len(n.Value)))
 
-	case *ast.BinaryExpr:
+	case *types.BinaryExpr:
 		children = append(children, tok(n.OpPos, len(n.Op.String())))
 
-	case *ast.BlockStmt:
+	case *types.BlockStmt:
 		children = append(children,
 			tok(n.Lbrace, len("{")),
 			tok(n.Rbrace, len("}")))
 
-	case *ast.BranchStmt:
+	case *types.BranchStmt:
 		children = append(children,
 			tok(n.TokPos, len(n.Tok.String())))
 
-	case *ast.CallExpr:
+	case *types.CallExpr:
 		children = append(children,
 			tok(n.Lparen, len("(")),
 			tok(n.Rparen, len(")")))
@@ -232,7 +232,7 @@ func childrenOf(n ast.Node) []ast.Node {
 			children = append(children, tok(n.Ellipsis, len("...")))
 		}
 
-	case *ast.CaseClause:
+	case *types.CaseClause:
 		if n.List == nil {
 			children = append(children,
 				tok(n.Case, len("default")))
@@ -242,17 +242,17 @@ func childrenOf(n ast.Node) []ast.Node {
 		}
 		children = append(children, tok(n.Colon, len(":")))
 
-	case *ast.ChanType:
+	case *types.ChanType:
 		switch n.Dir {
-		case ast.RECV:
+		case types.RecvOnly:
 			children = append(children, tok(n.Begin, len("<-chan")))
-		case ast.SEND:
+		case types.SendOnly:
 			children = append(children, tok(n.Begin, len("chan<-")))
-		case ast.RECV | ast.SEND:
+		case types.SendRecv:
 			children = append(children, tok(n.Begin, len("chan")))
 		}
 
-	case *ast.CommClause:
+	case *types.CommClause:
 		if n.Comm == nil {
 			children = append(children,
 				tok(n.Case, len("default")))
@@ -262,52 +262,52 @@ func childrenOf(n ast.Node) []ast.Node {
 		}
 		children = append(children, tok(n.Colon, len(":")))
 
-	case *ast.Comment:
+	case *types.Comment:
 		// nop
 
-	case *ast.CommentGroup:
+	case *types.CommentGroup:
 		// nop
 
-	case *ast.CompositeLit:
+	case *types.CompositeLit:
 		children = append(children,
 			tok(n.Lbrace, len("{")),
 			tok(n.Rbrace, len("{")))
 
-	case *ast.DeclStmt:
+	case *types.DeclStmt:
 		// nop
 
-	case *ast.DeferStmt:
+	case *types.DeferStmt:
 		children = append(children,
 			tok(n.Defer, len("defer")))
 
-	case *ast.Ellipsis:
+	case *types.Ellipsis:
 		children = append(children,
 			tok(n.Ellipsis, len("...")))
 
-	case *ast.EmptyStmt:
+	case *types.EmptyStmt:
 		// nop
 
-	case *ast.ExprStmt:
+	case *types.ExprStmt:
 		// nop
 
-	case *ast.Field:
+	case *types.Field:
 		// TODO(adonovan): Field.{Doc,Comment,Tag}?
 
-	case *ast.FieldList:
+	case *types.FieldList:
 		children = append(children,
 			tok(n.Opening, len("(")),
 			tok(n.Closing, len(")")))
 
-	case *ast.File:
+	case *types.File:
 		// TODO test: Doc
 		children = append(children,
 			tok(n.Package, len("package")))
 
-	case *ast.ForStmt:
+	case *types.ForStmt:
 		children = append(children,
 			tok(n.For, len("for")))
 
-	case *ast.FuncDecl:
+	case *types.FuncDecl:
 		// TODO(adonovan): FuncDecl.Comment?
 
 		// Uniquely, FuncDecl breaks the invariant that
@@ -317,7 +317,7 @@ func childrenOf(n ast.Node) []ast.Node {
 		// As a workaround, we inline the case for FuncType
 		// here and order things correctly.
 		//
-		children = nil // discard ast.Walk(FuncDecl) info subtrees
+		children = nil // discard types.Walk(FuncDecl) info subtrees
 		children = append(children, tok(n.Type.Func, len("func")))
 		if n.Recv != nil {
 			children = append(children, n.Recv)
@@ -333,16 +333,16 @@ func childrenOf(n ast.Node) []ast.Node {
 			children = append(children, n.Body)
 		}
 
-	case *ast.FuncLit:
+	case *types.FuncLit:
 		// nop
 
-	case *ast.FuncType:
+	case *types.FuncType:
 		if n.Func != 0 {
 			children = append(children,
 				tok(n.Func, len("func")))
 		}
 
-	case *ast.GenDecl:
+	case *types.GenDecl:
 		children = append(children,
 			tok(n.TokPos, len(n.Tok.String())))
 		if n.Lparen != 0 {
@@ -351,108 +351,108 @@ func childrenOf(n ast.Node) []ast.Node {
 				tok(n.Rparen, len(")")))
 		}
 
-	case *ast.GoStmt:
+	case *types.GoStmt:
 		children = append(children,
 			tok(n.Go, len("go")))
 
-	case *ast.Ident:
+	case *types.Ident:
 		children = append(children,
 			tok(n.NamePos, len(n.Name)))
 
-	case *ast.IfStmt:
+	case *types.IfStmt:
 		children = append(children,
 			tok(n.If, len("if")))
 
-	case *ast.ImportSpec:
+	case *types.ImportSpec:
 		// TODO(adonovan): ImportSpec.{Doc,EndPos}?
 
-	case *ast.IncDecStmt:
+	case *types.IncDecStmt:
 		children = append(children,
 			tok(n.TokPos, len(n.Tok.String())))
 
-	case *ast.IndexExpr:
+	case *types.IndexExpr:
 		children = append(children,
 			tok(n.Lbrack, len("{")),
 			tok(n.Rbrack, len("}")))
 
-	case *ast.InterfaceType:
+	case *types.InterfaceType:
 		children = append(children,
 			tok(n.Interface, len("interface")))
 
-	case *ast.KeyValueExpr:
+	case *types.KeyValueExpr:
 		children = append(children,
 			tok(n.Colon, len(":")))
 
-	case *ast.LabeledStmt:
+	case *types.LabeledStmt:
 		children = append(children,
 			tok(n.Colon, len(":")))
 
-	case *ast.MapType:
+	case *types.MapType:
 		children = append(children,
 			tok(n.Map, len("map")))
 
-	case *ast.ParenExpr:
+	case *types.ParenExpr:
 		children = append(children,
 			tok(n.Lparen, len("(")),
 			tok(n.Rparen, len(")")))
 
-	case *ast.RangeStmt:
+	case *types.RangeStmt:
 		children = append(children,
 			tok(n.For, len("for")),
 			tok(n.TokPos, len(n.Tok.String())))
 
-	case *ast.ReturnStmt:
+	case *types.ReturnStmt:
 		children = append(children,
 			tok(n.Return, len("return")))
 
-	case *ast.SelectStmt:
+	case *types.SelectStmt:
 		children = append(children,
 			tok(n.Select, len("select")))
 
-	case *ast.SelectorExpr:
+	case *types.SelectorExpr:
 		// nop
 
-	case *ast.SendStmt:
+	case *types.SendStmt:
 		children = append(children,
 			tok(n.Arrow, len("<-")))
 
-	case *ast.SliceExpr:
+	case *types.SliceExpr:
 		children = append(children,
 			tok(n.Lbrack, len("[")),
 			tok(n.Rbrack, len("]")))
 
-	case *ast.StarExpr:
+	case *types.StarExpr:
 		children = append(children, tok(n.Star, len("*")))
 
-	case *ast.StructType:
+	case *types.StructType:
 		children = append(children, tok(n.Struct, len("struct")))
 
-	case *ast.SwitchStmt:
+	case *types.SwitchStmt:
 		children = append(children, tok(n.Switch, len("switch")))
 
-	case *ast.TypeAssertExpr:
+	case *types.TypeAssertExpr:
 		children = append(children,
 			tok(n.Lparen-1, len(".")),
 			tok(n.Lparen, len("(")),
 			tok(n.Rparen, len(")")))
 
-	case *ast.TypeSpec:
+	case *types.TypeSpec:
 		// TODO(adonovan): TypeSpec.{Doc,Comment}?
 
-	case *ast.TypeSwitchStmt:
+	case *types.TypeSwitchStmt:
 		children = append(children, tok(n.Switch, len("switch")))
 
-	case *ast.UnaryExpr:
+	case *types.UnaryExpr:
 		children = append(children, tok(n.OpPos, len(n.Op.String())))
 
-	case *ast.ValueSpec:
+	case *types.ValueSpec:
 		// TODO(adonovan): ValueSpec.{Doc,Comment}?
 
-	case *ast.BadDecl, *ast.BadExpr, *ast.BadStmt:
+	case *types.BadDecl, *types.BadExpr, *types.BadStmt:
 		// nop
 	}
 
-	// TODO(adonovan): opt: merge the logic of ast.Inspect() into
+	// TODO(adonovan): opt: merge the logic of types.Inspect() into
 	// the switch above so we can make interleaved callbacks for
 	// both Nodes and Tokens in the right order and avoid the need
 	// to sort.
@@ -461,7 +461,7 @@ func childrenOf(n ast.Node) []ast.Node {
 	return children
 }
 
-type byPos []ast.Node
+type byPos []types.Node
 
 func (sl byPos) Len() int {
 	return len(sl)
@@ -480,25 +480,25 @@ func (sl byPos) Swap(i, j int) {
 // StarExpr) we could be much more specific given the path to the AST
 // root.  Perhaps we should do that.
 //
-func NodeDescription(n ast.Node) string {
+func NodeDescription(n types.Node) string {
 	switch n := n.(type) {
-	case *ast.ArrayType:
+	case *types.ArrayType:
 		return "array type"
-	case *ast.AssignStmt:
+	case *types.AssignStmt:
 		return "assignment"
-	case *ast.BadDecl:
+	case *types.BadDecl:
 		return "bad declaration"
-	case *ast.BadExpr:
+	case *types.BadExpr:
 		return "bad expression"
-	case *ast.BadStmt:
+	case *types.BadStmt:
 		return "bad statement"
-	case *ast.BasicLit:
+	case *types.BasicLit:
 		return "basic literal"
-	case *ast.BinaryExpr:
+	case *types.BinaryExpr:
 		return fmt.Sprintf("binary %s operation", n.Op)
-	case *ast.BlockStmt:
+	case *types.BlockStmt:
 		return "block"
-	case *ast.BranchStmt:
+	case *types.BranchStmt:
 		switch n.Tok {
 		case token.BREAK:
 			return "break statement"
@@ -509,34 +509,34 @@ func NodeDescription(n ast.Node) string {
 		case token.FALLTHROUGH:
 			return "fall-through statement"
 		}
-	case *ast.CallExpr:
+	case *types.CallExpr:
 		if len(n.Args) == 1 && !n.Ellipsis.IsValid() {
 			return "function call (or conversion)"
 		}
 		return "function call"
-	case *ast.CaseClause:
+	case *types.CaseClause:
 		return "case clause"
-	case *ast.ChanType:
+	case *types.ChanType:
 		return "channel type"
-	case *ast.CommClause:
+	case *types.CommClause:
 		return "communication clause"
-	case *ast.Comment:
+	case *types.Comment:
 		return "comment"
-	case *ast.CommentGroup:
+	case *types.CommentGroup:
 		return "comment group"
-	case *ast.CompositeLit:
+	case *types.CompositeLit:
 		return "composite literal"
-	case *ast.DeclStmt:
+	case *types.DeclStmt:
 		return NodeDescription(n.Decl) + " statement"
-	case *ast.DeferStmt:
+	case *types.DeferStmt:
 		return "defer statement"
-	case *ast.Ellipsis:
+	case *types.Ellipsis:
 		return "ellipsis"
-	case *ast.EmptyStmt:
+	case *types.EmptyStmt:
 		return "empty statement"
-	case *ast.ExprStmt:
+	case *types.ExprStmt:
 		return "expression statement"
-	case *ast.Field:
+	case *types.Field:
 		// Can be any of these:
 		// struct {x, y int}  -- struct field(s)
 		// struct {T}         -- anon struct field
@@ -544,19 +544,19 @@ func NodeDescription(n ast.Node) string {
 		// interface {f()}    -- interface method
 		// func (A) func(B) C -- receiver, param(s), result(s)
 		return "field/method/parameter"
-	case *ast.FieldList:
+	case *types.FieldList:
 		return "field/method/parameter list"
-	case *ast.File:
+	case *types.File:
 		return "source file"
-	case *ast.ForStmt:
+	case *types.ForStmt:
 		return "for loop"
-	case *ast.FuncDecl:
+	case *types.FuncDecl:
 		return "function declaration"
-	case *ast.FuncLit:
+	case *types.FuncLit:
 		return "function literal"
-	case *ast.FuncType:
+	case *types.FuncType:
 		return "function type"
-	case *ast.GenDecl:
+	case *types.GenDecl:
 		switch n.Tok {
 		case token.IMPORT:
 			return "import declaration"
@@ -567,60 +567,60 @@ func NodeDescription(n ast.Node) string {
 		case token.VAR:
 			return "variable declaration"
 		}
-	case *ast.GoStmt:
+	case *types.GoStmt:
 		return "go statement"
-	case *ast.Ident:
+	case *types.Ident:
 		return "identifier"
-	case *ast.IfStmt:
+	case *types.IfStmt:
 		return "if statement"
-	case *ast.ImportSpec:
+	case *types.ImportSpec:
 		return "import specification"
-	case *ast.IncDecStmt:
+	case *types.IncDecStmt:
 		if n.Tok == token.INC {
 			return "increment statement"
 		}
 		return "decrement statement"
-	case *ast.IndexExpr:
+	case *types.IndexExpr:
 		return "index expression"
-	case *ast.InterfaceType:
+	case *types.InterfaceType:
 		return "interface type"
-	case *ast.KeyValueExpr:
+	case *types.KeyValueExpr:
 		return "key/value association"
-	case *ast.LabeledStmt:
+	case *types.LabeledStmt:
 		return "statement label"
-	case *ast.MapType:
+	case *types.MapType:
 		return "map type"
-	case *ast.PackageA:
+	case *types.PackageA:
 		return "package"
-	case *ast.ParenExpr:
+	case *types.ParenExpr:
 		return "parenthesized " + NodeDescription(n.X)
-	case *ast.RangeStmt:
+	case *types.RangeStmt:
 		return "range loop"
-	case *ast.ReturnStmt:
+	case *types.ReturnStmt:
 		return "return statement"
-	case *ast.SelectStmt:
+	case *types.SelectStmt:
 		return "select statement"
-	case *ast.SelectorExpr:
+	case *types.SelectorExpr:
 		return "selector"
-	case *ast.SendStmt:
+	case *types.SendStmt:
 		return "channel send"
-	case *ast.SliceExpr:
+	case *types.SliceExpr:
 		return "slice expression"
-	case *ast.StarExpr:
+	case *types.StarExpr:
 		return "*-operation" // load/store expr or pointer type
-	case *ast.StructType:
+	case *types.StructType:
 		return "struct type"
-	case *ast.SwitchStmt:
+	case *types.SwitchStmt:
 		return "switch statement"
-	case *ast.TypeAssertExpr:
+	case *types.TypeAssertExpr:
 		return "type assertion"
-	case *ast.TypeSpec:
+	case *types.TypeSpec:
 		return "type specification"
-	case *ast.TypeSwitchStmt:
+	case *types.TypeSwitchStmt:
 		return "type switch"
-	case *ast.UnaryExpr:
+	case *types.UnaryExpr:
 		return fmt.Sprintf("unary %s operation", n.Op)
-	case *ast.ValueSpec:
+	case *types.ValueSpec:
 		return "value specification"
 
 	}

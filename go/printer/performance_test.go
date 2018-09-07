@@ -14,13 +14,13 @@ import (
 	"log"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 )
 
-var testfile *ast.File
+var testfile *types.File
 
-func testprint(out io.Writer, file *ast.File) {
+func testprint(out io.Writer, file *types.File) {
 	if err := (&Config{TabIndent | UseSpaces, 8, 0}).Fprint(out, fset, file); err != nil {
 		log.Fatalf("print error: %s", err)
 	}

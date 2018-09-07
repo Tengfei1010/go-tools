@@ -8,7 +8,7 @@ package types
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/token"
 	"strings"
 )
@@ -41,7 +41,7 @@ func (check *Checker) sprintf(format string, args ...interface{}) string {
 			arg = operandString(a, check.qualifier)
 		case token.Pos:
 			arg = check.fset.Position(a).String()
-		case ast.Expr:
+		case Expr:
 			arg = ExprString(a)
 		case Object:
 			arg = ObjectString(a, check.qualifier)

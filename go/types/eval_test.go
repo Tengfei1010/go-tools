@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -167,7 +167,7 @@ func TestEvalPos(t *testing.T) {
 	}
 
 	fset := token.NewFileSet()
-	var files []*ast.File
+	var files []*File
 	for i, src := range sources {
 		file, err := parser.ParseFile(fset, "p", src, parser.ParseComments)
 		if err != nil {

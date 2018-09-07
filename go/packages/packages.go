@@ -16,7 +16,6 @@ import (
 	"os"
 	"sync"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 )
@@ -100,7 +99,7 @@ type Config struct {
 	// unsaved text editor buffers, or to selectively eliminate
 	// unwanted function bodies to reduce the amount of work
 	// done by the type checker.
-	ParseFile func(fset *token.FileSet, filename string) (*ast.File, error)
+	ParseFile func(fset *token.FileSet, filename string) (*types.File, error)
 
 	// If Tests is set, the loader includes not just the packages
 	// matching a particular pattern but also any related test packages,
@@ -228,7 +227,7 @@ type Package struct {
 	//
 	// Mode LoadSyntax sets this field for packages matching the patterns.
 	// Mode LoadAllSyntax sets this field for all packages, including dependencies.
-	Syntax []*ast.File
+	Syntax []*types.File
 
 	// TypesInfo provides type information about the package's syntax trees.
 	// It is set only when Syntax is set.
@@ -365,7 +364,7 @@ func newLoader(cfg *Config) *loader {
 		// ParseFile is required even in LoadTypes mode
 		// because we load source if export data is missing.
 		if ld.ParseFile == nil {
-			ld.ParseFile = func(fset *token.FileSet, filename string) (*ast.File, error) {
+			ld.ParseFile = func(fset *token.FileSet, filename string) (*types.File, error) {
 				const mode = parser.AllErrors | parser.ParseComments
 				return parser.ParseFile(fset, filename, nil, mode)
 			}
@@ -530,7 +529,7 @@ func (ld *loader) loadPackage(lpkg *loaderPackage) {
 		// Fill in the blanks to avoid surprises.
 		lpkg.Types = types.Unsafe
 		lpkg.Fset = ld.Fset
-		lpkg.Syntax = []*ast.File{}
+		lpkg.Syntax = []*types.File{}
 		lpkg.TypesInfo = new(types.Info)
 		return
 	}
@@ -603,12 +602,12 @@ func (ld *loader) loadPackage(lpkg *loaderPackage) {
 	lpkg.Syntax = files
 
 	lpkg.TypesInfo = &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Defs:       make(map[*ast.Ident]types.Object),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Implicits:  make(map[ast.Node]types.Object),
-		Scopes:     make(map[ast.Node]*types.Scope),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		Types:      make(map[types.Expr]types.TypeAndValue),
+		Defs:       make(map[*types.Ident]types.Object),
+		Uses:       make(map[*types.Ident]types.Object),
+		Implicits:  make(map[types.Node]types.Object),
+		Scopes:     make(map[types.Node]*types.Scope),
+		Selections: make(map[*types.SelectorExpr]*types.Selection),
 	}
 
 	importer := importerFunc(func(path string) (*types.Package, error) {
@@ -703,12 +702,12 @@ var ioLimit = make(chan bool, 20)
 // list of I/O and parse errors encountered.
 //
 // Because files are scanned in parallel, the token.Pos
-// positions of the resulting ast.Files are not ordered.
+// positions of the resulting types.Files are not ordered.
 //
-func (ld *loader) parseFiles(filenames []string) ([]*ast.File, []error) {
+func (ld *loader) parseFiles(filenames []string) ([]*types.File, []error) {
 	var wg sync.WaitGroup
 	n := len(filenames)
-	parsed := make([]*ast.File, n)
+	parsed := make([]*types.File, n)
 	errors := make([]error, n)
 	for i, file := range filenames {
 		wg.Add(1)

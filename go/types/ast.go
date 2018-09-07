@@ -5,7 +5,7 @@
 // Package ast declares the types used to represent syntax trees for Go
 // packages.
 //
-package ast
+package types
 
 import (
 	"go/token"
@@ -357,16 +357,6 @@ type (
 		Colon token.Pos // position of ":"
 		Value Expr
 	}
-)
-
-// The direction of a channel type is indicated by a bit
-// mask including one or both of the following constants.
-//
-type ChanDir int
-
-const (
-	SEND ChanDir = 1 << iota
-	RECV
 )
 
 // A type is represented by a tree consisting of one

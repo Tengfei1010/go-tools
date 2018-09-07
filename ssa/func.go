@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/types"
 	"io"
 	"os"
@@ -158,12 +158,12 @@ type lblock struct {
 // labelledBlock returns the branch target associated with the
 // specified label, creating it if needed.
 //
-func (f *Function) labelledBlock(label *ast.Ident) *lblock {
+func (f *Function) labelledBlock(label *types.Ident) *lblock {
 	lb := f.lblocks[label.Obj]
 	if lb == nil {
 		lb = &lblock{_goto: f.newBasicBlock(label.Name)}
 		if f.lblocks == nil {
-			f.lblocks = make(map[*ast.ObjectA]*lblock)
+			f.lblocks = make(map[*types.ObjectA]*lblock)
 		}
 		f.lblocks[label.Obj] = lb
 	}
@@ -226,7 +226,7 @@ func (f *Function) startBody() {
 // Postcondition:
 // len(f.Params) == len(f.Signature.Params) + (f.Signature.Recv() ? 1 : 0)
 //
-func (f *Function) createSyntacticParams(recv *ast.FieldList, functype *ast.FuncType) {
+func (f *Function) createSyntacticParams(recv *types.FieldList, functype *types.FuncType) {
 	// Receiver (at most one inner iteration).
 	if recv != nil {
 		for _, field := range recv.List {
@@ -385,7 +385,7 @@ func (f *Function) removeNilBlocks() {
 // the ASTs, potentially keeping them live in memory for longer.
 //
 func (pkg *Package) SetDebugMode(debug bool) {
-	// TODO(adonovan): do we want ast.File granularity?
+	// TODO(adonovan): do we want types.File granularity?
 	pkg.debug = debug
 }
 
@@ -405,7 +405,7 @@ func (f *Function) addNamedLocal(obj types.Object) *Alloc {
 	return l
 }
 
-func (f *Function) addLocalForIdent(id *ast.Ident) *Alloc {
+func (f *Function) addLocalForIdent(id *types.Ident) *Alloc {
 	return f.addNamedLocal(f.Pkg.info.Defs[id])
 }
 
@@ -689,13 +689,13 @@ type extentNode [2]token.Pos
 func (n extentNode) Pos() token.Pos { return n[0] }
 func (n extentNode) End() token.Pos { return n[1] }
 
-// Syntax returns an ast.Node whose Pos/End methods provide the
+// Syntax returns an types.Node whose Pos/End methods provide the
 // lexical extent of the function if it was defined by Go source code
 // (f.Synthetic==""), or nil otherwise.
 //
 // If f was built with debug information (see Package.SetDebugRef),
-// the result is the *ast.FuncDecl or *ast.FuncLit that declared the
+// the result is the *types.FuncDecl or *types.FuncLit that declared the
 // function.  Otherwise, it is an opaque Node providing only position
 // information; this avoids pinning the AST in memory.
 //
-func (f *Function) Syntax() ast.Node { return f.syntax }
+func (f *Function) Syntax() types.Node { return f.syntax }

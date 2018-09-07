@@ -7,13 +7,14 @@ package printer
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/ast"
 	"go/token"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"honnef.co/go/tools/go/types"
 )
 
 const (
@@ -43,10 +44,10 @@ const (
 )
 
 type commentInfo struct {
-	cindex         int               // current comment index
-	comment        *ast.CommentGroup // = printer.comments[cindex]; or nil
-	commentOffset  int               // = printer.posFor(printer.comments[cindex].List[0].Pos()).Offset; or infinity
-	commentNewline bool              // true if the comment group contains newlines
+	cindex         int                 // current comment index
+	comment        *types.CommentGroup // = printer.comments[cindex]; or nil
+	commentOffset  int                 // = printer.posFor(printer.comments[cindex].List[0].Pos()).Offset; or infinity
+	commentNewline bool                // true if the comment group contains newlines
 }
 
 type printer struct {
@@ -77,21 +78,21 @@ type printer struct {
 	linePtr *int           // if set, record out.Line for the next token in *linePtr
 
 	// The list of all source comments, in order of appearance.
-	comments        []*ast.CommentGroup // may be nil
-	useNodeComments bool                // if not set, ignore lead and line comments of nodes
+	comments        []*types.CommentGroup // may be nil
+	useNodeComments bool                  // if not set, ignore lead and line comments of nodes
 
 	// Information about p.comments[p.cindex]; set up by nextComment.
 	commentInfo
 
 	// Cache of already computed node sizes.
-	nodeSizes map[ast.Node]int
+	nodeSizes map[types.Node]int
 
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
 }
 
-func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
+func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[types.Node]int) {
 	p.Config = *cfg
 	p.fset = fset
 	p.pos = token.Position{Line: 1, Column: 1}
@@ -110,9 +111,9 @@ func (p *printer) internalError(msg ...interface{}) {
 }
 
 // commentsHaveNewline reports whether a list of comments belonging to
-// an *ast.CommentGroup contains newlines. Because the position information
+// an *types.CommentGroup contains newlines. Because the position information
 // may only be partially correct, we also have to read the comment text.
-func (p *printer) commentsHaveNewline(list []*ast.Comment) bool {
+func (p *printer) commentsHaveNewline(list []*types.Comment) bool {
 	// len(list) > 0
 	line := p.lineFor(list[0].Pos())
 	for i, c := range list {
@@ -139,7 +140,7 @@ func (p *printer) nextComment() {
 			return
 		}
 		// we should not reach here (correct ASTs don't have empty
-		// ast.CommentGroup nodes), but be conservative and try again
+		// types.CommentGroup nodes), but be conservative and try again
 	}
 	// no more comments
 	p.commentOffset = infinity
@@ -350,7 +351,7 @@ func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 // after all pending comments, prev is the previous comment in
 // a group of comments (or nil), and tok is the next token.
 //
-func (p *printer) writeCommentPrefix(pos, next token.Position, prev *ast.Comment, tok token.Token) {
+func (p *printer) writeCommentPrefix(pos, next token.Position, prev *types.Comment, tok token.Token) {
 	if len(p.output) == 0 {
 		// the comment is the first item to be printed - don't write any whitespace
 		return
@@ -635,7 +636,7 @@ func stripCommonPrefix(lines []string) {
 	}
 }
 
-func (p *printer) writeComment(comment *ast.Comment) {
+func (p *printer) writeComment(comment *types.Comment) {
 	text := comment.Text
 	pos := p.posFor(comment.Pos())
 
@@ -741,7 +742,7 @@ func (p *printer) containsLinebreak() bool {
 // newline was written or if a formfeed was dropped from the whitespace buffer.
 //
 func (p *printer) intersperseComments(next token.Position, tok token.Token) (wroteNewline, droppedFF bool) {
-	var last *ast.Comment
+	var last *types.Comment
 	for p.commentBefore(next) {
 		for _, c := range p.comment.List {
 			p.writeCommentPrefix(p.posFor(c.Pos()), next, last, tok)
@@ -924,12 +925,12 @@ func (p *printer) print(args ...interface{}) {
 			p.lastTok = token.ILLEGAL
 			continue
 
-		case *ast.Ident:
+		case *types.Ident:
 			data = x.Name
 			impliedSemi = true
 			p.lastTok = token.IDENT
 
-		case *ast.BasicLit:
+		case *types.BasicLit:
 			data = x.Value
 			isLit = true
 			impliedSemi = true
@@ -1027,42 +1028,42 @@ func (p *printer) flush(next token.Position, tok token.Token) (wroteNewline, dro
 	return
 }
 
-// getNode returns the ast.CommentGroup associated with n, if any.
-func getDoc(n ast.Node) *ast.CommentGroup {
+// getNode returns the types.CommentGroup associated with n, if any.
+func getDoc(n types.Node) *types.CommentGroup {
 	switch n := n.(type) {
-	case *ast.Field:
+	case *types.Field:
 		return n.Doc
-	case *ast.ImportSpec:
+	case *types.ImportSpec:
 		return n.Doc
-	case *ast.ValueSpec:
+	case *types.ValueSpec:
 		return n.Doc
-	case *ast.TypeSpec:
+	case *types.TypeSpec:
 		return n.Doc
-	case *ast.GenDecl:
+	case *types.GenDecl:
 		return n.Doc
-	case *ast.FuncDecl:
+	case *types.FuncDecl:
 		return n.Doc
-	case *ast.File:
+	case *types.File:
 		return n.Doc
 	}
 	return nil
 }
 
-func getLastComment(n ast.Node) *ast.CommentGroup {
+func getLastComment(n types.Node) *types.CommentGroup {
 	switch n := n.(type) {
-	case *ast.Field:
+	case *types.Field:
 		return n.Comment
-	case *ast.ImportSpec:
+	case *types.ImportSpec:
 		return n.Comment
-	case *ast.ValueSpec:
+	case *types.ValueSpec:
 		return n.Comment
-	case *ast.TypeSpec:
+	case *types.TypeSpec:
 		return n.Comment
-	case *ast.GenDecl:
+	case *types.GenDecl:
 		if len(n.Specs) > 0 {
 			return getLastComment(n.Specs[len(n.Specs)-1])
 		}
-	case *ast.File:
+	case *types.File:
 		if len(n.Comments) > 0 {
 			return n.Comments[len(n.Comments)-1]
 		}
@@ -1072,7 +1073,7 @@ func getLastComment(n ast.Node) *ast.CommentGroup {
 
 func (p *printer) printNode(node interface{}) error {
 	// unpack *CommentedNode, if any
-	var comments []*ast.CommentGroup
+	var comments []*types.CommentGroup
 	if cnode, ok := node.(*CommentedNode); ok {
 		node = cnode.Node
 		comments = cnode.Comments
@@ -1080,7 +1081,7 @@ func (p *printer) printNode(node interface{}) error {
 
 	if comments != nil {
 		// commented node - restrict comment list to relevant range
-		n, ok := node.(ast.Node)
+		n, ok := node.(types.Node)
 		if !ok {
 			goto unsupported
 		}
@@ -1111,8 +1112,8 @@ func (p *printer) printNode(node interface{}) error {
 		if i < j {
 			p.comments = comments[i:j]
 		}
-	} else if n, ok := node.(*ast.File); ok {
-		// use ast.File comments, if any
+	} else if n, ok := node.(*types.File); ok {
+		// use types.File comments, if any
 		p.comments = n.Comments
 	}
 
@@ -1124,31 +1125,31 @@ func (p *printer) printNode(node interface{}) error {
 
 	// format node
 	switch n := node.(type) {
-	case ast.Expr:
+	case types.Expr:
 		p.expr(n)
-	case ast.Stmt:
+	case types.Stmt:
 		// A labeled statement will un-indent to position the label.
 		// Set p.indent to 1 so we don't get indent "underflow".
-		if _, ok := n.(*ast.LabeledStmt); ok {
+		if _, ok := n.(*types.LabeledStmt); ok {
 			p.indent = 1
 		}
 		p.stmt(n, false)
-	case ast.Decl:
+	case types.Decl:
 		p.decl(n)
-	case ast.Spec:
+	case types.Spec:
 		p.spec(n, 1, false)
-	case []ast.Stmt:
+	case []types.Stmt:
 		// A labeled statement will un-indent to position the label.
 		// Set p.indent to 1 so we don't get indent "underflow".
 		for _, s := range n {
-			if _, ok := s.(*ast.LabeledStmt); ok {
+			if _, ok := s.(*types.LabeledStmt); ok {
 				p.indent = 1
 			}
 		}
 		p.stmtList(n, 0, false)
-	case []ast.Decl:
+	case []types.Decl:
 		p.declList(n)
-	case *ast.File:
+	case *types.File:
 		p.file(n)
 	default:
 		goto unsupported
@@ -1286,7 +1287,7 @@ type Config struct {
 }
 
 // fprint implements Fprint and takes a nodesSizes map for setting up the printer state.
-func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (err error) {
+func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[types.Node]int) (err error) {
 	// print node
 	var p printer
 	p.init(cfg, fset, nodeSizes)
@@ -1338,17 +1339,17 @@ func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{
 // It may be provided as argument to any of the Fprint functions.
 //
 type CommentedNode struct {
-	Node     interface{} // *ast.File, or ast.Expr, ast.Decl, ast.Spec, or ast.Stmt
-	Comments []*ast.CommentGroup
+	Node     interface{} // *types.File, or types.Expr, types.Decl, types.Spec, or types.Stmt
+	Comments []*types.CommentGroup
 }
 
 // Fprint "pretty-prints" an AST node to output for a given configuration cfg.
 // Position information is interpreted relative to the file set fset.
-// The node type must be *ast.File, *CommentedNode, []ast.Decl, []ast.Stmt,
-// or assignment-compatible to ast.Expr, ast.Decl, ast.Spec, or ast.Stmt.
+// The node type must be *types.File, *CommentedNode, []types.Decl, []types.Stmt,
+// or assignment-compatible to types.Expr, types.Decl, types.Spec, or types.Stmt.
 //
 func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
-	return cfg.fprint(output, fset, node, make(map[ast.Node]int))
+	return cfg.fprint(output, fset, node, make(map[types.Node]int))
 }
 
 // Fprint "pretty-prints" an AST node to output.

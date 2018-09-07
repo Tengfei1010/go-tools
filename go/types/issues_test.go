@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -29,7 +29,7 @@ func TestIssue5770(t *testing.T) {
 	}
 
 	conf := Config{Importer: importer.Default()}
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, nil) // do not crash
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, nil) // do not crash
 	want := "undeclared name: T"
 	if err == nil || !strings.Contains(err.Error(), want) {
 		t.Errorf("got: %v; want: %s", err, want)
@@ -54,8 +54,8 @@ var (
 	}
 
 	var conf Config
-	types := make(map[ast.Expr]TypeAndValue)
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, &Info{Types: types})
+	types := make(map[Expr]TypeAndValue)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, &Info{Types: types})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ var (
 	for x, tv := range types {
 		var want Type
 		switch x := x.(type) {
-		case *ast.BasicLit:
+		case *BasicLit:
 			switch x.Value {
 			case `8`:
 				want = Typ[Uint8]
@@ -76,7 +76,7 @@ var (
 			case `"foo"`:
 				want = Typ[String]
 			}
-		case *ast.Ident:
+		case *Ident:
 			if x.Name == "nil" {
 				want = Typ[UntypedNil]
 			}
@@ -102,8 +102,8 @@ func f() int {
 	}
 
 	var conf Config
-	types := make(map[ast.Expr]TypeAndValue)
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, &Info{Types: types})
+	types := make(map[Expr]TypeAndValue)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, &Info{Types: types})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func f() int {
 	want := Typ[Int]
 	n := 0
 	for x, tv := range types {
-		if _, ok := x.(*ast.CallExpr); ok {
+		if _, ok := x.(*CallExpr); ok {
 			if tv.Type != want {
 				t.Errorf("%s: got %s; want %s", fset.Position(x.Pos()), tv.Type, want)
 			}
@@ -136,13 +136,13 @@ type T struct{} // receiver type after method declaration
 	}
 
 	var conf Config
-	defs := make(map[*ast.Ident]Object)
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, &Info{Defs: defs})
+	defs := make(map[*Ident]Object)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, &Info{Defs: defs})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	m := f.Decls[0].(*ast.FuncDecl)
+	m := f.Decls[0].(*FuncDecl)
 	res1 := defs[m.Name].(*Func).Type().(*Signature).Results().At(0)
 	res2 := defs[m.Type.Results.List[0].Names[0]].(*Var)
 
@@ -182,9 +182,9 @@ L7 uses var z int`
 
 	// don't abort at the first error
 	conf := Config{Error: func(err error) { t.Log(err) }}
-	defs := make(map[*ast.Ident]Object)
-	uses := make(map[*ast.Ident]Object)
-	_, err = conf.Check(f.Name.Name, fset, []*ast.File{f}, &Info{Defs: defs, Uses: uses})
+	defs := make(map[*Ident]Object)
+	uses := make(map[*Ident]Object)
+	_, err = conf.Check(f.Name.Name, fset, []*File{f}, &Info{Defs: defs, Uses: uses})
 	if s := fmt.Sprint(err); !strings.HasSuffix(s, "cannot assign to w") {
 		t.Errorf("Check: unexpected error: %s", s)
 	}
@@ -268,8 +268,8 @@ func main() {
 			t.Fatal(err)
 		}
 		cfg := Config{Importer: importer.Default()}
-		info := Info{Uses: make(map[*ast.Ident]Object)}
-		_, err = cfg.Check("main", fset, []*ast.File{f}, &info)
+		info := Info{Uses: make(map[*Ident]Object)}
+		_, err = cfg.Check("main", fset, []*File{f}, &info)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -304,7 +304,7 @@ func TestIssue22525(t *testing.T) {
 
 	got := "\n"
 	conf := Config{Error: func(err error) { got += err.Error() + "\n" }}
-	conf.Check(f.Name.Name, fset, []*ast.File{f}, nil) // do not crash
+	conf.Check(f.Name.Name, fset, []*File{f}, nil) // do not crash
 	want := `
 1:27: a declared but not used
 1:30: b declared but not used
@@ -336,16 +336,16 @@ func TestIssue25627(t *testing.T) {
 		}
 
 		cfg := Config{Importer: importer.Default(), Error: func(err error) {}}
-		info := &Info{Types: make(map[ast.Expr]TypeAndValue)}
-		_, err = cfg.Check(f.Name.Name, fset, []*ast.File{f}, info)
+		info := &Info{Types: make(map[Expr]TypeAndValue)}
+		_, err = cfg.Check(f.Name.Name, fset, []*File{f}, info)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
 				t.Fatal(err)
 			}
 		}
 
-		ast.Inspect(f, func(n ast.Node) bool {
-			if spec, _ := n.(*ast.TypeSpec); spec != nil {
+		Inspect(f, func(n Node) bool {
+			if spec, _ := n.(*TypeSpec); spec != nil {
 				if tv, ok := info.Types[spec.Type]; ok && spec.Name.Name == "T" {
 					want := strings.Count(src, ";") + 1
 					if got := tv.Type.(*Struct).NumFields(); got != want {

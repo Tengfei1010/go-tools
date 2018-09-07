@@ -16,21 +16,21 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/ast/astutil"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/types"
 )
 
 // pathToString returns a string containing the concrete types of the
 // nodes in path.
-func pathToString(path []ast.Node) string {
+func pathToString(path []types.Node) string {
 	var buf bytes.Buffer
 	fmt.Fprint(&buf, "[")
 	for i, n := range path {
 		if i > 0 {
 			fmt.Fprint(&buf, " ")
 		}
-		fmt.Fprint(&buf, strings.TrimPrefix(fmt.Sprintf("%T", n), "*ast."))
+		fmt.Fprint(&buf, strings.TrimPrefix(fmt.Sprintf("%T", n), "*types."))
 	}
 	fmt.Fprint(&buf, "]")
 	return buf.String()
@@ -40,7 +40,7 @@ func pathToString(path []ast.Node) string {
 // the first occurrence of substr in input.  f==nil indicates failure;
 // an error has already been reported in that case.
 //
-func findInterval(t *testing.T, fset *token.FileSet, input, substr string) (f *ast.File, start, end token.Pos) {
+func findInterval(t *testing.T, fset *token.FileSet, input, substr string) (f *types.File, start, end token.Pos) {
 	f, err := parser.ParseFile(fset, "<input>", input, 0)
 	if err != nil {
 		t.Errorf("parse error: %s", err)

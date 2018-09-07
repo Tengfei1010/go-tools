@@ -8,7 +8,7 @@ package ssa
 // expressions.
 
 import (
-	"honnef.co/go/tools/go/ast"
+	
 	"go/token"
 	"honnef.co/go/tools/go/types"
 )
@@ -28,7 +28,7 @@ type lvalue interface {
 type address struct {
 	addr Value
 	pos  token.Pos // source position
-	expr ast.Expr  // source syntax of the value (not address) [debug mode]
+	expr types.Expr  // source syntax of the value (not address) [debug mode]
 }
 
 func (a *address) load(fn *Function) Value {

@@ -8,10 +8,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
-	"honnef.co/go/tools/go/ast"
 	"os"
 	"strings"
 	"testing"
+
+	"honnef.co/go/tools/go/types"
 )
 
 var validFiles = []string{
@@ -75,8 +76,8 @@ func TestParseExpr(t *testing.T) {
 		t.Errorf("ParseExpr(%q): %v", src, err)
 	}
 	// sanity check
-	if _, ok := x.(*ast.BinaryExpr); !ok {
-		t.Errorf("ParseExpr(%q): got %T, want *ast.BinaryExpr", src, x)
+	if _, ok := x.(*types.BinaryExpr); !ok {
+		t.Errorf("ParseExpr(%q): got %T, want *types.BinaryExpr", src, x)
 	}
 
 	// a valid type expression
@@ -86,8 +87,8 @@ func TestParseExpr(t *testing.T) {
 		t.Errorf("ParseExpr(%q): %v", src, err)
 	}
 	// sanity check
-	if _, ok := x.(*ast.StructType); !ok {
-		t.Errorf("ParseExpr(%q): got %T, want *ast.StructType", src, x)
+	if _, ok := x.(*types.StructType); !ok {
+		t.Errorf("ParseExpr(%q): got %T, want *types.StructType", src, x)
 	}
 
 	// an invalid expression
@@ -135,15 +136,15 @@ func TestColonEqualsScope(t *testing.T) {
 	}
 
 	// RHS refers to undefined globals; LHS does not.
-	as := f.Decls[0].(*ast.FuncDecl).Body.List[0].(*ast.AssignStmt)
+	as := f.Decls[0].(*types.FuncDecl).Body.List[0].(*types.AssignStmt)
 	for _, v := range as.Rhs {
-		id := v.(*ast.Ident)
+		id := v.(*types.Ident)
 		if id.Obj != nil {
 			t.Errorf("rhs %s has Obj, should not", id.Name)
 		}
 	}
 	for _, v := range as.Lhs {
-		id := v.(*ast.Ident)
+		id := v.(*types.Ident)
 		if id.Obj == nil {
 			t.Errorf("lhs %s does not have Obj, should", id.Name)
 		}
@@ -157,9 +158,9 @@ func TestVarScope(t *testing.T) {
 	}
 
 	// RHS refers to undefined globals; LHS does not.
-	as := f.Decls[0].(*ast.FuncDecl).Body.List[0].(*ast.DeclStmt).Decl.(*ast.GenDecl).Specs[0].(*ast.ValueSpec)
+	as := f.Decls[0].(*types.FuncDecl).Body.List[0].(*types.DeclStmt).Decl.(*types.GenDecl).Specs[0].(*types.ValueSpec)
 	for _, v := range as.Values {
-		id := v.(*ast.Ident)
+		id := v.(*types.Ident)
 		if id.Obj != nil {
 			t.Errorf("rhs %s has Obj, should not", id.Name)
 		}
@@ -186,22 +187,22 @@ func f() { L: }
 		t.Fatal(err)
 	}
 
-	objects := map[string]ast.ObjKind{
-		"p":   ast.BadKind, // not in a scope
-		"fmt": ast.BadKind, // not resolved yet
-		"pi":  ast.ConKind,
-		"T":   ast.TypKind,
-		"x":   ast.VarKind,
-		"int": ast.BadKind, // not resolved yet
-		"f":   ast.FunKind,
-		"L":   ast.LblKind,
+	objects := map[string]types.ObjKind{
+		"p":   types.BadKind, // not in a scope
+		"fmt": types.BadKind, // not resolved yet
+		"pi":  types.ConKind,
+		"T":   types.TypKind,
+		"x":   types.VarKind,
+		"int": types.BadKind, // not resolved yet
+		"f":   types.FunKind,
+		"L":   types.LblKind,
 	}
 
-	ast.Inspect(f, func(n ast.Node) bool {
-		if ident, ok := n.(*ast.Ident); ok {
+	types.Inspect(f, func(n types.Node) bool {
+		if ident, ok := n.(*types.Ident); ok {
 			obj := ident.Obj
 			if obj == nil {
-				if objects[ident.Name] != ast.BadKind {
+				if objects[ident.Name] != types.BadKind {
 					t.Errorf("no object for %s", ident.Name)
 				}
 				return true
@@ -372,13 +373,13 @@ func ExampleCount() {
 	}
 }
 
-func getField(file *ast.File, fieldname string) *ast.Field {
+func getField(file *types.File, fieldname string) *types.Field {
 	parts := strings.Split(fieldname, ".")
 	for _, d := range file.Decls {
-		if d, ok := d.(*ast.GenDecl); ok && d.Tok == token.TYPE {
+		if d, ok := d.(*types.GenDecl); ok && d.Tok == token.TYPE {
 			for _, s := range d.Specs {
-				if s, ok := s.(*ast.TypeSpec); ok && s.Name.Name == parts[0] {
-					if s, ok := s.Type.(*ast.StructType); ok {
+				if s, ok := s.(*types.TypeSpec); ok && s.Name.Name == parts[0] {
+					if s, ok := s.Type.(*types.StructType); ok {
 						for _, f := range s.Fields.List {
 							for _, name := range f.Names {
 								if name.Name == parts[1] {
@@ -394,8 +395,8 @@ func getField(file *ast.File, fieldname string) *ast.Field {
 	return nil
 }
 
-// Don't use ast.CommentGroup.Text() - we want to see exact comment text.
-func commentText(c *ast.CommentGroup) string {
+// Don't use types.CommentGroup.Text() - we want to see exact comment text.
+func commentText(c *types.CommentGroup) string {
 	var buf bytes.Buffer
 	if c != nil {
 		for _, c := range c.List {
@@ -405,7 +406,7 @@ func commentText(c *ast.CommentGroup) string {
 	return buf.String()
 }
 
-func checkFieldComments(t *testing.T, file *ast.File, fieldname, lead, line string) {
+func checkFieldComments(t *testing.T, file *types.File, fieldname, lead, line string) {
 	f := getField(file, fieldname)
 	if f == nil {
 		t.Fatalf("field not found: %s", fieldname)
@@ -438,7 +439,7 @@ type T struct {
 	checkFieldComments(t, f, "T.F1", "/* F1 lead comment *///", "/* F1 */// line comment")
 	checkFieldComments(t, f, "T.F2", "// F2 lead// comment", "// F2 line comment")
 	checkFieldComments(t, f, "T.f3", "// f3 lead comment", "// f3 line comment")
-	ast.FileExports(f)
+	types.FileExports(f)
 	checkFieldComments(t, f, "T.F1", "/* F1 lead comment *///", "/* F1 */// line comment")
 	checkFieldComments(t, f, "T.F2", "// F2 lead// comment", "// F2 line comment")
 	if getField(f, "T.f3") != nil {
@@ -467,13 +468,13 @@ func TestIssue9979(t *testing.T) {
 		}
 
 		var pos, end token.Pos
-		ast.Inspect(f, func(x ast.Node) bool {
+		types.Inspect(f, func(x types.Node) bool {
 			switch s := x.(type) {
-			case *ast.BlockStmt:
+			case *types.BlockStmt:
 				pos, end = s.Pos()+1, s.End()-1 // exclude "{", "}"
-			case *ast.LabeledStmt:
+			case *types.LabeledStmt:
 				pos, end = s.Pos()+2, s.End() // exclude "L:"
-			case *ast.EmptyStmt:
+			case *types.EmptyStmt:
 				// check containment
 				if s.Pos() < pos || s.End() > end {
 					t.Errorf("%s: %T[%d, %d] not inside [%d, %d]", src, s, s.Pos(), s.End(), pos, end)
@@ -494,8 +495,8 @@ func TestIssue9979(t *testing.T) {
 }
 
 // TestIncompleteSelection ensures that an incomplete selector
-// expression is parsed as a (blank) *ast.SelectorExpr, not a
-// *ast.BadExpr.
+// expression is parsed as a (blank) *types.SelectorExpr, not a
+// *types.BadExpr.
 func TestIncompleteSelection(t *testing.T) {
 	for _, src := range []string{
 		"package p; var _ = fmt.",             // at EOF
@@ -513,15 +514,15 @@ func TestIncompleteSelection(t *testing.T) {
 			t.Errorf("ParseFile returned wrong error %q, want %q", err, wantErr)
 		}
 
-		var sel *ast.SelectorExpr
-		ast.Inspect(f, func(n ast.Node) bool {
-			if n, ok := n.(*ast.SelectorExpr); ok {
+		var sel *types.SelectorExpr
+		types.Inspect(f, func(n types.Node) bool {
+			if n, ok := n.(*types.SelectorExpr); ok {
 				sel = n
 			}
 			return true
 		})
 		if sel == nil {
-			t.Error("found no *ast.SelectorExpr")
+			t.Error("found no *types.SelectorExpr")
 			continue
 		}
 		const wantSel = "&{fmt _}"
@@ -541,7 +542,7 @@ type x int // comment
 	if err != nil {
 		t.Fatal(err)
 	}
-	comment := f.Decls[0].(*ast.GenDecl).Specs[0].(*ast.TypeSpec).Comment.List[0].Text
+	comment := f.Decls[0].(*types.GenDecl).Specs[0].(*types.TypeSpec).Comment.List[0].Text
 	if comment != "// comment" {
 		t.Errorf("got %q, want %q", comment, "// comment")
 	}

@@ -6,7 +6,7 @@ package types
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/ast"
+	
 	"go/constant"
 	"go/token"
 	"sort"
@@ -19,9 +19,9 @@ import (
 type declInfo struct {
 	file  *Scope        // scope of file containing this declaration
 	lhs   []*Var        // lhs of n:1 variable declarations, or nil
-	typ   ast.Expr      // type, or nil
-	init  ast.Expr      // init/orig expression, or nil
-	fdecl *ast.FuncDecl // func declaration, or nil
+	typ   Expr      // type, or nil
+	init  Expr      // init/orig expression, or nil
+	fdecl *FuncDecl // func declaration, or nil
 	alias bool          // type alias declaration
 
 	// The deps field tracks initialization expression dependencies.
@@ -51,7 +51,7 @@ func (d *declInfo) addDep(obj Object) {
 // have the appropriate number of names and init exprs. For const
 // decls, init is the value spec providing the init exprs; for
 // var decls, init is nil (the init exprs are in s in this case).
-func (check *Checker) arityMatch(s, init *ast.ValueSpec) {
+func (check *Checker) arityMatch(s, init *ValueSpec) {
 	l := len(s.Names)
 	r := len(s.Values)
 	if init != nil {
@@ -100,7 +100,7 @@ func validatedImportPath(path string) (string, error) {
 
 // declarePkgObj declares obj in the package scope, records its ident -> obj mapping,
 // and updates check.objMap. The object must not be a function or method.
-func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
+func (check *Checker) declarePkgObj(ident *Ident, obj Object, d *declInfo) {
 	assert(ident.Name == obj.Name())
 
 	// spec: "A package-scope or file-scope identifier with name init
@@ -221,9 +221,9 @@ func (check *Checker) collectObjects() {
 		// but there is no corresponding package object.
 		check.recordDef(file.Name, nil)
 
-		// Use the actual source file extent rather than *ast.File extent since the
+		// Use the actual source file extent rather than *File extent since the
 		// latter doesn't include comments which appear at the start or end of the file.
-		// Be conservative and use the *ast.File extent if we don't have a *token.File.
+		// Be conservative and use the *File extent if we don't have a *token.File.
 		pos, end := file.Pos(), file.End()
 		if f := check.fset.File(file.Pos()); f != nil {
 			pos, end = token.Pos(f.Base()), token.Pos(f.Base()+f.Size())
@@ -238,14 +238,14 @@ func (check *Checker) collectObjects() {
 
 		for _, decl := range file.Decls {
 			switch d := decl.(type) {
-			case *ast.BadDecl:
+			case *BadDecl:
 				// ignore
 
-			case *ast.GenDecl:
-				var last *ast.ValueSpec // last ValueSpec with type or init exprs seen
+			case *GenDecl:
+				var last *ValueSpec // last ValueSpec with type or init exprs seen
 				for iota, spec := range d.Specs {
 					switch s := spec.(type) {
-					case *ast.ImportSpec:
+					case *ImportSpec:
 						// import package
 						path, err := validatedImportPath(s.Path.Value)
 						if err != nil {
@@ -320,7 +320,7 @@ func (check *Checker) collectObjects() {
 							check.declare(fileScope, nil, obj, token.NoPos)
 						}
 
-					case *ast.ValueSpec:
+					case *ValueSpec:
 						switch d.Tok {
 						case token.CONST:
 							// determine which initialization expressions to use
@@ -328,14 +328,14 @@ func (check *Checker) collectObjects() {
 							case s.Type != nil || len(s.Values) > 0:
 								last = s
 							case last == nil:
-								last = new(ast.ValueSpec) // make sure last exists
+								last = new(ValueSpec) // make sure last exists
 							}
 
 							// declare all constants
 							for i, name := range s.Names {
 								obj := NewConst(name.Pos(), pkg, name.Name, nil, constant.MakeInt64(int64(iota)))
 
-								var init ast.Expr
+								var init Expr
 								if i < len(last.Values) {
 									init = last.Values[i]
 								}
@@ -368,7 +368,7 @@ func (check *Checker) collectObjects() {
 								d := d1
 								if d == nil {
 									// individual assignments
-									var init ast.Expr
+									var init Expr
 									if i < len(s.Values) {
 										init = s.Values[i]
 									}
@@ -384,16 +384,16 @@ func (check *Checker) collectObjects() {
 							check.invalidAST(s.Pos(), "invalid token %s", d.Tok)
 						}
 
-					case *ast.TypeSpec:
+					case *TypeSpec:
 						obj := NewTypeName(s.Name.Pos(), pkg, s.Name.Name, nil)
 						check.declarePkgObj(s.Name, obj, &declInfo{file: fileScope, typ: s.Type, alias: s.Assign.IsValid()})
 
 					default:
-						check.invalidAST(s.Pos(), "unknown ast.Spec node %T", s)
+						check.invalidAST(s.Pos(), "unknown Spec node %T", s)
 					}
 				}
 
-			case *ast.FuncDecl:
+			case *FuncDecl:
 				name := d.Name.Name
 				obj := NewFunc(d.Name.Pos(), pkg, name, nil)
 				if d.Recv == nil {
@@ -424,7 +424,7 @@ func (check *Checker) collectObjects() {
 				obj.setOrder(uint32(len(check.objMap)))
 
 			default:
-				check.invalidAST(d.Pos(), "unknown ast.Decl node %T", d)
+				check.invalidAST(d.Pos(), "unknown Decl node %T", d)
 			}
 		}
 	}
@@ -459,10 +459,10 @@ func (check *Checker) collectObjects() {
 			// f is a method
 			// receiver may be of the form T or *T, possibly with parentheses
 			typ := unparen(list[0].Type)
-			if ptr, _ := typ.(*ast.StarExpr); ptr != nil {
+			if ptr, _ := typ.(*StarExpr); ptr != nil {
 				typ = unparen(ptr.X)
 			}
-			if base, _ := typ.(*ast.Ident); base != nil {
+			if base, _ := typ.(*Ident); base != nil {
 				// base is a potential base type name; determine
 				// "underlying" defined type and associate f with it
 				if tname := check.resolveBaseTypeName(base); tname != nil {
@@ -476,7 +476,7 @@ func (check *Checker) collectObjects() {
 // resolveBaseTypeName returns the non-alias receiver base type name,
 // explicitly declared in the package scope, for the given receiver
 // type name; or nil.
-func (check *Checker) resolveBaseTypeName(name *ast.Ident) *TypeName {
+func (check *Checker) resolveBaseTypeName(name *Ident) *TypeName {
 	var path []*TypeName
 	for {
 		// name must denote an object found in the current package scope
@@ -507,7 +507,7 @@ func (check *Checker) resolveBaseTypeName(name *ast.Ident) *TypeName {
 		// type which is not an (unqualified) named type, we're done because
 		// receiver base types must be named types declared in this package.
 		typ := unparen(tdecl.typ) // a type may be parenthesized
-		name, _ = typ.(*ast.Ident)
+		name, _ = typ.(*Ident)
 		if name == nil {
 			return nil
 		}

@@ -13,7 +13,7 @@ import (
 	"go/token"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/types"
 )
@@ -25,9 +25,9 @@ func findStructType(t *testing.T, src string) *types.Struct {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info := types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	info := types.Info{Types: make(map[Expr]types.TypeAndValue)}
 	var conf types.Config
-	_, err = conf.Check("x", fset, []*ast.File{f}, &info)
+	_, err = conf.Check("x", fset, []*File{f}, &info)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,12 +99,12 @@ const _ = unsafe.Offsetof(struct{ x int64 }{}.x)
 	if err != nil {
 		t.Fatal(err)
 	}
-	info := types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	info := types.Info{Types: make(map[Expr]types.TypeAndValue)}
 	conf := types.Config{
 		Importer: importer.Default(),
 		Sizes:    &types.StdSizes{WordSize: 8, MaxAlign: 8},
 	}
-	_, err = conf.Check("x", fset, []*ast.File{f}, &info)
+	_, err = conf.Check("x", fset, []*File{f}, &info)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -38,7 +38,7 @@ import (
 	"strings"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
+	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )
@@ -114,8 +114,8 @@ func splitError(err error) (pos, msg string) {
 	return
 }
 
-func parseFiles(t *testing.T, filenames []string) ([]*ast.File, []error) {
-	var files []*ast.File
+func parseFiles(t *testing.T, filenames []string) ([]*File, []error) {
+	var files []*File
 	var errlist []error
 	for _, filename := range filenames {
 		file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
@@ -147,7 +147,7 @@ var errRx = regexp.MustCompile(`^ *ERROR *(HERE)? *"?([^"]*)"?`)
 // errMap collects the regular expressions of ERROR comments found
 // in files and returns them as a map of error positions to error messages.
 //
-func errMap(t *testing.T, testname string, files []*ast.File) map[string][]string {
+func errMap(t *testing.T, testname string, files []*File) map[string][]string {
 	// map of position strings to lists of error message patterns
 	errmap := make(map[string][]string)
 

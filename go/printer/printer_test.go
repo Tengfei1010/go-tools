@@ -49,7 +49,7 @@ func format(src []byte, mode checkMode) ([]byte, error) {
 
 	// filter exports if necessary
 	if mode&export != 0 {
-		ast.FileExports(f) // ignore result
+		types.FileExports(f) // ignore result
 		f.Comments = nil   // don't print comments that are not in AST
 	}
 
@@ -253,7 +253,7 @@ func TestLineComments(t *testing.T) {
 func init() {
 	const name = "foobar"
 	var buf bytes.Buffer
-	if err := Fprint(&buf, fset, &ast.Ident{Name: name}); err != nil {
+	if err := Fprint(&buf, fset, &types.Ident{Name: name}); err != nil {
 		panic(err) // error in test
 	}
 	// in debug mode, the result contains additional information;
@@ -280,7 +280,7 @@ func TestBadNodes(t *testing.T) {
 
 // testComment verifies that f can be parsed again after printing it
 // with its first comment set to comment at any possible source offset.
-func testComment(t *testing.T, f *ast.File, srclen int, comment *ast.Comment) {
+func testComment(t *testing.T, f *types.File, srclen int, comment *types.Comment) {
 	f.Comments[0].List[0] = comment
 	var buf bytes.Buffer
 	for offs := 0; offs <= srclen; offs++ {
@@ -332,33 +332,33 @@ func fibo(n int) {
 		t.Error("expected offset 1") // error in test
 	}
 
-	testComment(t, f, len(src), &ast.Comment{Slash: pos, Text: "//-style comment"})
-	testComment(t, f, len(src), &ast.Comment{Slash: pos, Text: "/*-style comment */"})
-	testComment(t, f, len(src), &ast.Comment{Slash: pos, Text: "/*-style \n comment */"})
-	testComment(t, f, len(src), &ast.Comment{Slash: pos, Text: "/*-style comment \n\n\n */"})
+	testComment(t, f, len(src), &types.Comment{Slash: pos, Text: "//-style comment"})
+	testComment(t, f, len(src), &types.Comment{Slash: pos, Text: "/*-style comment */"})
+	testComment(t, f, len(src), &types.Comment{Slash: pos, Text: "/*-style \n comment */"})
+	testComment(t, f, len(src), &types.Comment{Slash: pos, Text: "/*-style comment \n\n\n */"})
 }
 
-type visitor chan *ast.Ident
+type visitor chan *types.Ident
 
-func (v visitor) Visit(n ast.Node) (w ast.Visitor) {
-	if ident, ok := n.(*ast.Ident); ok {
+func (v visitor) Visit(n types.Node) (w types.Visitor) {
+	if ident, ok := n.(*types.Ident); ok {
 		v <- ident
 	}
 	return v
 }
 
 // idents is an iterator that returns all idents in f via the result channel.
-func idents(f *ast.File) <-chan *ast.Ident {
+func idents(f *types.File) <-chan *types.Ident {
 	v := make(visitor)
 	go func() {
-		ast.Walk(v, f)
+		types.Walk(v, f)
 		close(v)
 	}()
 	return v
 }
 
 // identCount returns the number of identifiers found in f.
-func identCount(f *ast.File) int {
+func identCount(f *types.File) int {
 	n := 0
 	for range idents(f) {
 		n++
@@ -525,7 +525,7 @@ func TestStmtLists(t *testing.T) {
 		}
 
 		var buf bytes.Buffer
-		err = Fprint(&buf, fset, file.Decls[0].(*ast.FuncDecl).Body.List) // only print statements
+		err = Fprint(&buf, fset, file.Decls[0].(*types.FuncDecl).Body.List) // only print statements
 		if err != nil {
 			panic(err) // error in test
 		}
@@ -581,15 +581,15 @@ func TestBaseIndent(t *testing.T) {
 	}
 }
 
-// TestFuncType tests that an ast.FuncType with a nil Params field
+// TestFuncType tests that an types.FuncType with a nil Params field
 // can be printed (per go/ast specification). Test case for issue 3870.
 func TestFuncType(t *testing.T) {
-	src := &ast.File{
-		Name: &ast.Ident{Name: "p"},
-		Decls: []ast.Decl{
-			&ast.FuncDecl{
-				Name: &ast.Ident{Name: "f"},
-				Type: &ast.FuncType{},
+	src := &types.File{
+		Name: &types.Ident{Name: "p"},
+		Decls: []types.Decl{
+			&types.FuncDecl{
+				Name: &types.Ident{Name: "f"},
+				Type: &types.FuncType{},
 			},
 		},
 	}

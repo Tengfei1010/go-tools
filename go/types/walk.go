@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package ast
+package types
 
 import "fmt"
 
@@ -55,7 +55,7 @@ func Walk(v Visitor, node Node) {
 
 	// walk children
 	// (the order of the cases matches the order
-	// of the corresponding node types in ast.go)
+	// of the corresponding node types in go)
 	switch n := node.(type) {
 	// Comments and fields
 	case *Comment:
@@ -361,7 +361,7 @@ func Walk(v Visitor, node Node) {
 		}
 
 	default:
-		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
+		panic(fmt.Sprintf("Walk: unexpected node type %T", n))
 	}
 
 	v.Visit(nil)
