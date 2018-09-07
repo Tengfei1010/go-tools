@@ -7,7 +7,6 @@ package astutil
 import (
 	"fmt"
 	"reflect"
-	"sort"
 
 	"honnef.co/go/tools/go/types"
 )
@@ -107,11 +106,10 @@ func (c *Cursor) field() reflect.Value {
 // The replacement node is not walked by Apply.
 func (c *Cursor) Replace(n types.Node) {
 	if _, ok := c.node.(*types.File); ok {
-		file, ok := n.(*types.File)
+		_, ok := n.(*types.File)
 		if !ok {
 			panic("attempt to replace *types.File with non-*types.File")
 		}
-		c.parent.(*types.PackageA).Files[c.name] = file
 		return
 	}
 
@@ -128,7 +126,6 @@ func (c *Cursor) Replace(n types.Node) {
 // Delete removes it from the package's Files map.
 func (c *Cursor) Delete() {
 	if _, ok := c.node.(*types.File); ok {
-		delete(c.parent.(*types.PackageA).Files, c.name)
 		return
 	}
 
@@ -425,17 +422,6 @@ func (a *application) apply(parent types.Node, name string, iter *iterator, n ty
 		a.applyList(n, "Decls")
 		// Don't walk n.Comments; they have either been walked already if
 		// they are Doc comments, or they can be easily walked explicitly.
-
-	case *types.PackageA:
-		// collect and sort names for reproducible behavior
-		var names []string
-		for name := range n.Files {
-			names = append(names, name)
-		}
-		sort.Strings(names)
-		for _, name := range names {
-			a.apply(n, name, nil, n.Files[name])
-		}
 
 	default:
 		panic(fmt.Sprintf("Apply: unexpected node type %T", n))

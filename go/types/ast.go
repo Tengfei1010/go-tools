@@ -991,16 +991,3 @@ func (f *File) End() token.Pos {
 	}
 	return f.Name.End()
 }
-
-// A PackageA node represents a set of source files
-// collectively building a Go package.
-//
-type PackageA struct {
-	Name    string              // package name
-	Scope   *ScopeA             // package scope across all files
-	Imports map[string]*ObjectA // map of package id -> package object
-	Files   map[string]*File    // Go source files by filename
-}
-
-func (p *PackageA) Pos() token.Pos { return token.NoPos }
-func (p *PackageA) End() token.Pos { return token.NoPos }

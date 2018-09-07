@@ -590,8 +590,6 @@ func NodeDescription(n types.Node) string {
 		return "statement label"
 	case *types.MapType:
 		return "map type"
-	case *types.PackageA:
-		return "package"
 	case *types.ParenExpr:
 		return "parenthesized " + NodeDescription(n.X)
 	case *types.RangeStmt:

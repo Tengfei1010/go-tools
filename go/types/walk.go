@@ -355,11 +355,6 @@ func Walk(v Visitor, node Node) {
 		// visited already through the individual
 		// nodes
 
-	case *PackageA:
-		for _, f := range n.Files {
-			Walk(v, f)
-		}
-
 	default:
 		panic(fmt.Sprintf("Walk: unexpected node type %T", n))
 	}

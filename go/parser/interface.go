@@ -12,9 +12,6 @@ import (
 	"go/token"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"honnef.co/go/tools/go/types"
 )
@@ -116,55 +113,6 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 	// parse source
 	p.init(fset, filename, text, mode)
 	f = p.parseFile()
-
-	return
-}
-
-// ParseDir calls ParseFile for all files with names ending in ".go" in the
-// directory specified by path and returns a map of package name -> package
-// AST with all the packages found.
-//
-// If filter != nil, only the files with os.FileInfo entries passing through
-// the filter (and ending in ".go") are considered. The mode bits are passed
-// to ParseFile unchanged. Position information is recorded in fset, which
-// must not be nil.
-//
-// If the directory couldn't be read, a nil map and the respective error are
-// returned. If a parse error occurred, a non-nil but incomplete map and the
-// first error encountered are returned.
-//
-func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*types.PackageA, first error) {
-	fd, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-
-	list, err := fd.Readdir(-1)
-	if err != nil {
-		return nil, err
-	}
-
-	pkgs = make(map[string]*types.PackageA)
-	for _, d := range list {
-		if strings.HasSuffix(d.Name(), ".go") && (filter == nil || filter(d)) {
-			filename := filepath.Join(path, d.Name())
-			if src, err := ParseFile(fset, filename, nil, mode); err == nil {
-				name := src.Name.Name
-				pkg, found := pkgs[name]
-				if !found {
-					pkg = &types.PackageA{
-						Name:  name,
-						Files: make(map[string]*types.File),
-					}
-					pkgs[name] = pkg
-				}
-				pkg.Files[filename] = src
-			} else if first == nil {
-				first = err
-			}
-		}
-	}
 
 	return
 }
