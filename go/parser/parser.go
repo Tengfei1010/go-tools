@@ -960,7 +960,7 @@ func (p *parser) parseFuncTypeOrLit() types.Expr {
 	body := p.parseBody()
 	p.exprLev--
 
-	return &types.FuncLit{Type: typ, Body: body}
+	return &types.FuncLit{Typ: typ, Body: body}
 }
 
 // parseOperand may return an expression or a raw type (incl. array
@@ -1034,7 +1034,7 @@ func (p *parser) parseTypeAssertion(x types.Expr) types.Expr {
 	}
 	rparen := p.expect(token.RPAREN)
 
-	return &types.TypeAssertExpr{X: x, Type: typ, Lparen: lparen, Rparen: rparen}
+	return &types.TypeAssertExpr{X: x, Typ: typ, Lparen: lparen, Rparen: rparen}
 }
 
 func (p *parser) parseIndexOrSlice(x types.Expr) types.Expr {
@@ -1194,7 +1194,7 @@ func (p *parser) parseLiteralValue(typ types.Expr) types.Expr {
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
-	return &types.CompositeLit{Type: typ, Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
+	return &types.CompositeLit{Typ: typ, Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
 // checkExpr checks that x is an expression (and not a type).
@@ -1781,7 +1781,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *types.CaseClause {
 
 func isTypeSwitchAssert(x types.Expr) bool {
 	a, ok := x.(*types.TypeAssertExpr)
-	return ok && a.Type == nil
+	return ok && a.Typ == nil
 }
 
 func (p *parser) isTypeSwitchGuard(s types.Stmt) bool {

@@ -41,6 +41,7 @@ type Node interface {
 type Expr interface {
 	Node
 	TV() TypeAndValue
+	Type() Type
 	setTV(tv TypeAndValue)
 	exprNode()
 }
@@ -267,14 +268,14 @@ type (
 
 	// A FuncLit node represents a function literal.
 	FuncLit struct {
-		Type *FuncType  // function type
+		Typ  *FuncType  // function type
 		Body *BlockStmt // function body
 		tv   TypeAndValue
 	}
 
 	// A CompositeLit node represents a composite literal.
 	CompositeLit struct {
-		Type       Expr      // literal type; or nil
+		Typ        Expr      // literal type; or nil
 		Lbrace     token.Pos // position of "{"
 		Elts       []Expr    // list of composite elements; or nil
 		Rbrace     token.Pos // position of "}"
@@ -325,7 +326,7 @@ type (
 	TypeAssertExpr struct {
 		X      Expr      // expression
 		Lparen token.Pos // position of "("
-		Type   Expr      // asserted type; nil means type switch X.(type)
+		Typ    Expr      // asserted type; nil means type switch X.(type)
 		Rparen token.Pos // position of ")"
 		tv     TypeAndValue
 	}
@@ -442,10 +443,10 @@ func (x *BadExpr) Pos() token.Pos  { return x.From }
 func (x *Ident) Pos() token.Pos    { return x.NamePos }
 func (x *Ellipsis) Pos() token.Pos { return x.Ellipsis }
 func (x *BasicLit) Pos() token.Pos { return x.ValuePos }
-func (x *FuncLit) Pos() token.Pos  { return x.Type.Pos() }
+func (x *FuncLit) Pos() token.Pos  { return x.Typ.Pos() }
 func (x *CompositeLit) Pos() token.Pos {
-	if x.Type != nil {
-		return x.Type.Pos()
+	if x.Typ != nil {
+		return x.Typ.Pos()
 	}
 	return x.Lbrace
 }
@@ -549,6 +550,37 @@ func (expr *FuncType) setTV(tv TypeAndValue)       { expr.tv = tv }
 func (expr *InterfaceType) setTV(tv TypeAndValue)  { expr.tv = tv }
 func (expr *MapType) setTV(tv TypeAndValue)        { expr.tv = tv }
 func (expr *ChanType) setTV(tv TypeAndValue)       { expr.tv = tv }
+
+func (expr *BadExpr) Type() Type { return expr.tv.Type }
+func (expr *Ident) Type() Type {
+	if expr.tv.Type != nil {
+		return expr.tv.Type
+	}
+	if expr.Obj != nil {
+		return expr.Obj.Type()
+	}
+	return nil
+}
+func (expr *Ellipsis) Type() Type       { return expr.tv.Type }
+func (expr *BasicLit) Type() Type       { return expr.tv.Type }
+func (expr *FuncLit) Type() Type        { return expr.tv.Type }
+func (expr *CompositeLit) Type() Type   { return expr.tv.Type }
+func (expr *ParenExpr) Type() Type      { return expr.tv.Type }
+func (expr *SelectorExpr) Type() Type   { return expr.tv.Type }
+func (expr *IndexExpr) Type() Type      { return expr.tv.Type }
+func (expr *SliceExpr) Type() Type      { return expr.tv.Type }
+func (expr *TypeAssertExpr) Type() Type { return expr.tv.Type }
+func (expr *CallExpr) Type() Type       { return expr.tv.Type }
+func (expr *StarExpr) Type() Type       { return expr.tv.Type }
+func (expr *UnaryExpr) Type() Type      { return expr.tv.Type }
+func (expr *BinaryExpr) Type() Type     { return expr.tv.Type }
+func (expr *KeyValueExpr) Type() Type   { return expr.tv.Type }
+func (expr *ArrayType) Type() Type      { return expr.tv.Type }
+func (expr *StructType) Type() Type     { return expr.tv.Type }
+func (expr *FuncType) Type() Type       { return expr.tv.Type }
+func (expr *InterfaceType) Type() Type  { return expr.tv.Type }
+func (expr *MapType) Type() Type        { return expr.tv.Type }
+func (expr *ChanType) Type() Type       { return expr.tv.Type }
 
 // exprNode() ensures that only expression/type nodes can be
 // assigned to an Expr.

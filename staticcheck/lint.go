@@ -469,7 +469,7 @@ func applyStdlibKnowledge(fn *ssa.Function) {
 }
 
 func hasType(j *lint.Job, expr types.Expr, name string) bool {
-	T := expr.TV().Type
+	T := expr.Type()
 	return IsType(T, name)
 }
 
@@ -713,7 +713,7 @@ func (c *Checker) CheckDubiousDeferInChannelRangeLoop(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		typ := loop.X.TV().Type
+		typ := loop.X.Type()
 		_, ok = typ.Underlying().(*types.Chan)
 		if !ok {
 			return true
@@ -860,7 +860,7 @@ func (c *Checker) CheckLhsRhsIdentical(j *lint.Job) {
 		}
 		switch op.Op {
 		case token.EQL, token.NEQ:
-			if basic, ok := op.X.TV().Type.(*types.Basic); ok {
+			if basic, ok := op.X.Type().(*types.Basic); ok {
 				if kind := basic.Kind(); kind == types.Float32 || kind == types.Float64 {
 					// f == f and f != f might be used to check for NaN
 					return true
@@ -1002,7 +1002,7 @@ func (c *Checker) CheckEarlyDefer(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			sig, ok := call.Fun.TV().Type.(*types.Signature)
+			sig, ok := call.Fun.Type().(*types.Signature)
 			if !ok {
 				continue
 			}
@@ -1385,7 +1385,7 @@ func (c *Checker) CheckUnsignedComparison(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		tx := expr.X.TV().Type
+		tx := expr.X.Type()
 		basic, ok := tx.Underlying().(*types.Basic)
 		if !ok {
 			return true
@@ -1526,7 +1526,7 @@ func (c *Checker) CheckArgOverwritten(j *lint.Job) {
 				typ = fn.Type
 				body = fn.Body
 			case *types.FuncLit:
-				typ = fn.Type
+				typ = fn.Typ
 				body = fn.Body
 			}
 			if body == nil {
@@ -1625,7 +1625,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 				body = node.Body
 				loop = node
 			case *types.RangeStmt:
-				typ := node.X.TV().Type
+				typ := node.X.Type()
 				if _, ok := typ.Underlying().(*types.Map); ok {
 					// looping once over a map is a valid pattern for
 					// getting an arbitrary element.
@@ -1705,10 +1705,10 @@ func (c *Checker) CheckNilContext(j *lint.Job) {
 		if len(call.Args) == 0 {
 			return true
 		}
-		if typ, ok := call.Args[0].TV().Type.(*types.Basic); !ok || typ.Kind() != types.UntypedNil {
+		if typ, ok := call.Args[0].Type().(*types.Basic); !ok || typ.Kind() != types.UntypedNil {
 			return true
 		}
-		sig, ok := call.Fun.TV().Type.(*types.Signature)
+		sig, ok := call.Fun.Type().(*types.Signature)
 		if !ok {
 			return true
 		}
@@ -2225,7 +2225,7 @@ func (c *Checker) CheckNonOctalFileMode(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		sig, ok := call.Fun.TV().Type.(*types.Signature)
+		sig, ok := call.Fun.Type().(*types.Signature)
 		if !ok {
 			return true
 		}

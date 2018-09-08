@@ -595,7 +595,7 @@ func (check *Checker) stmt(ctxt stmtContext, s Stmt) {
 
 		// rhs must be of the form: expr.(type) and expr must be an interface
 		expr, _ := rhs.(*TypeAssertExpr)
-		if expr == nil || expr.Type != nil {
+		if expr == nil || expr.Typ != nil {
 			check.invalidAST(s.Pos(), "incorrect form of type switch guard")
 			return
 		}

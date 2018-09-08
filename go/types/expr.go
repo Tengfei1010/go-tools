@@ -8,7 +8,7 @@ package types
 
 import (
 	"fmt"
-	
+
 	"go/constant"
 	"go/token"
 	"math"
@@ -1026,7 +1026,7 @@ func (check *Checker) exprInternal(x *operand, e Expr, hint Type) exprKind {
 		}
 
 	case *FuncLit:
-		if sig, ok := check.typ(e.Type).(*Signature); ok {
+		if sig, ok := check.typ(e.Typ).(*Signature); ok {
 			// Anonymous functions are considered part of the
 			// init expression/func declaration which contains
 			// them: use existing package-level declaration info.
@@ -1050,11 +1050,11 @@ func (check *Checker) exprInternal(x *operand, e Expr, hint Type) exprKind {
 		var typ, base Type
 
 		switch {
-		case e.Type != nil:
+		case e.Typ != nil:
 			// composite literal type present - use it
 			// [...]T array types may only appear with composite literals.
 			// Check for them here so we don't have to handle ... in general.
-			if atyp, _ := e.Type.(*ArrayType); atyp != nil && atyp.Len != nil {
+			if atyp, _ := e.Typ.(*ArrayType); atyp != nil && atyp.Len != nil {
 				if ellip, _ := atyp.Len.(*Ellipsis); ellip != nil && ellip.Elt == nil {
 					// We have an "open" [...]T array type.
 					// Create a new ArrayType with unknown length (-1)
@@ -1064,7 +1064,7 @@ func (check *Checker) exprInternal(x *operand, e Expr, hint Type) exprKind {
 					break
 				}
 			}
-			typ = check.typExpr(e.Type, nil, nil)
+			typ = check.typExpr(e.Typ, nil, nil)
 			base = typ
 
 		case hint != nil:
@@ -1161,7 +1161,7 @@ func (check *Checker) exprInternal(x *operand, e Expr, hint Type) exprKind {
 			// not called for [...]).
 			if utyp.len < 0 {
 				utyp.len = n
-				check.recordTypeAndValue(e.Type, typexpr, utyp, nil)
+				check.recordTypeAndValue(e.Typ, typexpr, utyp, nil)
 			}
 
 		case *Slice:
@@ -1429,11 +1429,11 @@ func (check *Checker) exprInternal(x *operand, e Expr, hint Type) exprKind {
 			goto Error
 		}
 		// x.(type) expressions are handled explicitly in type switches
-		if e.Type == nil {
+		if e.Typ == nil {
 			check.invalidAST(e.Pos(), "use of .(type) outside type switch")
 			goto Error
 		}
-		T := check.typExpr(e.Type, nil, nil)
+		T := check.typExpr(e.Typ, nil, nil)
 		if T == Typ[Invalid] {
 			goto Error
 		}

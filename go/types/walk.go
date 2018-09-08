@@ -94,12 +94,12 @@ func Walk(v Visitor, node Node) {
 		}
 
 	case *FuncLit:
-		Walk(v, n.Type)
+		Walk(v, n.Typ)
 		Walk(v, n.Body)
 
 	case *CompositeLit:
-		if n.Type != nil {
-			Walk(v, n.Type)
+		if n.Typ != nil {
+			Walk(v, n.Typ)
 		}
 		walkExprList(v, n.Elts)
 
@@ -128,8 +128,8 @@ func Walk(v Visitor, node Node) {
 
 	case *TypeAssertExpr:
 		Walk(v, n.X)
-		if n.Type != nil {
-			Walk(v, n.Type)
+		if n.Typ != nil {
+			Walk(v, n.Typ)
 		}
 
 	case *CallExpr:

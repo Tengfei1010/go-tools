@@ -46,12 +46,12 @@ func WriteExpr(buf *bytes.Buffer, x Expr) {
 
 	case *FuncLit:
 		buf.WriteByte('(')
-		WriteExpr(buf, x.Type)
+		WriteExpr(buf, x.Typ)
 		buf.WriteString(" literal)") // shortened
 
 	case *CompositeLit:
 		buf.WriteByte('(')
-		WriteExpr(buf, x.Type)
+		WriteExpr(buf, x.Typ)
 		buf.WriteString(" literal)") // shortened
 
 	case *ParenExpr:
@@ -91,7 +91,7 @@ func WriteExpr(buf *bytes.Buffer, x Expr) {
 	case *TypeAssertExpr:
 		WriteExpr(buf, x.X)
 		buf.WriteString(".(")
-		WriteExpr(buf, x.Type)
+		WriteExpr(buf, x.Typ)
 		buf.WriteByte(')')
 
 	case *CallExpr:

@@ -795,8 +795,8 @@ func (p *printer) expr1(expr types.Expr, prec1, depth int) {
 		p.print(x)
 
 	case *types.FuncLit:
-		p.expr(x.Type)
-		p.funcBody(p.distanceFrom(x.Type.Pos()), blank, x.Body)
+		p.expr(x.Typ)
+		p.funcBody(p.distanceFrom(x.Typ.Pos()), blank, x.Body)
 
 	case *types.ParenExpr:
 		if _, hasParens := x.X.(*types.ParenExpr); hasParens {
@@ -815,8 +815,8 @@ func (p *printer) expr1(expr types.Expr, prec1, depth int) {
 	case *types.TypeAssertExpr:
 		p.expr1(x.X, token.HighestPrec, depth)
 		p.print(token.PERIOD, x.Lparen, token.LPAREN)
-		if x.Type != nil {
-			p.expr(x.Type)
+		if x.Typ != nil {
+			p.expr(x.Typ)
 		} else {
 			p.print(token.TYPE)
 		}
@@ -900,8 +900,8 @@ func (p *printer) expr1(expr types.Expr, prec1, depth int) {
 
 	case *types.CompositeLit:
 		// composite literal elements that are composite literals themselves may have the type omitted
-		if x.Type != nil {
-			p.expr1(x.Type, token.HighestPrec, depth)
+		if x.Typ != nil {
+			p.expr1(x.Typ, token.HighestPrec, depth)
 		}
 		p.level++
 		p.print(x.Lbrace, token.LBRACE)
@@ -1074,7 +1074,7 @@ func stripParens(x types.Expr) types.Expr {
 				// parentheses protect enclosed composite literals
 				return false
 			case *types.CompositeLit:
-				if isTypeName(x.Type) {
+				if isTypeName(x.Typ) {
 					strip = false // do not strip parentheses
 				}
 				return false

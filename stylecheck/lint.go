@@ -419,11 +419,11 @@ func (c *Checker) CheckTimeNames(j *lint.Job) {
 		types.Inspect(f, func(node types.Node) bool {
 			switch node := node.(type) {
 			case *types.ValueSpec:
-				T := node.Type.TV().Type
+				T := node.Names[0].Type()
 				fn(T, node.Names)
 			case *types.FieldList:
 				for _, field := range node.List {
-					T := field.Type.TV().Type
+					T := field.Type.Type()
 					fn(T, field.Names)
 				}
 			}

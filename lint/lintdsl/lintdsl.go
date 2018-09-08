@@ -102,7 +102,7 @@ func IsZero(expr types.Expr) bool {
 	return IsIntLiteral(expr, "0")
 }
 
-func IsOfType(expr types.Expr, name string) bool { return IsType(expr.TV().Type, name) }
+func IsOfType(expr types.Expr, name string) bool { return IsType(expr.Type(), name) }
 
 func IsInTest(j *lint.Job, node lint.Positioner) bool {
 	// FIXME(dh): this doesn't work for global variables with

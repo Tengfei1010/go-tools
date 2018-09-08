@@ -11,8 +11,8 @@ package ssa
 // the originating syntax, as specified.
 
 import (
-	
 	"go/token"
+
 	"honnef.co/go/tools/go/types"
 )
 
@@ -41,7 +41,7 @@ outer:
 	for i := range path {
 		if lit, ok := path[n-1-i].(*types.FuncLit); ok {
 			for _, anon := range fn.AnonFuncs {
-				if anon.Pos() == lit.Type.Func {
+				if anon.Pos() == lit.Typ.Func {
 					fn = anon
 					continue outer
 				}

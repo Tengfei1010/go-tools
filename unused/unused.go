@@ -1,3 +1,5 @@
+// +build ignore
+
 package unused // import "honnef.co/go/tools/unused"
 
 import (
@@ -7,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
@@ -625,7 +626,7 @@ func dereferenceType(typ types.Type) types.Type {
 // processConversion marks fields as used if they're part of a type conversion.
 func (c *Checker) processConversion(pkg *lint.Pkg, node types.Node) {
 	if node, ok := node.(*types.CallExpr); ok {
-		callTyp := pkg.TypesInfo.TypeOf(node.Fun)
+		callTyp := node.Fun.Type()
 		var typDst *types.Struct
 		var ok bool
 		switch typ := callTyp.(type) {
@@ -640,7 +641,7 @@ func (c *Checker) processConversion(pkg *lint.Pkg, node types.Node) {
 			return
 		}
 
-		if typ, ok := pkg.TypesInfo.TypeOf(node.Args[0]).(*types.Basic); ok && typ.Kind() == types.UnsafePointer {
+		if typ, ok := node.Args[0].Type().(*types.Basic); ok && typ.Kind() == types.UnsafePointer {
 			// This is an unsafe conversion. Assume that all the
 			// fields are relevant (they are, because of memory
 			// layout)
@@ -651,7 +652,7 @@ func (c *Checker) processConversion(pkg *lint.Pkg, node types.Node) {
 			return
 		}
 
-		typSrc, ok := dereferenceType(pkg.TypesInfo.TypeOf(node.Args[0])).Underlying().(*types.Struct)
+		typSrc, ok := dereferenceType(node.Args[0].Type()).Underlying().(*types.Struct)
 		if !ok {
 			return
 		}
@@ -684,7 +685,7 @@ func (c *Checker) processConversion(pkg *lint.Pkg, node types.Node) {
 func (c *Checker) processCompositeLiteral(pkg *lint.Pkg, node types.Node) {
 	// XXX how does this actually work? wouldn't it match t{}?
 	if node, ok := node.(*types.CompositeLit); ok {
-		typ := pkg.TypesInfo.TypeOf(node)
+		typ := node.Type()
 		if _, ok := typ.(*types.Named); ok {
 			typ = typ.Underlying()
 		}
@@ -709,7 +710,7 @@ func (c *Checker) processCgoExported(pkg *lint.Pkg, node types.Node) {
 			if !strings.HasPrefix(cmt.Text, "//go:cgo_export_") {
 				return
 			}
-			obj := pkg.TypesInfo.ObjectOf(node.Name)
+			obj := node.Name.Obj
 			c.graph.roots = append(c.graph.roots, c.graph.getNode(obj))
 		}
 	}
@@ -729,11 +730,11 @@ func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node types.Node) {
 				value := spec.Values[i]
 				fn := func(node types.Node) bool {
 					if node3, ok := node.(*types.Ident); ok {
-						obj := pkg.TypesInfo.ObjectOf(node3)
+						obj := node3.Obj
 						if _, ok := obj.(*types.PkgName); ok {
 							return true
 						}
-						c.graph.markUsedBy(obj, pkg.TypesInfo.ObjectOf(name))
+						c.graph.markUsedBy(obj, name.Obj)
 					}
 					return true
 				}
@@ -749,7 +750,7 @@ func (c *Checker) processArrayConstants(pkg *lint.Pkg, node types.Node) {
 		if !ok {
 			return
 		}
-		c.graph.markUsedBy(pkg.TypesInfo.ObjectOf(ident), pkg.TypesInfo.TypeOf(decl))
+		c.graph.markUsedBy(ident.Obj, decl.Type())
 	}
 }
 
@@ -762,12 +763,12 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node types.Nod
 	if !ok {
 		return
 	}
-	if !IsType(pkg.TypesInfo.TypeOf(sel.X), "*net/rpc.Server") {
+	if !IsType(sel.X.Type(), "*net/rpc.Server") {
 		x, ok := sel.X.(*types.Ident)
 		if !ok {
 			return
 		}
-		pkgname, ok := pkg.TypesInfo.ObjectOf(x).(*types.PkgName)
+		pkgname, ok := x.Obj.(*types.PkgName)
 		if !ok {
 			return
 		}
@@ -789,7 +790,7 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node types.Nod
 		}
 		arg = call.Args[1]
 	}
-	typ := pkg.TypesInfo.TypeOf(arg)
+	typ := arg.Type()
 	ms := types.NewMethodSet(typ)
 	for i := 0; i < ms.Len(); i++ {
 		c.graph.markUsedBy(ms.At(i).Obj(), typ)

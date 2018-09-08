@@ -544,8 +544,8 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 	case *types.FuncLit:
 		fn2 := &Function{
 			name:      fmt.Sprintf("%s$%d", fn.Name(), 1+len(fn.AnonFuncs)),
-			Signature: fn.Pkg.typeOf(e.Type).Underlying().(*types.Signature),
-			pos:       e.Type.Func,
+			Signature: fn.Pkg.typeOf(e.Typ).Underlying().(*types.Signature),
+			pos:       e.Typ.Func,
 			parent:    fn,
 			Pkg:       fn.Pkg,
 			Prog:      fn.Prog,
@@ -2163,7 +2163,7 @@ func (b *builder) buildFunction(fn *Function) {
 		recvField = n.Recv
 		body = n.Body
 	case *types.FuncLit:
-		functype = n.Type
+		functype = n.Typ
 		body = n.Body
 	default:
 		panic(n)
@@ -2373,7 +2373,7 @@ func (p *Package) objectOf(id *types.Ident) types.Object {
 // Like TypeOf, but panics instead of returning nil.
 // Only valid during p's create and build phases.
 func (p *Package) typeOf(e types.Expr) types.Type {
-	if T := e.TV().Type; T != nil {
+	if T := e.Type(); T != nil {
 		return T
 	}
 	panic(fmt.Sprintf("no type for %T @ %s",

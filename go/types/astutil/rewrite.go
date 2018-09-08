@@ -231,11 +231,11 @@ func (a *application) apply(parent types.Node, name string, iter *iterator, n ty
 		a.apply(n, "Elt", nil, n.Elt)
 
 	case *types.FuncLit:
-		a.apply(n, "Type", nil, n.Type)
+		a.apply(n, "Type", nil, n.Typ)
 		a.apply(n, "Body", nil, n.Body)
 
 	case *types.CompositeLit:
-		a.apply(n, "Type", nil, n.Type)
+		a.apply(n, "Type", nil, n.Typ)
 		a.applyList(n, "Elts")
 
 	case *types.ParenExpr:
@@ -257,7 +257,7 @@ func (a *application) apply(parent types.Node, name string, iter *iterator, n ty
 
 	case *types.TypeAssertExpr:
 		a.apply(n, "X", nil, n.X)
-		a.apply(n, "Type", nil, n.Type)
+		a.apply(n, "Type", nil, n.Typ)
 
 	case *types.CallExpr:
 		a.apply(n, "Fun", nil, n.Fun)

@@ -130,7 +130,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			return true
 		}
 
-		if _, ok := lhs.X.TV().Type.(*types.Slice); !ok {
+		if _, ok := lhs.X.Type().(*types.Slice); !ok {
 			return true
 		}
 		lidx, ok := lhs.Index.(*types.Ident)
@@ -141,16 +141,16 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if lhs.TV().Type == nil || stmt.Rhs[0].TV().Type == nil {
+		if lhs.Type() == nil || stmt.Rhs[0].Type() == nil {
 			return true
 		}
 		if lidx.Obj != key.Obj {
 			return true
 		}
-		if !types.Identical(lhs.TV().Type, stmt.Rhs[0].TV().Type) {
+		if !types.Identical(lhs.Type(), stmt.Rhs[0].Type()) {
 			return true
 		}
-		if _, ok := loop.X.TV().Type.(*types.Slice); !ok {
+		if _, ok := loop.X.Type().(*types.Slice); !ok {
 			return true
 		}
 
@@ -206,7 +206,7 @@ func (c *Checker) LintIfBoolCmp(j *lint.Job) {
 			val = BoolConst(expr.Y)
 			other = expr.X
 		}
-		basic, ok := other.TV().Type.Underlying().(*types.Basic)
+		basic, ok := other.Type().Underlying().(*types.Basic)
 		if !ok || basic.Kind() != types.Bool {
 			return true
 		}
@@ -247,7 +247,7 @@ func (c *Checker) LintBytesBufferConversions(j *lint.Job) {
 			return true
 		}
 
-		typ := call.Fun.TV().Type
+		typ := call.Fun.Type()
 		if typ == types.Universe.Lookup("string").Type() && IsCallToAST(call.Args[0], "(*bytes.Buffer).Bytes") {
 			j.Errorf(call, "should use %v.String() instead of %v", Render(j, sel.X), Render(j, call))
 		} else if typ, ok := typ.(*types.Slice); ok && typ.Elem() == types.Universe.Lookup("byte").Type() && IsCallToAST(call.Args[0], "(*bytes.Buffer).String") {
@@ -630,7 +630,7 @@ func (c *Checker) LintRedundantNilCheckWithLen(j *lint.Job) {
 		// finally check that xx type is one of array, slice, map or chan
 		// this is to prevent false positive in case if xx is a pointer to an array
 		var nilType string
-		switch xx.TV().Type.(type) {
+		switch xx.Type().(type) {
 		case *types.Slice:
 			nilType = "nil slices"
 		case *types.Map:
@@ -743,8 +743,8 @@ func (c *Checker) LintLoopAppend(j *lint.Job) {
 			return true
 		}
 
-		src := loop.X.TV().Type
-		dst := call.Args[Arg("append.slice")].TV().Type
+		src := loop.X.Type()
+		dst := call.Args[Arg("append.slice")].Type()
 		// TODO(dominikh) remove nil check once Go issue #15173 has
 		// been fixed
 		if src == nil {
@@ -837,7 +837,7 @@ func (c *Checker) LintUnnecessaryBlank(j *lint.Job) {
 		case *types.IndexExpr:
 			// The type-checker should make sure that it's a map, but
 			// let's be safe.
-			if _, ok := rhs.X.TV().Type.Underlying().(*types.Map); !ok {
+			if _, ok := rhs.X.Type().Underlying().(*types.Map); !ok {
 				return
 			}
 		case *types.UnaryExpr:
@@ -924,7 +924,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		typ1, _ := lit.Type.TV().Type.(*types.Named)
+		typ1, _ := lit.Type().(*types.Named)
 		if typ1 == nil {
 			return true
 		}
@@ -944,7 +944,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 			if !ok {
 				return nil, nil, false
 			}
-			typ := sel.X.TV().Type
+			typ := sel.X.Type()
 			return typ, ident, typ != nil
 		}
 		if len(lit.Elts) == 0 {
@@ -1332,7 +1332,7 @@ func (c *Checker) LintMakeLenCap(j *lint.Job) {
 		switch len(call.Args) {
 		case 2:
 			// make(T, len)
-			if _, ok := call.Args[Arg("make.t")].TV().Type.Underlying().(*types.Slice); ok {
+			if _, ok := call.Args[Arg("make.t")].Type().Underlying().(*types.Slice); ok {
 				break
 			}
 			if IsZero(call.Args[Arg("make.size[0]")]) {
@@ -1486,7 +1486,7 @@ func (c *Checker) LintRedundantBreak(j *lint.Job) {
 			ret = x.Type.Results
 			body = x.Body
 		case *types.FuncLit:
-			ret = x.Type.Results
+			ret = x.Typ.Results
 			body = x.Body
 		default:
 			return
@@ -1560,7 +1560,7 @@ func (c *Checker) LintRedundantSprintf(j *lint.Job) {
 			return true
 		}
 		arg := call.Args[Arg("fmt.Sprintf.a[0]")]
-		typ := arg.TV().Type
+		typ := arg.Type()
 
 		if c.Implements(j, typ, "fmt.Stringer") {
 			j.Errorf(call, "should use String() instead of fmt.Sprintf")
@@ -1633,7 +1633,7 @@ func (c *Checker) LintNilCheckAroundRange(j *lint.Job) {
 		if ifXIdent.Obj != rangeXIdent.Obj {
 			return true
 		}
-		switch rangeXIdent.TV().Type.(type) {
+		switch rangeXIdent.Type().(type) {
 		case *types.Slice, *types.Map:
 			j.Errorf(node, "unnecessary nil check around range")
 		}
