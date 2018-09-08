@@ -102,21 +102,7 @@ func IsZero(expr types.Expr) bool {
 	return IsIntLiteral(expr, "0")
 }
 
-func TypeOf(j *lint.Job, expr types.Expr) types.Type {
-	if expr == nil {
-		return nil
-	}
-	return j.NodePackage(expr).TypesInfo.TypeOf(expr)
-}
-
-func IsOfType(j *lint.Job, expr types.Expr, name string) bool { return IsType(TypeOf(j, expr), name) }
-
-func ObjectOf(j *lint.Job, ident *types.Ident) types.Object {
-	if ident == nil {
-		return nil
-	}
-	return j.NodePackage(ident).TypesInfo.ObjectOf(ident)
-}
+func IsOfType(expr types.Expr, name string) bool { return IsType(expr.TV().Type, name) }
 
 func IsInTest(j *lint.Job, node lint.Positioner) bool {
 	// FIXME(dh): this doesn't work for global variables with
@@ -136,12 +122,11 @@ func IsInMain(j *lint.Job, node lint.Positioner) bool {
 	return pkg.Types.Name() == "main"
 }
 
-func SelectorName(j *lint.Job, expr *types.SelectorExpr) string {
-	info := j.NodePackage(expr).TypesInfo
-	sel := info.Selections[expr]
+func SelectorName(expr *types.SelectorExpr) string {
+	sel := expr.Selection
 	if sel == nil {
 		if x, ok := expr.X.(*types.Ident); ok {
-			pkg, ok := info.ObjectOf(x).(*types.PkgName)
+			pkg, ok := x.Obj.(*types.PkgName)
 			if !ok {
 				// This shouldn't happen
 				return fmt.Sprintf("%s.%s", x.Name, expr.Sel.Name)
@@ -153,16 +138,12 @@ func SelectorName(j *lint.Job, expr *types.SelectorExpr) string {
 	return fmt.Sprintf("(%s).%s", sel.Recv(), sel.Obj().Name())
 }
 
-func IsNil(j *lint.Job, expr types.Expr) bool {
-	return j.NodePackage(expr).TypesInfo.Types[expr].IsNil()
-}
-
-func BoolConst(j *lint.Job, expr types.Expr) bool {
-	val := j.NodePackage(expr).TypesInfo.ObjectOf(expr.(*types.Ident)).(*types.Const).Val()
+func BoolConst(expr types.Expr) bool {
+	val := expr.(*types.Ident).Obj.(*types.Const).Val()
 	return constant.BoolVal(val)
 }
 
-func IsBoolConst(j *lint.Job, expr types.Expr) bool {
+func IsBoolConst(expr types.Expr) bool {
 	// We explicitly don't support typed bools because more often than
 	// not, custom bool types are used as binary enums and the
 	// explicit comparison is desired.
@@ -171,8 +152,7 @@ func IsBoolConst(j *lint.Job, expr types.Expr) bool {
 	if !ok {
 		return false
 	}
-	obj := j.NodePackage(expr).TypesInfo.ObjectOf(ident)
-	c, ok := obj.(*types.Const)
+	c, ok := ident.Obj.(*types.Const)
 	if !ok {
 		return false
 	}
@@ -186,8 +166,8 @@ func IsBoolConst(j *lint.Job, expr types.Expr) bool {
 	return true
 }
 
-func ExprToInt(j *lint.Job, expr types.Expr) (int64, bool) {
-	tv := j.NodePackage(expr).TypesInfo.Types[expr]
+func ExprToInt(expr types.Expr) (int64, bool) {
+	tv := expr.TV()
 	if tv.Value == nil {
 		return 0, false
 	}
@@ -197,8 +177,8 @@ func ExprToInt(j *lint.Job, expr types.Expr) (int64, bool) {
 	return constant.Int64Val(tv.Value)
 }
 
-func ExprToString(j *lint.Job, expr types.Expr) (string, bool) {
-	val := j.NodePackage(expr).TypesInfo.Types[expr].Value
+func ExprToString(expr types.Expr) (string, bool) {
+	val := expr.TV().Value
 	if val == nil {
 		return "", false
 	}
@@ -231,29 +211,29 @@ func IsGoVersion(j *lint.Job, minor int) bool {
 	return j.Program.GoVersion >= minor
 }
 
-func CallNameAST(j *lint.Job, call *types.CallExpr) string {
+func CallNameAST(call *types.CallExpr) string {
 	sel, ok := call.Fun.(*types.SelectorExpr)
 	if !ok {
 		return ""
 	}
-	fn, ok := j.NodePackage(call).TypesInfo.ObjectOf(sel.Sel).(*types.Func)
+	fn, ok := sel.Sel.Obj.(*types.Func)
 	if !ok {
 		return ""
 	}
 	return fn.FullName()
 }
 
-func IsCallToAST(j *lint.Job, node types.Node, name string) bool {
+func IsCallToAST(node types.Node, name string) bool {
 	call, ok := node.(*types.CallExpr)
 	if !ok {
 		return false
 	}
-	return CallNameAST(j, call) == name
+	return CallNameAST(call) == name
 }
 
-func IsCallToAnyAST(j *lint.Job, node types.Node, names ...string) bool {
+func IsCallToAnyAST(node types.Node, names ...string) bool {
 	for _, name := range names {
-		if IsCallToAST(j, node, name) {
+		if IsCallToAST(node, name) {
 			return true
 		}
 	}

@@ -90,6 +90,8 @@ type Checker struct {
 	untyped    map[Expr]exprInfo        // map of expressions without final type
 	delayed    []func()                 // stack of delayed actions
 	objPath    []Object                 // path of object dependencies during type inference (for cycle reporting)
+	uses       []*Ident
+	defs       []*Ident
 
 	// context within which the current object is type-checked
 	// (valid only for the duration of type-checking a specific object)
@@ -199,6 +201,8 @@ func (check *Checker) initFiles(files []*File) {
 	check.interfaces = nil
 	check.untyped = nil
 	check.delayed = nil
+	check.uses = check.uses[:0]
+	check.defs = check.defs[:0]
 
 	// determine package name and collect valid files
 	pkg := check.pkg
@@ -258,6 +262,17 @@ func (check *Checker) checkFiles(files []*File) (err error) {
 
 	check.recordUntyped()
 
+	for _, id := range check.defs {
+		if id.Obj != nil && id.tv == (TypeAndValue{}) {
+			id.tv.Type = id.Obj.Type()
+		}
+	}
+	for _, id := range check.uses {
+		if id.Obj != nil && id.tv == (TypeAndValue{}) {
+			id.tv.Type = id.Obj.Type()
+		}
+	}
+
 	check.pkg.complete = true
 	return
 }
@@ -283,7 +298,7 @@ func (check *Checker) recordTypeAndValue(x Expr, mode operandMode, typ Type, val
 		assert(val != nil)
 		assert(typ == Typ[Invalid] || isConstType(typ))
 	}
-	x.SetTV(TypeAndValue{mode, typ, val})
+	x.setTV(TypeAndValue{mode, typ, val})
 }
 
 func (check *Checker) recordBuiltinType(f Expr, sig *Signature) {
@@ -318,7 +333,7 @@ func (check *Checker) recordCommaOkTypes(x Expr, a [2]Type) {
 			NewVar(pos, check.pkg, "", a[0]),
 			NewVar(pos, check.pkg, "", a[1]),
 		)
-		x.SetTV(tv)
+		x.setTV(tv)
 		// if x is a parenthesized expression (p.X), update p.X
 		p, _ := x.(*ParenExpr)
 		if p == nil {
@@ -332,12 +347,14 @@ func (check *Checker) recordDef(id *Ident, obj Object) {
 	assert(id != nil)
 	id.Obj = obj
 	id.IsDef = true
+	check.defs = append(check.defs, id)
 }
 
 func (check *Checker) recordUse(id *Ident, obj Object) {
 	assert(id != nil)
 	assert(obj != nil)
 	id.Obj = obj
+	check.uses = append(check.uses, id)
 }
 
 func (check *Checker) recordImplicit(node Node, obj Object) {

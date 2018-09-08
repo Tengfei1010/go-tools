@@ -41,7 +41,7 @@ type Node interface {
 type Expr interface {
 	Node
 	TV() TypeAndValue
-	SetTV(tv TypeAndValue)
+	setTV(tv TypeAndValue)
 	exprNode()
 }
 
@@ -527,28 +527,28 @@ func (expr *InterfaceType) TV() TypeAndValue  { return expr.tv }
 func (expr *MapType) TV() TypeAndValue        { return expr.tv }
 func (expr *ChanType) TV() TypeAndValue       { return expr.tv }
 
-func (expr *BadExpr) SetTV(tv TypeAndValue)        { expr.tv = tv }
-func (expr *Ident) SetTV(tv TypeAndValue)          { expr.tv = tv }
-func (expr *Ellipsis) SetTV(tv TypeAndValue)       { expr.tv = tv }
-func (expr *BasicLit) SetTV(tv TypeAndValue)       { expr.tv = tv }
-func (expr *FuncLit) SetTV(tv TypeAndValue)        { expr.tv = tv }
-func (expr *CompositeLit) SetTV(tv TypeAndValue)   { expr.tv = tv }
-func (expr *ParenExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
-func (expr *SelectorExpr) SetTV(tv TypeAndValue)   { expr.tv = tv }
-func (expr *IndexExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
-func (expr *SliceExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
-func (expr *TypeAssertExpr) SetTV(tv TypeAndValue) { expr.tv = tv }
-func (expr *CallExpr) SetTV(tv TypeAndValue)       { expr.tv = tv }
-func (expr *StarExpr) SetTV(tv TypeAndValue)       { expr.tv = tv }
-func (expr *UnaryExpr) SetTV(tv TypeAndValue)      { expr.tv = tv }
-func (expr *BinaryExpr) SetTV(tv TypeAndValue)     { expr.tv = tv }
-func (expr *KeyValueExpr) SetTV(tv TypeAndValue)   { expr.tv = tv }
-func (expr *ArrayType) SetTV(tv TypeAndValue)      { expr.tv = tv }
-func (expr *StructType) SetTV(tv TypeAndValue)     { expr.tv = tv }
-func (expr *FuncType) SetTV(tv TypeAndValue)       { expr.tv = tv }
-func (expr *InterfaceType) SetTV(tv TypeAndValue)  { expr.tv = tv }
-func (expr *MapType) SetTV(tv TypeAndValue)        { expr.tv = tv }
-func (expr *ChanType) SetTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *BadExpr) setTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *Ident) setTV(tv TypeAndValue)          { expr.tv = tv }
+func (expr *Ellipsis) setTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *BasicLit) setTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *FuncLit) setTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *CompositeLit) setTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *ParenExpr) setTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *SelectorExpr) setTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *IndexExpr) setTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *SliceExpr) setTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *TypeAssertExpr) setTV(tv TypeAndValue) { expr.tv = tv }
+func (expr *CallExpr) setTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *StarExpr) setTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *UnaryExpr) setTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *BinaryExpr) setTV(tv TypeAndValue)     { expr.tv = tv }
+func (expr *KeyValueExpr) setTV(tv TypeAndValue)   { expr.tv = tv }
+func (expr *ArrayType) setTV(tv TypeAndValue)      { expr.tv = tv }
+func (expr *StructType) setTV(tv TypeAndValue)     { expr.tv = tv }
+func (expr *FuncType) setTV(tv TypeAndValue)       { expr.tv = tv }
+func (expr *InterfaceType) setTV(tv TypeAndValue)  { expr.tv = tv }
+func (expr *MapType) setTV(tv TypeAndValue)        { expr.tv = tv }
+func (expr *ChanType) setTV(tv TypeAndValue)       { expr.tv = tv }
 
 // exprNode() ensures that only expression/type nodes can be
 // assigned to an Expr.

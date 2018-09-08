@@ -7,7 +7,6 @@
 package types
 
 import (
-	
 	"go/constant"
 	"go/token"
 	"sort"

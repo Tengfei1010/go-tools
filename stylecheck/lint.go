@@ -9,7 +9,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 	"honnef.co/go/tools/lint"
@@ -420,11 +419,11 @@ func (c *Checker) CheckTimeNames(j *lint.Job) {
 		types.Inspect(f, func(node types.Node) bool {
 			switch node := node.(type) {
 			case *types.ValueSpec:
-				T := TypeOf(j, node.Type)
+				T := node.Type.TV().Type
 				fn(T, node.Names)
 			case *types.FieldList:
 				for _, field := range node.List {
-					T := TypeOf(j, field.Type)
+					T := field.Type.TV().Type
 					fn(T, field.Names)
 				}
 			}
@@ -448,7 +447,7 @@ func (c *Checker) CheckErrorVarNames(j *lint.Job) {
 
 				for i, name := range spec.Names {
 					val := spec.Values[i]
-					if !IsCallToAST(j, val, "errors.New") && !IsCallToAST(j, val, "fmt.Errorf") {
+					if !IsCallToAST(val, "errors.New") && !IsCallToAST(val, "fmt.Errorf") {
 						continue
 					}
 
@@ -540,7 +539,7 @@ func (c *Checker) CheckHTTPStatusCodes(j *lint.Job) {
 			}
 
 			var arg int
-			switch CallNameAST(j, call) {
+			switch CallNameAST(call) {
 			case "net/http.Error":
 				arg = 2
 			case "net/http.Redirect":

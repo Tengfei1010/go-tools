@@ -319,8 +319,7 @@ func (c *Checker) findDeprecated(prog *lint.Program) {
 		}
 
 		for _, name := range names {
-			obj := pkg.TypesInfo.ObjectOf(name)
-			c.deprecatedObjs[obj] = alt
+			c.deprecatedObjs[name.Obj] = alt
 		}
 	}
 
@@ -470,7 +469,7 @@ func applyStdlibKnowledge(fn *ssa.Function) {
 }
 
 func hasType(j *lint.Job, expr types.Expr, name string) bool {
-	T := TypeOf(j, expr)
+	T := expr.TV().Type
 	return IsType(T, name)
 }
 
@@ -480,7 +479,7 @@ func (c *Checker) CheckUntrappableSignal(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAnyAST(j, call,
+		if !IsCallToAnyAST(call,
 			"os/signal.Ignore", "os/signal.Notify", "os/signal.Reset") {
 			return true
 		}
@@ -510,23 +509,23 @@ func (c *Checker) CheckTemplate(j *lint.Job) {
 			return true
 		}
 		var kind string
-		if IsCallToAST(j, call, "(*text/template.Template).Parse") {
+		if IsCallToAST(call, "(*text/template.Template).Parse") {
 			kind = "text"
-		} else if IsCallToAST(j, call, "(*html/template.Template).Parse") {
+		} else if IsCallToAST(call, "(*html/template.Template).Parse") {
 			kind = "html"
 		} else {
 			return true
 		}
 		sel := call.Fun.(*types.SelectorExpr)
-		if !IsCallToAST(j, sel.X, "text/template.New") &&
-			!IsCallToAST(j, sel.X, "html/template.New") {
+		if !IsCallToAST(sel.X, "text/template.New") &&
+			!IsCallToAST(sel.X, "html/template.New") {
 			// TODO(dh): this is a cheap workaround for templates with
 			// different delims. A better solution with less false
 			// negatives would use data flow analysis to see where the
 			// template comes from and where it has been
 			return true
 		}
-		s, ok := ExprToString(j, call.Args[Arg("(*text/template.Template).Parse.text")])
+		s, ok := ExprToString(call.Args[Arg("(*text/template.Template).Parse.text")])
 		if !ok {
 			return true
 		}
@@ -556,7 +555,7 @@ func (c *Checker) CheckTimeSleepConstant(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "time.Sleep") {
+		if !IsCallToAST(call, "time.Sleep") {
 			return true
 		}
 		lit, ok := call.Args[Arg("time.Sleep.d")].(*types.BasicLit)
@@ -611,7 +610,7 @@ func (c *Checker) CheckWaitgroupAdd(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		fn, ok := ObjectOf(j, sel.Sel).(*types.Func)
+		fn, ok := sel.Sel.Obj.(*types.Func)
 		if !ok {
 			return true
 		}
@@ -714,7 +713,7 @@ func (c *Checker) CheckDubiousDeferInChannelRangeLoop(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		typ := TypeOf(j, loop.X)
+		typ := loop.X.TV().Type
 		_, ok = typ.Underlying().(*types.Chan)
 		if !ok {
 			return true
@@ -743,7 +742,7 @@ func (c *Checker) CheckTestMainExit(j *lint.Job) {
 			return true
 		}
 
-		arg := ObjectOf(j, node.(*types.FuncDecl).Type.Params.List[0].Names[0])
+		arg := node.(*types.FuncDecl).Type.Params.List[0].Names[0].Obj
 		callsRun := false
 		fn2 := func(node types.Node) bool {
 			call, ok := node.(*types.CallExpr)
@@ -758,7 +757,7 @@ func (c *Checker) CheckTestMainExit(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if arg != ObjectOf(j, ident) {
+			if arg != ident.Obj {
 				return true
 			}
 			if sel.Sel.Name == "Run" {
@@ -771,7 +770,7 @@ func (c *Checker) CheckTestMainExit(j *lint.Job) {
 
 		callsExit := false
 		fn3 := func(node types.Node) bool {
-			if IsCallToAST(j, node, "os.Exit") {
+			if IsCallToAST(node, "os.Exit") {
 				callsExit = true
 				return false
 			}
@@ -803,7 +802,7 @@ func isTestMain(j *lint.Job, node types.Node) bool {
 	if len(arg.Names) != 1 {
 		return false
 	}
-	return IsOfType(j, arg.Type, "*testing.M")
+	return IsOfType(arg.Type, "*testing.M")
 }
 
 func (c *Checker) CheckExec(j *lint.Job) {
@@ -812,10 +811,10 @@ func (c *Checker) CheckExec(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "os/exec.Command") {
+		if !IsCallToAST(call, "os/exec.Command") {
 			return true
 		}
-		val, ok := ExprToString(j, call.Args[Arg("os/exec.Command.name")])
+		val, ok := ExprToString(call.Args[Arg("os/exec.Command.name")])
 		if !ok {
 			return true
 		}
@@ -861,7 +860,7 @@ func (c *Checker) CheckLhsRhsIdentical(j *lint.Job) {
 		}
 		switch op.Op {
 		case token.EQL, token.NEQ:
-			if basic, ok := TypeOf(j, op.X).(*types.Basic); ok {
+			if basic, ok := op.X.TV().Type.(*types.Basic); ok {
 				if kind := basic.Kind(); kind == types.Float32 || kind == types.Float64 {
 					// f == f and f != f might be used to check for NaN
 					return true
@@ -953,7 +952,7 @@ func (c *Checker) CheckUnsafePrintf(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAnyAST(j, call, "fmt.Printf", "fmt.Sprintf", "log.Printf") {
+		if !IsCallToAnyAST(call, "fmt.Printf", "fmt.Sprintf", "log.Printf") {
 			return true
 		}
 		if len(call.Args) != 1 {
@@ -1003,7 +1002,7 @@ func (c *Checker) CheckEarlyDefer(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			sig, ok := TypeOf(j, call.Fun).(*types.Signature)
+			sig, ok := call.Fun.TV().Type.(*types.Signature)
 			if !ok {
 				continue
 			}
@@ -1032,7 +1031,7 @@ func (c *Checker) CheckEarlyDefer(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if ObjectOf(j, ident) != ObjectOf(j, lhs) {
+			if ident.Obj != lhs.Obj {
 				continue
 			}
 			if sel.Sel.Name != "Close" {
@@ -1082,7 +1081,7 @@ func (c *Checker) CheckEmptyCriticalSection(j *lint.Job) {
 			return nil, "", false
 		}
 
-		fn, ok := ObjectOf(j, sel.Sel).(*types.Func)
+		fn, ok := sel.Sel.Obj.(*types.Func)
 		if !ok {
 			return nil, "", false
 		}
@@ -1203,7 +1202,7 @@ func (c *Checker) CheckCanonicalHeaderKey(j *lint.Job) {
 		if !hasType(j, op.X, "net/http.Header") {
 			return true
 		}
-		s, ok := ExprToString(j, op.Index)
+		s, ok := ExprToString(op.Index)
 		if !ok {
 			return true
 		}
@@ -1386,7 +1385,7 @@ func (c *Checker) CheckUnsignedComparison(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		tx := TypeOf(j, expr.X)
+		tx := expr.X.TV().Type
 		basic, ok := tx.Underlying().(*types.Basic)
 		if !ok {
 			return true
@@ -1478,7 +1477,7 @@ func (c *Checker) CheckLoopCondition(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if ObjectOf(j, x) != ObjectOf(j, lhs) {
+			if x.Obj != lhs.Obj {
 				return true
 			}
 			if _, ok := loop.Post.(*types.IncDecStmt); !ok {
@@ -1538,7 +1537,7 @@ func (c *Checker) CheckArgOverwritten(j *lint.Job) {
 			}
 			for _, field := range typ.Params.List {
 				for _, arg := range field.Names {
-					obj := ObjectOf(j, arg)
+					obj := arg.Obj
 					var ssaobj *ssa.Parameter
 					for _, param := range ssafn.Params {
 						if param.Object() == obj {
@@ -1568,7 +1567,7 @@ func (c *Checker) CheckArgOverwritten(j *lint.Job) {
 							if !ok {
 								continue
 							}
-							if ObjectOf(j, ident) == obj {
+							if ident.Obj == obj {
 								assigned = true
 								return false
 							}
@@ -1614,7 +1613,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			labels[ObjectOf(j, label.Label)] = label.Stmt
+			labels[label.Label.Obj] = label.Stmt
 			return true
 		})
 
@@ -1626,7 +1625,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 				body = node.Body
 				loop = node
 			case *types.RangeStmt:
-				typ := TypeOf(j, node.X)
+				typ := node.X.TV().Type
 				if _, ok := typ.Underlying().(*types.Map); ok {
 					// looping once over a map is a valid pattern for
 					// getting an arbitrary element.
@@ -1650,11 +1649,11 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 				case *types.BranchStmt:
 					switch stmt.Tok {
 					case token.BREAK:
-						if stmt.Label == nil || labels[ObjectOf(j, stmt.Label)] == loop {
+						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
 							unconditionalExit = stmt
 						}
 					case token.CONTINUE:
-						if stmt.Label == nil || labels[ObjectOf(j, stmt.Label)] == loop {
+						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
 							unconditionalExit = nil
 							return false
 						}
@@ -1676,7 +1675,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 						unconditionalExit = nil
 						return false
 					case token.CONTINUE:
-						if branch.Label != nil && labels[ObjectOf(j, branch.Label)] != loop {
+						if branch.Label != nil && labels[branch.Label.Obj] != loop {
 							return true
 						}
 						unconditionalExit = nil
@@ -1706,10 +1705,10 @@ func (c *Checker) CheckNilContext(j *lint.Job) {
 		if len(call.Args) == 0 {
 			return true
 		}
-		if typ, ok := TypeOf(j, call.Args[0]).(*types.Basic); !ok || typ.Kind() != types.UntypedNil {
+		if typ, ok := call.Args[0].TV().Type.(*types.Basic); !ok || typ.Kind() != types.UntypedNil {
 			return true
 		}
-		sig, ok := TypeOf(j, call.Fun).(*types.Signature)
+		sig, ok := call.Fun.TV().Type.(*types.Signature)
 		if !ok {
 			return true
 		}
@@ -2069,9 +2068,9 @@ func isName(j *lint.Job, expr types.Expr, name string) bool {
 	var obj types.Object
 	switch expr := expr.(type) {
 	case *types.Ident:
-		obj = ObjectOf(j, expr)
+		obj = expr.Obj
 	case *types.SelectorExpr:
-		obj = ObjectOf(j, expr.Sel)
+		obj = expr.Sel.Obj
 	}
 	return objectName(obj) == name
 }
@@ -2226,7 +2225,7 @@ func (c *Checker) CheckNonOctalFileMode(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		sig, ok := TypeOf(j, call.Fun).(*types.Signature)
+		sig, ok := call.Fun.TV().Type.(*types.Signature)
 		if !ok {
 			return true
 		}
@@ -2307,7 +2306,7 @@ fnLoop:
 }
 
 func (c *Checker) isDeprecated(j *lint.Job, ident *types.Ident) (bool, string) {
-	obj := ObjectOf(j, ident)
+	obj := ident.Obj
 	if obj.Pkg() == nil {
 		return false, ""
 	}
@@ -2331,14 +2330,14 @@ func (c *Checker) CheckDeprecated(j *lint.Job) {
 			ssafn = nil
 		}
 		if fn, ok := node.(*types.FuncDecl); ok {
-			ssafn = j.Program.SSA.FuncValue(ObjectOf(j, fn.Name).(*types.Func))
+			ssafn = j.Program.SSA.FuncValue(fn.Name.Obj.(*types.Func))
 		}
 		sel, ok := node.(*types.SelectorExpr)
 		if !ok {
 			return true
 		}
 
-		obj := ObjectOf(j, sel.Sel)
+		obj := sel.Sel.Obj
 		if obj.Pkg() == nil {
 			return true
 		}
@@ -2354,7 +2353,7 @@ func (c *Checker) CheckDeprecated(j *lint.Job) {
 			// already in 1.0, and we're targeting 1.2, it still
 			// makes sense to use the alternative from 1.0, to be
 			// future-proof.
-			minVersion := deprecated.Stdlib[SelectorName(j, sel)].AlternativeAvailableSince
+			minVersion := deprecated.Stdlib[SelectorName(sel)].AlternativeAvailableSince
 			if !IsGoVersion(j, minVersion) {
 				return true
 			}

@@ -180,33 +180,6 @@ type Info struct {
 	InitOrder []*Initializer
 }
 
-// TypeOf returns the type of expression e, or nil if not found.
-// Precondition: the Types, Uses and Defs maps are populated.
-//
-func (info *Info) TypeOf(e Expr) Type {
-	if e.TV().Type != nil {
-		return e.TV().Type
-	}
-	if id, _ := e.(*Ident); id != nil {
-		if obj := info.ObjectOf(id); obj != nil {
-			return obj.Type()
-		}
-	}
-	return nil
-}
-
-// ObjectOf returns the object denoted by the specified id,
-// or nil if not found.
-//
-// If id is an embedded struct field, ObjectOf returns the field (*Var)
-// it uses, not the type (*TypeName) it defines.
-//
-// Precondition: the Uses and Defs maps are populated.
-//
-func (info *Info) ObjectOf(id *Ident) Object {
-	return id.Obj
-}
-
 // TypeAndValue reports the type and value (for constants)
 // of the corresponding expression.
 type TypeAndValue struct {

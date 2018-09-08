@@ -2363,7 +2363,7 @@ func (p *Package) build() {
 // Like ObjectOf, but panics instead of returning nil.
 // Only valid during p's create and build phases.
 func (p *Package) objectOf(id *types.Ident) types.Object {
-	if o := p.info.ObjectOf(id); o != nil {
+	if o := id.Obj; o != nil {
 		return o
 	}
 	panic(fmt.Sprintf("no types.Object for types.Ident %s @ %s",
@@ -2373,7 +2373,7 @@ func (p *Package) objectOf(id *types.Ident) types.Object {
 // Like TypeOf, but panics instead of returning nil.
 // Only valid during p's create and build phases.
 func (p *Package) typeOf(e types.Expr) types.Type {
-	if T := p.info.TypeOf(e); T != nil {
+	if T := e.TV().Type; T != nil {
 		return T
 	}
 	panic(fmt.Sprintf("no type for %T @ %s",

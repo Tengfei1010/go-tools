@@ -130,7 +130,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			return true
 		}
 
-		if _, ok := TypeOf(j, lhs.X).(*types.Slice); !ok {
+		if _, ok := lhs.X.TV().Type.(*types.Slice); !ok {
 			return true
 		}
 		lidx, ok := lhs.Index.(*types.Ident)
@@ -141,16 +141,16 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if TypeOf(j, lhs) == nil || TypeOf(j, stmt.Rhs[0]) == nil {
+		if lhs.TV().Type == nil || stmt.Rhs[0].TV().Type == nil {
 			return true
 		}
-		if ObjectOf(j, lidx) != ObjectOf(j, key) {
+		if lidx.Obj != key.Obj {
 			return true
 		}
-		if !types.Identical(TypeOf(j, lhs), TypeOf(j, stmt.Rhs[0])) {
+		if !types.Identical(lhs.TV().Type, stmt.Rhs[0].TV().Type) {
 			return true
 		}
-		if _, ok := TypeOf(j, loop.X).(*types.Slice); !ok {
+		if _, ok := loop.X.TV().Type.(*types.Slice); !ok {
 			return true
 		}
 
@@ -164,7 +164,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if ObjectOf(j, ridx) != ObjectOf(j, key) {
+			if ridx.Obj != key.Obj {
 				return true
 			}
 		} else if rhs, ok := stmt.Rhs[0].(*types.Ident); ok {
@@ -172,7 +172,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if ObjectOf(j, rhs) != ObjectOf(j, value) {
+			if rhs.Obj != value.Obj {
 				return true
 			}
 		} else {
@@ -192,21 +192,21 @@ func (c *Checker) LintIfBoolCmp(j *lint.Job) {
 		if !ok || (expr.Op != token.EQL && expr.Op != token.NEQ) {
 			return true
 		}
-		x := IsBoolConst(j, expr.X)
-		y := IsBoolConst(j, expr.Y)
+		x := IsBoolConst(expr.X)
+		y := IsBoolConst(expr.Y)
 		if !x && !y {
 			return true
 		}
 		var other types.Expr
 		var val bool
 		if x {
-			val = BoolConst(j, expr.X)
+			val = BoolConst(expr.X)
 			other = expr.Y
 		} else {
-			val = BoolConst(j, expr.Y)
+			val = BoolConst(expr.Y)
 			other = expr.X
 		}
-		basic, ok := TypeOf(j, other).Underlying().(*types.Basic)
+		basic, ok := other.TV().Type.Underlying().(*types.Basic)
 		if !ok || basic.Kind() != types.Bool {
 			return true
 		}
@@ -247,10 +247,10 @@ func (c *Checker) LintBytesBufferConversions(j *lint.Job) {
 			return true
 		}
 
-		typ := TypeOf(j, call.Fun)
-		if typ == types.Universe.Lookup("string").Type() && IsCallToAST(j, call.Args[0], "(*bytes.Buffer).Bytes") {
+		typ := call.Fun.TV().Type
+		if typ == types.Universe.Lookup("string").Type() && IsCallToAST(call.Args[0], "(*bytes.Buffer).Bytes") {
 			j.Errorf(call, "should use %v.String() instead of %v", Render(j, sel.X), Render(j, call))
-		} else if typ, ok := typ.(*types.Slice); ok && typ.Elem() == types.Universe.Lookup("byte").Type() && IsCallToAST(j, call.Args[0], "(*bytes.Buffer).String") {
+		} else if typ, ok := typ.(*types.Slice); ok && typ.Elem() == types.Universe.Lookup("byte").Type() && IsCallToAST(call.Args[0], "(*bytes.Buffer).String") {
 			j.Errorf(call, "should use %v.Bytes() instead of %v", Render(j, sel.X), Render(j, call))
 		}
 
@@ -278,7 +278,7 @@ func (c *Checker) LintStringsContains(j *lint.Job) {
 			return true
 		}
 
-		value, ok := ExprToInt(j, expr.Y)
+		value, ok := ExprToInt(expr.Y)
 		if !ok {
 			return true
 		}
@@ -346,10 +346,10 @@ func (c *Checker) LintBytesCompare(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "bytes.Compare") {
+		if !IsCallToAST(call, "bytes.Compare") {
 			return true
 		}
-		value, ok := ExprToInt(j, expr.Y)
+		value, ok := ExprToInt(expr.Y)
 		if !ok || value != 0 {
 			return true
 		}
@@ -375,7 +375,7 @@ func (c *Checker) LintForTrue(j *lint.Job) {
 		if loop.Init != nil || loop.Post != nil {
 			return true
 		}
-		if !IsBoolConst(j, loop.Cond) || !BoolConst(j, loop.Cond) {
+		if !IsBoolConst(loop.Cond) || !BoolConst(loop.Cond) {
 			return true
 		}
 		j.Errorf(loop, "should use for {} instead of for true {}")
@@ -392,8 +392,8 @@ func (c *Checker) LintRegexpRaw(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "regexp.MustCompile") &&
-			!IsCallToAST(j, call, "regexp.Compile") {
+		if !IsCallToAST(call, "regexp.MustCompile") &&
+			!IsCallToAST(call, "regexp.Compile") {
 			return true
 		}
 		sel, ok := call.Fun.(*types.SelectorExpr)
@@ -494,7 +494,7 @@ func (c *Checker) LintIfReturn(j *lint.Job) {
 		if len(ret1.Results) != 1 {
 			return true
 		}
-		if !IsBoolConst(j, ret1.Results[0]) {
+		if !IsBoolConst(ret1.Results[0]) {
 			return true
 		}
 
@@ -505,7 +505,7 @@ func (c *Checker) LintIfReturn(j *lint.Job) {
 		if len(ret2.Results) != 1 {
 			return true
 		}
-		if !IsBoolConst(j, ret2.Results[0]) {
+		if !IsBoolConst(ret2.Results[0]) {
 			return true
 		}
 		j.Errorf(n1, "should use 'return <expr>' instead of 'if <expr> { return <bool> }; return <bool>'")
@@ -534,7 +534,7 @@ func (c *Checker) LintRedundantNilCheckWithLen(j *lint.Job) {
 		if !ok {
 			return false, false
 		}
-		c, ok := ObjectOf(j, id).(*types.Const)
+		c, ok := id.Obj.(*types.Const)
 		if !ok {
 			return false, false
 		}
@@ -567,7 +567,7 @@ func (c *Checker) LintRedundantNilCheckWithLen(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsNil(j, x.Y) {
+		if !x.Y.TV().IsNil() {
 			return true
 		}
 
@@ -630,7 +630,7 @@ func (c *Checker) LintRedundantNilCheckWithLen(j *lint.Job) {
 		// finally check that xx type is one of array, slice, map or chan
 		// this is to prevent false positive in case if xx is a pointer to an array
 		var nilType string
-		switch TypeOf(j, xx).(type) {
+		switch xx.TV().Type.(type) {
 		case *types.Slice:
 			nilType = "nil slices"
 		case *types.Map:
@@ -669,11 +669,11 @@ func (c *Checker) LintSlicing(j *lint.Job) {
 		if !ok || fun.Name != "len" {
 			return true
 		}
-		if _, ok := ObjectOf(j, fun).(*types.Builtin); !ok {
+		if _, ok := fun.Obj.(*types.Builtin); !ok {
 			return true
 		}
 		arg, ok := call.Args[Arg("len.v")].(*types.Ident)
-		if !ok || ObjectOf(j, arg) != ObjectOf(j, s) {
+		if !ok || arg.Obj != s.Obj {
 			return true
 		}
 		j.Errorf(n, "should omit second index in slice, s[a:len(s)] is identical to s[a:]")
@@ -691,7 +691,7 @@ func refersTo(j *lint.Job, expr types.Expr, ident *types.Ident) bool {
 		if !ok {
 			return true
 		}
-		if ObjectOf(j, ident) == ObjectOf(j, ident2) {
+		if ident.Obj == ident2.Obj {
 			found = true
 			return false
 		}
@@ -738,14 +738,13 @@ func (c *Checker) LintLoopAppend(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		obj := ObjectOf(j, fun)
-		fn, ok := obj.(*types.Builtin)
+		fn, ok := fun.Obj.(*types.Builtin)
 		if !ok || fn.Name() != "append" {
 			return true
 		}
 
-		src := TypeOf(j, loop.X)
-		dst := TypeOf(j, call.Args[Arg("append.slice")])
+		src := loop.X.TV().Type
+		dst := call.Args[Arg("append.slice")].TV().Type
 		// TODO(dominikh) remove nil check once Go issue #15173 has
 		// been fixed
 		if src == nil {
@@ -763,7 +762,7 @@ func (c *Checker) LintLoopAppend(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if ObjectOf(j, val) != ObjectOf(j, el) {
+		if val.Obj != el.Obj {
 			return true
 		}
 		j.Errorf(loop, "should replace loop with %s = append(%s, %s...)",
@@ -785,7 +784,7 @@ func (c *Checker) LintTimeSince(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, sel.X, "time.Now") {
+		if !IsCallToAST(sel.X, "time.Now") {
 			return true
 		}
 		if sel.Sel.Name != "Sub" {
@@ -808,10 +807,10 @@ func (c *Checker) LintTimeUntil(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "(time.Time).Sub") {
+		if !IsCallToAST(call, "(time.Time).Sub") {
 			return true
 		}
-		if !IsCallToAST(j, call.Args[Arg("(time.Time).Sub.u")], "time.Now") {
+		if !IsCallToAST(call.Args[Arg("(time.Time).Sub.u")], "time.Now") {
 			return true
 		}
 		j.Errorf(call, "should use time.Until instead of t.Sub(time.Now())")
@@ -838,7 +837,7 @@ func (c *Checker) LintUnnecessaryBlank(j *lint.Job) {
 		case *types.IndexExpr:
 			// The type-checker should make sure that it's a map, but
 			// let's be safe.
-			if _, ok := TypeOf(j, rhs.X).Underlying().(*types.Map); !ok {
+			if _, ok := rhs.X.TV().Type.Underlying().(*types.Map); !ok {
 				return
 			}
 		case *types.UnaryExpr:
@@ -925,7 +924,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		typ1, _ := TypeOf(j, lit.Type).(*types.Named)
+		typ1, _ := lit.Type.TV().Type.(*types.Named)
 		if typ1 == nil {
 			return true
 		}
@@ -945,7 +944,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 			if !ok {
 				return nil, nil, false
 			}
-			typ := TypeOf(j, sel.X)
+			typ := sel.X.TV().Type
 			return typ, ident, typ != nil
 		}
 		if len(lit.Elts) == 0 {
@@ -983,7 +982,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 				return true
 			}
 			// All fields must be initialized from the same object
-			if ident != nil && ObjectOf(j, ident) != ObjectOf(j, id) {
+			if ident != nil && ident.Obj != id.Obj {
 				return true
 			}
 			typ2, _ = t.(*types.Named)
@@ -1039,7 +1038,7 @@ func (c *Checker) LintTrim(j *lint.Job) {
 
 		switch node1 := node1.(type) {
 		case *types.Ident:
-			return ObjectOf(j, node1) == ObjectOf(j, node2.(*types.Ident))
+			return node1.Obj == node2.(*types.Ident).Obj
 		case *types.SelectorExpr:
 			return Render(j, node1) == Render(j, node2)
 		case *types.IndexExpr:
@@ -1136,7 +1135,7 @@ func (c *Checker) LintTrim(j *lint.Job) {
 			index = slice.Low
 		case "HasSuffix":
 			if slice.Low != nil {
-				n, ok := ExprToInt(j, slice.Low)
+				n, ok := ExprToInt(slice.Low)
 				if !ok || n != 0 {
 					return true
 				}
@@ -1165,8 +1164,8 @@ func (c *Checker) LintTrim(j *lint.Job) {
 				if !ok {
 					return true
 				}
-				s1, ok1 := ExprToString(j, lit)
-				s2, ok2 := ExprToString(j, condCall.Args[1])
+				s1, ok1 := ExprToString(lit)
+				s2, ok2 := ExprToString(condCall.Args[1])
 				if !ok1 || !ok2 || s1 != s2 {
 					return true
 				}
@@ -1182,8 +1181,8 @@ func (c *Checker) LintTrim(j *lint.Job) {
 			if pkg != "strings" {
 				return true
 			}
-			string, ok1 := ExprToString(j, condCall.Args[1])
-			int, ok2 := ExprToInt(j, slice.Low)
+			string, ok1 := ExprToString(condCall.Args[1])
+			int, ok2 := ExprToInt(slice.Low)
 			if !ok1 || !ok2 || int != int64(len(string)) {
 				return true
 			}
@@ -1251,7 +1250,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		postvar, ok := post.X.(*types.Ident)
-		if !ok || ObjectOf(j, postvar) != ObjectOf(j, initvar) {
+		if !ok || postvar.Obj != initvar.Obj {
 			return true
 		}
 		bin, ok := loop.Cond.(*types.BinaryExpr)
@@ -1259,7 +1258,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		binx, ok := bin.X.(*types.Ident)
-		if !ok || ObjectOf(j, binx) != ObjectOf(j, initvar) {
+		if !ok || binx.Obj != initvar.Obj {
 			return true
 		}
 		biny, ok := bin.Y.(*types.Ident)
@@ -1288,17 +1287,15 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		obj1 := ObjectOf(j, bs1)
-		obj2 := ObjectOf(j, bs2)
-		if obj1 != obj2 {
+		if bs1.Obj != bs2.Obj {
 			return true
 		}
-		if _, ok := obj1.Type().Underlying().(*types.Slice); !ok {
+		if _, ok := bs1.Obj.Type().Underlying().(*types.Slice); !ok {
 			return true
 		}
 
 		index1, ok := lhs.Index.(*types.Ident)
-		if !ok || ObjectOf(j, index1) != ObjectOf(j, initvar) {
+		if !ok || index1.Obj != initvar.Obj {
 			return true
 		}
 		index2, ok := rhs.Index.(*types.BinaryExpr)
@@ -1310,7 +1307,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		add2, ok := index2.Y.(*types.Ident)
-		if !ok || ObjectOf(j, add2) != ObjectOf(j, initvar) {
+		if !ok || add2.Obj != initvar.Obj {
 			return true
 		}
 
@@ -1335,7 +1332,7 @@ func (c *Checker) LintMakeLenCap(j *lint.Job) {
 		switch len(call.Args) {
 		case 2:
 			// make(T, len)
-			if _, ok := TypeOf(j, call.Args[Arg("make.t")]).Underlying().(*types.Slice); ok {
+			if _, ok := call.Args[Arg("make.t")].TV().Type.Underlying().(*types.Slice); ok {
 				break
 			}
 			if IsZero(call.Args[Arg("make.size[0]")]) {
@@ -1363,17 +1360,17 @@ func (c *Checker) LintAssertNotNil(j *lint.Job) {
 			return false
 		}
 		xident, ok := xbinop.X.(*types.Ident)
-		if !ok || ObjectOf(j, xident) != ObjectOf(j, ident) {
+		if !ok || xident.Obj != ident.Obj {
 			return false
 		}
-		if !IsNil(j, xbinop.Y) {
+		if !xbinop.Y.TV().IsNil() {
 			return false
 		}
 		return true
 	}
 	isOKCheck := func(ident *types.Ident, expr types.Expr) bool {
 		yident, ok := expr.(*types.Ident)
-		if !ok || ObjectOf(j, yident) != ObjectOf(j, ident) {
+		if !ok || yident.Obj != ident.Obj {
 			return false
 		}
 		return true
@@ -1450,7 +1447,7 @@ func (c *Checker) LintDeclareAssign(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if ObjectOf(j, vspec.Names[0]) != ObjectOf(j, ident) {
+			if vspec.Names[0].Obj != ident.Obj {
 				continue
 			}
 
@@ -1553,17 +1550,17 @@ func (c *Checker) LintRedundantSprintf(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if !IsCallToAST(j, call, "fmt.Sprintf") {
+		if !IsCallToAST(call, "fmt.Sprintf") {
 			return true
 		}
 		if len(call.Args) != 2 {
 			return true
 		}
-		if s, ok := ExprToString(j, call.Args[Arg("fmt.Sprintf.format")]); !ok || s != "%s" {
+		if s, ok := ExprToString(call.Args[Arg("fmt.Sprintf.format")]); !ok || s != "%s" {
 			return true
 		}
 		arg := call.Args[Arg("fmt.Sprintf.a[0]")]
-		typ := TypeOf(j, arg)
+		typ := arg.TV().Type
 
 		if c.Implements(j, typ, "fmt.Stringer") {
 			j.Errorf(call, "should use String() instead of fmt.Sprintf")
@@ -1586,11 +1583,11 @@ func (c *Checker) LintRedundantSprintf(j *lint.Job) {
 
 func (c *Checker) LintErrorsNewSprintf(j *lint.Job) {
 	fn := func(node types.Node) bool {
-		if !IsCallToAST(j, node, "errors.New") {
+		if !IsCallToAST(node, "errors.New") {
 			return true
 		}
 		call := node.(*types.CallExpr)
-		if !IsCallToAST(j, call.Args[Arg("errors.New.text")], "fmt.Sprintf") {
+		if !IsCallToAST(call.Args[Arg("errors.New.text")], "fmt.Sprintf") {
 			return true
 		}
 		j.Errorf(node, "should use fmt.Errorf(...) instead of errors.New(fmt.Sprintf(...))")
@@ -1617,7 +1614,7 @@ func (c *Checker) LintNilCheckAroundRange(j *lint.Job) {
 			return true
 		}
 
-		if cond.Op != token.NEQ || !IsNil(j, cond.Y) || len(ifstmt.Body.List) != 1 {
+		if cond.Op != token.NEQ || !cond.Y.TV().IsNil() || len(ifstmt.Body.List) != 1 {
 			return true
 		}
 
@@ -1633,10 +1630,10 @@ func (c *Checker) LintNilCheckAroundRange(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if ObjectOf(j, ifXIdent) != ObjectOf(j, rangeXIdent) {
+		if ifXIdent.Obj != rangeXIdent.Obj {
 			return true
 		}
-		switch TypeOf(j, rangeXIdent).(type) {
+		switch rangeXIdent.TV().Type.(type) {
 		case *types.Slice, *types.Map:
 			j.Errorf(node, "unnecessary nil check around range")
 		}
@@ -1658,7 +1655,7 @@ func isPermissibleSort(j *lint.Job, node types.Node) bool {
 	if !ok {
 		return true
 	}
-	name := SelectorName(j, sel)
+	name := SelectorName(sel)
 	switch name {
 	case "sort.IntSlice", "sort.Float64Slice", "sort.StringSlice":
 	default:
@@ -1693,7 +1690,7 @@ func (c *Checker) LintSortHelpers(j *lint.Job) {
 			if permissible {
 				return false
 			}
-			if !IsCallToAST(j, node, "sort.Sort") {
+			if !IsCallToAST(node, "sort.Sort") {
 				return true
 			}
 			if isPermissibleSort(j, node) {
@@ -1703,7 +1700,7 @@ func (c *Checker) LintSortHelpers(j *lint.Job) {
 			call := node.(*types.CallExpr)
 			typeconv := call.Args[Arg("sort.Sort.data")].(*types.CallExpr)
 			sel := typeconv.Fun.(*types.SelectorExpr)
-			name := SelectorName(j, sel)
+			name := SelectorName(sel)
 
 			switch name {
 			case "sort.IntSlice":
