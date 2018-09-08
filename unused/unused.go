@@ -1,5 +1,3 @@
-// +build ignore
-
 package unused // import "honnef.co/go/tools/unused"
 
 import (
@@ -367,10 +365,7 @@ func (c *Checker) useExportedMethods(typ types.Type) {
 }
 
 func (c *Checker) processDefs(pkg *lint.Pkg) {
-	for _, obj := range pkg.TypesInfo.Defs {
-		if obj == nil {
-			continue
-		}
+	objFn := func(obj types.Object) {
 		c.graph.getNode(obj)
 
 		if obj, ok := obj.(*types.TypeName); ok {
@@ -465,24 +460,44 @@ func (c *Checker) processDefs(pkg *lint.Pkg) {
 			}
 		}
 	}
+	for _, f := range pkg.Syntax {
+		types.Inspect(f, func(node types.Node) bool {
+			if ident, ok := node.(*types.Ident); ok && ident.IsDef {
+				if ident.Obj == nil {
+					return true
+				}
+				objFn(ident.Obj)
+			}
+			return true
+		})
+	}
 }
 
 func (c *Checker) processUses(pkg *lint.Pkg) {
-	for ident, usedObj := range pkg.TypesInfo.Uses {
-		if _, ok := usedObj.(*types.PkgName); ok {
-			continue
-		}
-		pos := ident.Pos()
-		scope := pkg.Types.Scope().Innermost(pos)
-		scope = c.topmostScope(scope, pkg.Types)
-		if scope != pkg.Types.Scope() {
-			c.graph.markUsedBy(usedObj, scope)
-		}
+	for _, f := range pkg.Syntax {
+		types.Inspect(f, func(node types.Node) bool {
+			if ident, ok := node.(*types.Ident); ok && !ident.IsDef {
+				usedObj := ident.Obj
+				if usedObj == nil {
+					return true
+				}
+				if _, ok := usedObj.(*types.PkgName); ok {
+					return true
+				}
+				pos := ident.Pos()
+				scope := pkg.Types.Scope().Innermost(pos)
+				scope = c.topmostScope(scope, pkg.Types)
+				if scope != pkg.Types.Scope() {
+					c.graph.markUsedBy(usedObj, scope)
+				}
 
-		switch usedObj.(type) {
-		case *types.Var, *types.Const:
-			c.graph.markUsedBy(usedObj.Type(), usedObj)
-		}
+				switch usedObj.(type) {
+				case *types.Var, *types.Const:
+					c.graph.markUsedBy(usedObj.Type(), usedObj)
+				}
+			}
+			return true
+		})
 	}
 }
 
@@ -498,15 +513,22 @@ func (c *Checker) findExportedInterfaces() {
 	}
 
 	for _, pkg := range pkgs {
-		for _, tv := range pkg.TypesInfo.Types {
-			iface, ok := tv.Type.(*types.Interface)
-			if !ok {
-				continue
-			}
-			if iface.NumMethods() == 0 {
-				continue
-			}
-			c.interfaces = append(c.interfaces, iface)
+		for _, f := range pkg.Syntax {
+			types.Inspect(f, func(node types.Node) bool {
+				expr, ok := node.(types.Expr)
+				if !ok {
+					return true
+				}
+				iface, ok := expr.Type().(*types.Interface)
+				if !ok {
+					return true
+				}
+				if iface.NumMethods() == 0 {
+					return true
+				}
+				c.interfaces = append(c.interfaces, iface)
+				return true
+			})
 		}
 	}
 }
@@ -514,28 +536,37 @@ func (c *Checker) findExportedInterfaces() {
 func (c *Checker) processTypes(pkg *lint.Pkg) {
 	named := map[*types.Named]*types.Pointer{}
 	var interfaces []*types.Interface
-	for _, tv := range pkg.TypesInfo.Types {
-		if typ, ok := tv.Type.(interface {
-			Elem() types.Type
-		}); ok {
-			c.graph.markUsedBy(typ.Elem(), typ)
-		}
+	for _, f := range pkg.Syntax {
+		types.Inspect(f, func(node types.Node) bool {
+			expr, ok := node.(types.Expr)
+			if !ok {
+				return true
+			}
 
-		switch obj := tv.Type.(type) {
-		case *types.Named:
-			named[obj] = types.NewPointer(obj)
-			c.graph.markUsedBy(obj, obj.Underlying())
-			c.graph.markUsedBy(obj.Underlying(), obj)
-		case *types.Interface:
-			if obj.NumMethods() > 0 {
-				interfaces = append(interfaces, obj)
+			if typ, ok := expr.Type().(interface {
+				Elem() types.Type
+			}); ok {
+				c.graph.markUsedBy(typ.Elem(), typ)
 			}
-		case *types.Struct:
-			c.useNoCopyFields(obj)
-			if pkg.Types.Name() != "main" && !c.WholeProgram {
-				c.useExportedFields(obj, obj)
+
+			switch obj := expr.Type().(type) {
+			case *types.Named:
+				named[obj] = types.NewPointer(obj)
+				c.graph.markUsedBy(obj, obj.Underlying())
+				c.graph.markUsedBy(obj.Underlying(), obj)
+			case *types.Interface:
+				if obj.NumMethods() > 0 {
+					interfaces = append(interfaces, obj)
+				}
+			case *types.Struct:
+				c.useNoCopyFields(obj)
+				if pkg.Types.Name() != "main" && !c.WholeProgram {
+					c.useExportedFields(obj, obj)
+				}
 			}
-		}
+
+			return true
+		})
 	}
 
 	// Pretend that all types are meant to implement as many
@@ -606,13 +637,25 @@ func (c *Checker) processSelections(pkg *lint.Pkg) {
 		}
 	}
 
-	for expr, sel := range pkg.TypesInfo.Selections {
-		switch sel.Kind() {
-		case types.FieldVal:
-			fn(expr, sel, 0)
-		case types.MethodVal:
-			fn(expr, sel, 1)
-		}
+	for _, f := range pkg.Syntax {
+		types.Inspect(f, func(node types.Node) bool {
+			expr, ok := node.(*types.SelectorExpr)
+			if !ok {
+				return true
+			}
+			sel := expr.Selection
+			if sel == nil {
+				return true
+			}
+			switch sel.Kind() {
+			case types.FieldVal:
+				fn(expr, sel, 0)
+			case types.MethodVal:
+				fn(expr, sel, 1)
+			}
+
+			return true
+		})
 	}
 }
 
@@ -790,10 +833,12 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node types.Nod
 		}
 		arg = call.Args[1]
 	}
-	typ := arg.Type()
-	ms := types.NewMethodSet(typ)
-	for i := 0; i < ms.Len(); i++ {
-		c.graph.markUsedBy(ms.At(i).Obj(), typ)
+	if arg != nil {
+		typ := arg.Type()
+		ms := types.NewMethodSet(typ)
+		for i := 0; i < ms.Len(); i++ {
+			c.graph.markUsedBy(ms.At(i).Obj(), typ)
+		}
 	}
 }
 
