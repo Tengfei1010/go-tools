@@ -8,12 +8,11 @@ import (
 	"strings"
 
 	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
-
 	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
-	"honnef.co/go/tools/ssa"
 )
 
 type packager interface {

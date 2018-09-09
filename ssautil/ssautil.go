@@ -1,7 +1,7 @@
 package ssautil
 
 import (
-	"honnef.co/go/tools/ssa"
+	"honnef.co/go/tools/go/ssa"
 )
 
 func Reachable(from, to *ssa.BasicBlock) bool {

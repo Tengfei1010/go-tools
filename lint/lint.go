@@ -3,7 +3,6 @@ package lint // import "honnef.co/go/tools/lint"
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,9 +14,10 @@ import (
 
 	"honnef.co/go/tools/config"
 	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/ssa/ssautil"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
-	"honnef.co/go/tools/ssa"
-	"honnef.co/go/tools/ssa/ssautil"
 )
 
 type Job struct {

@@ -6,8 +6,8 @@ package vrp
 import (
 	"fmt"
 
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/types"
-	"honnef.co/go/tools/ssa"
 )
 
 type SliceInterval struct {

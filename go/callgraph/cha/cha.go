@@ -21,14 +21,14 @@
 // and all concrete types are put into interfaces, it is sound to run on
 // partial programs, such as libraries without a main or test function.
 //
-package cha // import "honnef.co/go/tools/callgraph/cha"
+package cha // import "honnef.co/go/tools/go/callgraph/cha"
 
 import (
-	"honnef.co/go/tools/callgraph"
+	"honnef.co/go/tools/go/callgraph"
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/ssa/ssautil"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
-	"honnef.co/go/tools/ssa"
-	"honnef.co/go/tools/ssa/ssautil"
 )
 
 // CallGraph computes the call graph of the specified program using the

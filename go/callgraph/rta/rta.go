@@ -40,7 +40,7 @@
 // cmd/callgraph tool on its own source takes ~2.1s for RTA and ~5.4s
 // for points-to analysis.
 //
-package rta // import "honnef.co/go/tools/callgraph/rta"
+package rta // import "honnef.co/go/tools/go/callgraph/rta"
 
 // TODO(adonovan): test it by connecting it to the interpreter and
 // replacing all "unreachable" functions by a special intrinsic, and
@@ -49,10 +49,10 @@ package rta // import "honnef.co/go/tools/callgraph/rta"
 import (
 	"fmt"
 
-	"honnef.co/go/tools/callgraph"
+	"honnef.co/go/tools/go/callgraph"
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
-	"honnef.co/go/tools/ssa"
 )
 
 // A Result holds the results of Rapid Type Analysis, which includes the

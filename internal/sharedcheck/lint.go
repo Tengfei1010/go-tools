@@ -1,11 +1,10 @@
 package sharedcheck
 
 import (
-	
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
-	"honnef.co/go/tools/ssa"
 )
 
 func CheckRangeStringRunes(j *lint.Job) {

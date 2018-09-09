@@ -10,8 +10,8 @@ import (
 	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/types"
-	"honnef.co/go/tools/ssa"
 )
 
 // Packages creates an SSA program for a set of packages loaded from

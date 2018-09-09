@@ -120,4 +120,4 @@
 // domains of source locations, types.Nodes, types.Objects,
 // ssa.Values/Instructions.
 //
-package ssa // import "honnef.co/go/tools/ssa"
+package ssa // import "honnef.co/go/tools/go/ssa"

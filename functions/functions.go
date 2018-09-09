@@ -3,10 +3,10 @@ package functions
 import (
 	"sync"
 
-	"honnef.co/go/tools/callgraph"
-	"honnef.co/go/tools/callgraph/static"
+	"honnef.co/go/tools/go/callgraph"
+	"honnef.co/go/tools/go/callgraph/static"
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/types"
-	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/staticcheck/vrp"
 )
 

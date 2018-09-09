@@ -2,18 +2,18 @@ package stylecheck // import "honnef.co/go/tools/stylecheck"
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
-	"honnef.co/go/tools/ssa"
 )
 
 type Checker struct {

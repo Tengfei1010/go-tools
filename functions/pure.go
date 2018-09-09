@@ -1,12 +1,11 @@
 package functions
 
 import (
+	"honnef.co/go/tools/go/callgraph"
+	"honnef.co/go/tools/go/ssa"
 	"honnef.co/go/tools/go/token"
-
-	"honnef.co/go/tools/callgraph"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint/lintdsl"
-	"honnef.co/go/tools/ssa"
 )
 
 // IsStub reports whether a function is a stub. A function is

@@ -2,11 +2,11 @@ package vrp
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"math/big"
 
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
-	"honnef.co/go/tools/ssa"
 )
 
 type Zs []Z

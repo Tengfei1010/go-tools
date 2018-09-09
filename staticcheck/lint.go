@@ -13,19 +13,18 @@ import (
 	"sync"
 	texttemplate "text/template"
 
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
-
 	. "honnef.co/go/tools/arg"
 	"honnef.co/go/tools/deprecated"
 	"honnef.co/go/tools/functions"
+	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/ssa"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/astutil"
 	"honnef.co/go/tools/internal/sharedcheck"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"
-	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssautil"
 	"honnef.co/go/tools/staticcheck/vrp"
 )
