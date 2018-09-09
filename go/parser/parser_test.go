@@ -105,96 +105,6 @@ func TestParseExpr(t *testing.T) {
 	}
 }
 
-func TestColonEqualsScope(t *testing.T) {
-	f, err := ParseFile(token.NewFileSet(), "", `package p; func f() { x, y, z := x, y, z }`, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// RHS refers to undefined globals; LHS does not.
-	as := f.Decls[0].(*types.FuncDecl).Body.List[0].(*types.AssignStmt)
-	for _, v := range as.Rhs {
-		id := v.(*types.Ident)
-		if id.Obj != nil {
-			t.Errorf("rhs %s has Obj, should not", id.Name)
-		}
-	}
-	for _, v := range as.Lhs {
-		id := v.(*types.Ident)
-		if id.Obj == nil {
-			t.Errorf("lhs %s does not have Obj, should", id.Name)
-		}
-	}
-}
-
-func TestVarScope(t *testing.T) {
-	f, err := ParseFile(token.NewFileSet(), "", `package p; func f() { var x, y, z = x, y, z }`, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// RHS refers to undefined globals; LHS does not.
-	as := f.Decls[0].(*types.FuncDecl).Body.List[0].(*types.DeclStmt).Decl.(*types.GenDecl).Specs[0].(*types.ValueSpec)
-	for _, v := range as.Values {
-		id := v.(*types.Ident)
-		if id.Obj != nil {
-			t.Errorf("rhs %s has Obj, should not", id.Name)
-		}
-	}
-	for _, id := range as.Names {
-		if id.Obj == nil {
-			t.Errorf("lhs %s does not have Obj, should", id.Name)
-		}
-	}
-}
-
-func TestObjects(t *testing.T) {
-	const src = `
-package p
-import fmt "fmt"
-const pi = 3.14
-type T struct{}
-var x int
-func f() { L: }
-`
-
-	f, err := ParseFile(token.NewFileSet(), "", src, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	objects := map[string]types.ObjKind{
-		"p":   types.BadKind, // not in a scope
-		"fmt": types.BadKind, // not resolved yet
-		"pi":  types.ConKind,
-		"T":   types.TypKind,
-		"x":   types.VarKind,
-		"int": types.BadKind, // not resolved yet
-		"f":   types.FunKind,
-		"L":   types.LblKind,
-	}
-
-	types.Inspect(f, func(n types.Node) bool {
-		if ident, ok := n.(*types.Ident); ok {
-			obj := ident.Obj
-			if obj == nil {
-				if objects[ident.Name] != types.BadKind {
-					t.Errorf("no object for %s", ident.Name)
-				}
-				return true
-			}
-			if obj.Name != ident.Name {
-				t.Errorf("names don't match: obj.Name = %s, ident.Name = %s", obj.Name, ident.Name)
-			}
-			kind := objects[ident.Name]
-			if obj.Kind != kind {
-				t.Errorf("%s: obj.Kind = %s; want %s", ident.Name, obj.Kind, kind)
-			}
-		}
-		return true
-	})
-}
-
 var imports = map[string]bool{
 	`"a"`:        true,
 	"`a`":        true,
@@ -440,9 +350,9 @@ func TestIncompleteSelection(t *testing.T) {
 			t.Error("found no *types.SelectorExpr")
 			continue
 		}
-		const wantSel = "&{fmt _}"
-		if fmt.Sprint(sel) != wantSel {
-			t.Errorf("found selector %s, want %s", sel, wantSel)
+		const wantSel = "&{fmt _ {0 <nil> <nil>} <nil>}"
+		if selStr := fmt.Sprint(sel); selStr != wantSel {
+			t.Errorf("found selector %s, want %s", selStr, wantSel)
 			continue
 		}
 	}

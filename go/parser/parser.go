@@ -78,6 +78,17 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 	p.next()
 }
 
+func (p *parser) shortVarDecl(decl *types.AssignStmt, list []types.Expr) {
+	// Go spec: A short variable declaration may redeclare variables
+	// provided they were originally declared in the same block with
+	// the same type, and at least one of the non-blank variables is new.
+	for _, x := range list {
+		if _, isIdent := x.(*types.Ident); !isIdent {
+			p.errorExpected(x.Pos(), "identifier on left side of :=")
+		}
+	}
+}
+
 // ----------------------------------------------------------------------------
 // Parsing support
 
@@ -1513,6 +1524,9 @@ func (p *parser) parseSimpleStmt(mode int) (types.Stmt, bool) {
 			y = p.parseRhsList()
 		}
 		as := &types.AssignStmt{Lhs: x, TokPos: pos, Tok: tok, Rhs: y}
+		if tok == token.DEFINE {
+			p.shortVarDecl(as, x)
+		}
 		return as, isRange
 	}
 
@@ -1892,6 +1906,9 @@ func (p *parser) parseCommClause() *types.CommClause {
 				p.next()
 				rhs := p.parseRhs()
 				as := &types.AssignStmt{Lhs: lhs, TokPos: pos, Tok: tok, Rhs: []types.Expr{rhs}}
+				if tok == token.DEFINE {
+					p.shortVarDecl(as, lhs)
+				}
 				comm = as
 			} else {
 				// lhs must be single receive operation
