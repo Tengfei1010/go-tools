@@ -7,7 +7,7 @@
 package types
 
 import (
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // assignment reports whether x can be assigned to a variable of type T,

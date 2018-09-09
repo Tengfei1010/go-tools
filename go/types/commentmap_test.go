@@ -11,7 +11,7 @@ import (
 	"fmt"
 	. "go/ast"
 	"go/parser"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"sort"
 	"testing"
 )

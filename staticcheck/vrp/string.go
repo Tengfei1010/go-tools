@@ -2,7 +2,7 @@ package vrp
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"

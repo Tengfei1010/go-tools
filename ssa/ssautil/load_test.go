@@ -8,7 +8,7 @@ package ssautil_test
 
 import (
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"os"
 	"testing"
 

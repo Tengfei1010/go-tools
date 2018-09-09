@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // This file implements the collection of an interface's methods

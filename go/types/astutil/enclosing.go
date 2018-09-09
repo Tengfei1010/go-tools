@@ -8,7 +8,7 @@ package astutil
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"sort"
 
 	"honnef.co/go/tools/go/types"

@@ -12,7 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"log"
 	"os"
 	"regexp"

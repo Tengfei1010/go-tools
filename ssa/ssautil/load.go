@@ -7,7 +7,7 @@ package ssautil
 // This file defines utility functions for constructing programs in SSA form.
 
 import (
-	"go/token"
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/types"

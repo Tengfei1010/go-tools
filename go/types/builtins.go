@@ -7,8 +7,8 @@
 package types
 
 import (
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 )
 
 // builtin type-checks a call to the built-in specified by id and

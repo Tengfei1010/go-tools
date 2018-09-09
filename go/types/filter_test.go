@@ -12,7 +12,7 @@ import (
 	"bytes"
 	"go/format"
 	"go/parser"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"testing"
 )
 

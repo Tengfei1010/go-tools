@@ -4,7 +4,7 @@
 package stylecheck
 
 import (
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"strings"
 	"unicode"
 

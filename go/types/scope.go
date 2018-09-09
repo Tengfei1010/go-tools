@@ -9,7 +9,7 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"sort"
 	"strings"

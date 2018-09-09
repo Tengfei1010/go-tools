@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"

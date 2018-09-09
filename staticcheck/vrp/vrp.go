@@ -5,8 +5,8 @@ package vrp
 
 import (
 	"fmt"
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 	"math/big"
 	"sort"
 	"strings"

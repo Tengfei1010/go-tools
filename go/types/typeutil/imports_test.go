@@ -6,7 +6,7 @@ package typeutil_test
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"testing"
 
 	"honnef.co/go/tools/go/parser"

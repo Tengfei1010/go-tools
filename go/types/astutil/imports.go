@@ -7,7 +7,7 @@ package astutil // import "honnef.co/go/tools/go/types/astutil"
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"strconv"
 	"strings"
 

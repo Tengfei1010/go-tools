@@ -53,10 +53,7 @@ package cgo
 
 import (
 	"fmt"
-	"go/ast"
 	"go/build"
-	"go/parser"
-	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
@@ -64,12 +61,16 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
+	"honnef.co/go/tools/go/types"
 )
 
 // ProcessFiles invokes the cgo preprocessor on bp.CgoFiles, parses
 // the output and returns the resulting ASTs.
 //
-func ProcessFiles(bp *build.Package, fset *token.FileSet, DisplayPath func(path string) string, mode parser.Mode) ([]*ast.File, error) {
+func ProcessFiles(bp *build.Package, fset *token.FileSet, DisplayPath func(path string) string, mode parser.Mode) ([]*types.File, error) {
 	tmpdir, err := ioutil.TempDir("", strings.Replace(bp.ImportPath, "/", "_", -1)+"_C")
 	if err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func ProcessFiles(bp *build.Package, fset *token.FileSet, DisplayPath func(path 
 	if err != nil {
 		return nil, err
 	}
-	var files []*ast.File
+	var files []*types.File
 	for i := range cgoFiles {
 		rd, err := os.Open(cgoFiles[i])
 		if err != nil {

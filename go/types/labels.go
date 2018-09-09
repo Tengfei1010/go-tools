@@ -6,7 +6,7 @@ package types
 
 import (
 	
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // labels checks correct label use in body.

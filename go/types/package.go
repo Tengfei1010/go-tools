@@ -6,7 +6,7 @@ package types
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // A Package describes a Go package.

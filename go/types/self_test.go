@@ -10,7 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"path/filepath"
 	"testing"
 	"time"

@@ -2,7 +2,7 @@ package staticcheck
 
 import (
 	"fmt"
-	"go/constant"
+	"honnef.co/go/tools/go/constant"
 	"net"
 	"net/url"
 	"regexp"

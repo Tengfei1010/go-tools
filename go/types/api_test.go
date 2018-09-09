@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"internal/testenv"
 	"reflect"
 	"regexp"

@@ -9,7 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"io/ioutil"
 	"path/filepath"

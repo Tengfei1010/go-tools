@@ -8,7 +8,7 @@
 package types
 
 import (
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"strings"
 	"unicode"
 	"unicode/utf8"

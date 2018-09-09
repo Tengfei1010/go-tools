@@ -16,7 +16,7 @@ package ssa_test
 
 import (
 	"go/build"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"runtime"
 	"testing"
 	"time"

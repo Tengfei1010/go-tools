@@ -12,7 +12,7 @@ package astutil_test
 import (
 	"bytes"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"strings"
 	"testing"
 

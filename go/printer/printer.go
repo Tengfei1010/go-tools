@@ -7,7 +7,7 @@ package printer
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"strings"

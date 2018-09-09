@@ -9,7 +9,7 @@ package ssa
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"os"
 	"sync"
 

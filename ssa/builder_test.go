@@ -9,7 +9,7 @@ package ssa_test
 import (
 	"bytes"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"os"
 	"reflect"
 	"sort"

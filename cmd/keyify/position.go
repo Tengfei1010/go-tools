@@ -8,7 +8,7 @@ package main
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"strconv"
 	"strings"
 )

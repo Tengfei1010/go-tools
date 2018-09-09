@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"go/format"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"log"
 	"regexp"
 	"sort"

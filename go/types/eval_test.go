@@ -10,7 +10,7 @@ package types_test
 
 import (
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"internal/testenv"
 	"strings"
 	"testing"

@@ -6,7 +6,7 @@ package parser_test
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/parser"
 )

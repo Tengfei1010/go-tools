@@ -3,7 +3,7 @@ package lint // import "honnef.co/go/tools/lint"
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"path/filepath"

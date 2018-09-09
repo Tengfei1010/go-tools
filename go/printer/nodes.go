@@ -10,7 +10,7 @@ package printer
 
 import (
 	"bytes"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"math"
 	"strconv"
 	"strings"

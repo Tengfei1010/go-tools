@@ -2,8 +2,8 @@ package stylecheck // import "honnef.co/go/tools/stylecheck"
 
 import (
 	"fmt"
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 	"strconv"
 	"strings"
 	"unicode"

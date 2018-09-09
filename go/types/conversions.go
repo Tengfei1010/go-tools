@@ -6,7 +6,7 @@
 
 package types
 
-import "go/constant"
+import "honnef.co/go/tools/go/constant"
 
 // Conversion type-checks the conversion T(x).
 // The result is in x.

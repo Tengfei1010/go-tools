@@ -8,7 +8,7 @@ package types
 
 import (
 	
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // isTerminating reports if s is a terminating statement.

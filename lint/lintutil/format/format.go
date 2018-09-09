@@ -4,7 +4,7 @@ package format
 import (
 	"encoding/json"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"path/filepath"

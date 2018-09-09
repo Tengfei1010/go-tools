@@ -11,7 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"testing"
 

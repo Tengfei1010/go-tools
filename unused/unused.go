@@ -2,7 +2,7 @@ package unused // import "honnef.co/go/tools/unused"
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"path/filepath"
 	"strings"

@@ -3,8 +3,8 @@ package staticcheck // import "honnef.co/go/tools/staticcheck"
 
 import (
 	"fmt"
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 	htmltemplate "html/template"
 	"net/http"
 	"regexp"

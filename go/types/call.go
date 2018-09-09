@@ -8,7 +8,7 @@ package types
 
 import (
 	
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 func (check *Checker) call(x *operand, e *CallExpr) exprKind {

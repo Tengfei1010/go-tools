@@ -40,7 +40,7 @@ package ssa
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"math/big"
 	"os"

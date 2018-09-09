@@ -9,8 +9,8 @@ package ssa
 
 import (
 	"fmt"
-	exact "go/constant"
-	"go/token"
+	exact "honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 	"sync"
 
 	"honnef.co/go/tools/go/types"

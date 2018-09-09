@@ -9,7 +9,7 @@ package ssa_test
 import (
 	"fmt"
 	"go/importer"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"os"
 
 	

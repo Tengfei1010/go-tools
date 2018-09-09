@@ -9,7 +9,7 @@ package astutil
 import (
 	"bytes"
 	"go/format"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"reflect"
 	"strconv"
 	"testing"

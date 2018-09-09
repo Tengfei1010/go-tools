@@ -10,7 +10,7 @@ import (
 	"go/ast"
 	"go/format"
 	"go/parser"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 )
 
 // This example demonstrates how to inspect the AST of a Go program.

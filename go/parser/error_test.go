@@ -23,8 +23,8 @@
 package parser
 
 import (
-	"go/scanner"
-	"go/token"
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"

@@ -41,7 +41,7 @@ package callgraph // import "honnef.co/go/tools/callgraph"
 
 import (
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/ssa"
 )

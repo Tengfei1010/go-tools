@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"fmt"
 	
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 )
 
 // An Object describes a named language entity such as a package,

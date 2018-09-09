@@ -18,12 +18,12 @@ package parser
 
 import (
 	"fmt"
-	"go/scanner"
-	"go/token"
 	"strconv"
 	"strings"
 	"unicode"
 
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

@@ -9,7 +9,7 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 
 	"io"
 	"os"

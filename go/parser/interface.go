@@ -9,7 +9,7 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"go/token"
+	"honnef.co/go/tools/go/token"
 	"io"
 	"io/ioutil"
 

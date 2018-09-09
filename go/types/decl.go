@@ -6,8 +6,8 @@ package types
 
 import (
 	
-	"go/constant"
-	"go/token"
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 )
 
 func (check *Checker) reportAltDecl(obj Object) {
