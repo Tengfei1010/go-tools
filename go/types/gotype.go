@@ -81,18 +81,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	
 	"go/build"
 	"go/importer"
-	"go/parser"
-	"honnef.co/go/tools/go/scanner"
-	"honnef.co/go/tools/go/token"
-	"honnef.co/go/tools/go/types"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
+	"honnef.co/go/tools/go/types"
 )
 
 var (

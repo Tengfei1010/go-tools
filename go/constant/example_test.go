@@ -6,9 +6,10 @@ package constant_test
 
 import (
 	"fmt"
+	"sort"
+
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
-	"sort"
 )
 
 func Example_complexNumbers() {
@@ -33,7 +34,7 @@ func Example_complexNumbers() {
 	C := complex(Ar, Ai)
 
 	fmt.Println("literal", 25.3+55i)
-	fmt.Println("honnef.co/go/tools/go/constant", c)
+	fmt.Println("go/constant", c)
 	fmt.Println("complex128", C)
 
 	// Output:

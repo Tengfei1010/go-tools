@@ -14,13 +14,14 @@ package constant
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"math"
 	"math/big"
 	"strconv"
 	"strings"
 	"sync"
 	"unicode/utf8"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // Kind specifies the kind of value represented by a Value.
@@ -403,8 +404,13 @@ func MakeFromLiteral(lit string, tok token.Token, zero uint) Value {
 
 	case token.CHAR:
 		if n := len(lit); n >= 2 {
-			if code, _, _, err := strconv.UnquoteChar(lit[1:n-1], '\''); err == nil {
-				return MakeInt64(int64(code))
+			s := lit[1 : n-1]
+			// TODO(dh): condition needed for Go 1.10's strconv.UnquoteChar,
+			// which panics on empty input.
+			if len(s) != 0 {
+				if code, _, _, err := strconv.UnquoteChar(s, '\''); err == nil {
+					return MakeInt64(int64(code))
+				}
 			}
 		}
 

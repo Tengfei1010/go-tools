@@ -23,7 +23,7 @@ var tests = []struct {
 	{"foobar", "0  \"foobar\""},
 
 	// maps
-	{map[Expr]string{}, `0  map[Expr]string (len = 0) {}`},
+	{map[Expr]string{}, `0  map[types.Expr]string (len = 0) {}`},
 	{map[string]int{"a": 1},
 		`0  map[string]int (len = 1) {
 		1  .  "a": 1

@@ -9,11 +9,12 @@ package types_test
 import (
 	"bytes"
 	"fmt"
-	. "go/ast"
-	"go/parser"
-	"honnef.co/go/tools/go/token"
 	"sort"
 	"testing"
+
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
+	. "honnef.co/go/tools/go/types"
 )
 
 const src = `
@@ -75,23 +76,23 @@ func f3() {
 // to the associated comments' text.
 //
 var res = map[string]string{
-	" 5: *File":       "the very first comment\npackage p\n",
-	" 5: *Ident":      " the name is p\n",
-	" 8: *GenDecl":    "imports\n",
-	" 9: *ImportSpec": "bytes\n",
-	"10: *ImportSpec": "fmt\n",
-	"16: *GenDecl":    "T\nalso associated with T\n",
-	"17: *Field":      "associated with a, b, c\n",
-	"19: *Field":      "associated with x, y\nfloat values\n",
-	"20: *Field":      "complex value\n",
-	"25: *GenDecl":    "x\nx = 0\nalso associated with x\n",
-	"29: *FuncDecl":   "f1\nassociated with f1\nalso associated with f1\n",
-	"31: *ExprStmt":   " associated with s1\nalso associated with s1\n",
-	"37: *ExprStmt":   "associated with s2\nalso associated with s2\nline comment for s2\n",
-	"45: *FuncDecl":   "associated with f2\nf2\n",
-	"49: *AssignStmt": "addition\n",
-	"49: *BasicLit":   " 1\n",
-	"50: *Ident":      "the very last comment\n",
+	" 5: *types.File":       "the very first comment\npackage p\n",
+	" 5: *types.Ident":      " the name is p\n",
+	" 8: *types.GenDecl":    "imports\n",
+	" 9: *types.ImportSpec": "bytes\n",
+	"10: *types.ImportSpec": "fmt\n",
+	"16: *types.GenDecl":    "T\nalso associated with T\n",
+	"17: *types.Field":      "associated with a, b, c\n",
+	"19: *types.Field":      "associated with x, y\nfloat values\n",
+	"20: *types.Field":      "complex value\n",
+	"25: *types.GenDecl":    "x\nx = 0\nalso associated with x\n",
+	"29: *types.FuncDecl":   "f1\nassociated with f1\nalso associated with f1\n",
+	"31: *types.ExprStmt":   " associated with s1\nalso associated with s1\n",
+	"37: *types.ExprStmt":   "associated with s2\nalso associated with s2\nline comment for s2\n",
+	"45: *types.FuncDecl":   "associated with f2\nf2\n",
+	"49: *types.AssignStmt": "addition\n",
+	"49: *types.BasicLit":   " 1\n",
+	"50: *types.Ident":      "the very last comment\n",
 }
 
 func ctext(list []*CommentGroup) string {

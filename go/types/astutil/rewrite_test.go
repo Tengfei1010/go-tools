@@ -8,12 +8,12 @@ package astutil_test
 
 import (
 	"bytes"
-	"go/format"
-	"honnef.co/go/tools/go/token"
 	"testing"
 
 	"honnef.co/go/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/go/format"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

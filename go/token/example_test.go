@@ -6,9 +6,10 @@ package token_test
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
+
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
+	"honnef.co/go/tools/go/types"
 )
 
 func Example_retrievePositionInfo() {
@@ -53,7 +54,7 @@ func ok(pos p) bool {
 
 		// Either a FuncDecl or GenDecl, since we exit on error.
 		kind := "func"
-		if gen, ok := decl.(*ast.GenDecl); ok {
+		if gen, ok := decl.(*types.GenDecl); ok {
 			kind = gen.Tok.String()
 		}
 

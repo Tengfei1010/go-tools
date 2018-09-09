@@ -7,10 +7,11 @@ package types_test
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
-	"go/format"
-	"go/parser"
+
+	"honnef.co/go/tools/go/format"
+	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/token"
+	"honnef.co/go/tools/go/types"
 )
 
 // This example demonstrates how to inspect the AST of a Go program.
@@ -30,12 +31,12 @@ var X = f(3.14)*2 + c
 	}
 
 	// Inspect the AST and print all identifiers and literals.
-	ast.Inspect(f, func(n ast.Node) bool {
+	types.Inspect(f, func(n types.Node) bool {
 		var s string
 		switch x := n.(type) {
-		case *ast.BasicLit:
+		case *types.BasicLit:
 			s = x.Value
-		case *ast.Ident:
+		case *types.Ident:
 			s = x.Name
 		}
 		if s != "" {
@@ -73,68 +74,59 @@ func main() {
 	}
 
 	// Print the AST.
-	ast.Print(fset, f)
+	types.Print(fset, f)
 
 	// Output:
-	//      0  *ast.File {
+	//      0  *types.File {
 	//      1  .  Package: 2:1
-	//      2  .  Name: *ast.Ident {
+	//      2  .  Name: *types.Ident {
 	//      3  .  .  NamePos: 2:9
 	//      4  .  .  Name: "main"
-	//      5  .  }
-	//      6  .  Decls: []ast.Decl (len = 1) {
-	//      7  .  .  0: *ast.FuncDecl {
-	//      8  .  .  .  Name: *ast.Ident {
-	//      9  .  .  .  .  NamePos: 3:6
-	//     10  .  .  .  .  Name: "main"
-	//     11  .  .  .  .  Obj: *ast.Object {
-	//     12  .  .  .  .  .  Kind: func
-	//     13  .  .  .  .  .  Name: "main"
-	//     14  .  .  .  .  .  Decl: *(obj @ 7)
-	//     15  .  .  .  .  }
-	//     16  .  .  .  }
-	//     17  .  .  .  Type: *ast.FuncType {
-	//     18  .  .  .  .  Func: 3:1
-	//     19  .  .  .  .  Params: *ast.FieldList {
-	//     20  .  .  .  .  .  Opening: 3:10
-	//     21  .  .  .  .  .  Closing: 3:11
-	//     22  .  .  .  .  }
-	//     23  .  .  .  }
-	//     24  .  .  .  Body: *ast.BlockStmt {
-	//     25  .  .  .  .  Lbrace: 3:13
-	//     26  .  .  .  .  List: []ast.Stmt (len = 1) {
-	//     27  .  .  .  .  .  0: *ast.ExprStmt {
-	//     28  .  .  .  .  .  .  X: *ast.CallExpr {
-	//     29  .  .  .  .  .  .  .  Fun: *ast.Ident {
-	//     30  .  .  .  .  .  .  .  .  NamePos: 4:2
-	//     31  .  .  .  .  .  .  .  .  Name: "println"
-	//     32  .  .  .  .  .  .  .  }
-	//     33  .  .  .  .  .  .  .  Lparen: 4:9
-	//     34  .  .  .  .  .  .  .  Args: []ast.Expr (len = 1) {
-	//     35  .  .  .  .  .  .  .  .  0: *ast.BasicLit {
-	//     36  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
-	//     37  .  .  .  .  .  .  .  .  .  Kind: STRING
-	//     38  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
-	//     39  .  .  .  .  .  .  .  .  }
-	//     40  .  .  .  .  .  .  .  }
-	//     41  .  .  .  .  .  .  .  Ellipsis: -
-	//     42  .  .  .  .  .  .  .  Rparen: 4:25
-	//     43  .  .  .  .  .  .  }
-	//     44  .  .  .  .  .  }
-	//     45  .  .  .  .  }
-	//     46  .  .  .  .  Rbrace: 5:1
-	//     47  .  .  .  }
-	//     48  .  .  }
-	//     49  .  }
-	//     50  .  Scope: *ast.Scope {
-	//     51  .  .  Objects: map[string]*ast.Object (len = 1) {
-	//     52  .  .  .  "main": *(obj @ 11)
-	//     53  .  .  }
-	//     54  .  }
-	//     55  .  Unresolved: []*ast.Ident (len = 1) {
-	//     56  .  .  0: *(obj @ 29)
-	//     57  .  }
-	//     58  }
+	//      5  .  .  IsDef: false
+	//      6  .  }
+	//      7  .  Decls: []types.Decl (len = 1) {
+	//      8  .  .  0: *types.FuncDecl {
+	//      9  .  .  .  Name: *types.Ident {
+	//     10  .  .  .  .  NamePos: 3:6
+	//     11  .  .  .  .  Name: "main"
+	//     12  .  .  .  .  IsDef: false
+	//     13  .  .  .  }
+	//     14  .  .  .  Type: *types.FuncType {
+	//     15  .  .  .  .  Func: 3:1
+	//     16  .  .  .  .  Params: *types.FieldList {
+	//     17  .  .  .  .  .  Opening: 3:10
+	//     18  .  .  .  .  .  Closing: 3:11
+	//     19  .  .  .  .  }
+	//     20  .  .  .  }
+	//     21  .  .  .  Body: *types.BlockStmt {
+	//     22  .  .  .  .  Lbrace: 3:13
+	//     23  .  .  .  .  List: []types.Stmt (len = 1) {
+	//     24  .  .  .  .  .  0: *types.ExprStmt {
+	//     25  .  .  .  .  .  .  X: *types.CallExpr {
+	//     26  .  .  .  .  .  .  .  Fun: *types.Ident {
+	//     27  .  .  .  .  .  .  .  .  NamePos: 4:2
+	//     28  .  .  .  .  .  .  .  .  Name: "println"
+	//     29  .  .  .  .  .  .  .  .  IsDef: false
+	//     30  .  .  .  .  .  .  .  }
+	//     31  .  .  .  .  .  .  .  Lparen: 4:9
+	//     32  .  .  .  .  .  .  .  Args: []types.Expr (len = 1) {
+	//     33  .  .  .  .  .  .  .  .  0: *types.BasicLit {
+	//     34  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
+	//     35  .  .  .  .  .  .  .  .  .  Kind: STRING
+	//     36  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
+	//     37  .  .  .  .  .  .  .  .  }
+	//     38  .  .  .  .  .  .  .  }
+	//     39  .  .  .  .  .  .  .  Ellipsis: -
+	//     40  .  .  .  .  .  .  .  Rparen: 4:25
+	//     41  .  .  .  .  .  .  }
+	//     42  .  .  .  .  .  }
+	//     43  .  .  .  .  }
+	//     44  .  .  .  .  Rbrace: 5:1
+	//     45  .  .  .  }
+	//     46  .  .  }
+	//     47  .  }
+	//     48  }
+
 }
 
 // This example illustrates how to remove a variable declaration
@@ -169,11 +161,11 @@ func main() {
 	// Create an ast.CommentMap from the ast.File's comments.
 	// This helps keeping the association between comments
 	// and AST nodes.
-	cmap := ast.NewCommentMap(fset, f, f.Comments)
+	cmap := types.NewCommentMap(fset, f, f.Comments)
 
 	// Remove the first variable declaration from the list of declarations.
 	for i, decl := range f.Decls {
-		if gen, ok := decl.(*ast.GenDecl); ok && gen.Tok == token.VAR {
+		if gen, ok := decl.(*types.GenDecl); ok && gen.Tok == token.VAR {
 			copy(f.Decls[i:], f.Decls[i+1:])
 			f.Decls = f.Decls[:len(f.Decls)-1]
 		}

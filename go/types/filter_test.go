@@ -10,10 +10,11 @@ package types_test
 
 import (
 	"bytes"
-	"go/format"
-	"go/parser"
-	"honnef.co/go/tools/go/token"
 	"testing"
+
+	"honnef.co/go/tools/go/format"
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 )
 
 const input = `package p

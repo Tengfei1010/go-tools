@@ -4,17 +4,13 @@
 
 // This file contains tests for sizes.
 
-// +build ignore
-
 package types_test
 
 import (
-	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 
@@ -25,19 +21,24 @@ func findStructType(t *testing.T, src string) *types.Struct {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info := types.Info{Types: make(map[Expr]types.TypeAndValue)}
+	info := types.Info{}
 	var conf types.Config
-	_, err = conf.Check("x", fset, []*File{f}, &info)
+	_, err = conf.Check("x", fset, []*types.File{f}, &info)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, tv := range info.Types {
-		if ts, ok := tv.Type.(*types.Struct); ok {
-			return ts
+	var ret *types.Struct
+	types.Inspect(f, func(node types.Node) bool {
+		if st, ok := node.(*types.StructType); ok {
+			ret = st.Type().(*types.Struct)
+			return false
 		}
+		return true
+	})
+	if ret == nil {
+		t.Fatalf("failed to find a struct type in src:\n%s\n", src)
 	}
-	t.Fatalf("failed to find a struct type in src:\n%s\n", src)
-	return nil
+	return ret
 }
 
 // Issue 16316
@@ -86,6 +87,15 @@ var s struct {
 	}
 }
 
+type testImporter struct{}
+
+func (testImporter) Import(path string) (*types.Package, error) {
+	if path != "unsafe" {
+		panic("unexpected import path " + path)
+	}
+	return types.Unsafe, nil
+}
+
 func TestIssue16902(t *testing.T) {
 	const src = `
 package a
@@ -99,17 +109,20 @@ const _ = unsafe.Offsetof(struct{ x int64 }{}.x)
 	if err != nil {
 		t.Fatal(err)
 	}
-	info := types.Info{Types: make(map[Expr]types.TypeAndValue)}
+	info := types.Info{}
 	conf := types.Config{
-		Importer: importer.Default(),
+		Importer: testImporter{},
 		Sizes:    &types.StdSizes{WordSize: 8, MaxAlign: 8},
 	}
-	_, err = conf.Check("x", fset, []*File{f}, &info)
+	_, err = conf.Check("x", fset, []*types.File{f}, &info)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, tv := range info.Types {
-		_ = conf.Sizes.Sizeof(tv.Type)
-		_ = conf.Sizes.Alignof(tv.Type)
-	}
+	types.Inspect(f, func(node types.Node) bool {
+		if expr, ok := node.(types.Expr); ok && expr.Type() != nil {
+			_ = conf.Sizes.Sizeof(expr.Type())
+			_ = conf.Sizes.Alignof(expr.Type())
+		}
+		return true
+	})
 }
