@@ -32,10 +32,11 @@ package ssa
 import (
 	"fmt"
 
-	exact "honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"sync"
+
+	exact "honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/types"
 )
@@ -586,7 +587,7 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		}
 		// Call to "intrinsic" built-ins, e.g. new, make, panic.
 		if id, ok := unparen(e.Fun).(*types.Ident); ok {
-			if obj, ok := id.Obj.(*types.Builtin); ok {
+			if obj, ok := id.Use.(*types.Builtin); ok {
 				if v := b.builtin(fn, obj, e.Args, tv.Type, e.Lparen); v != nil {
 					return v
 				}
@@ -673,7 +674,7 @@ func (b *builder) expr0(fn *Function, e types.Expr, tv types.TypeAndValue) Value
 		return fn.emit(v)
 
 	case *types.Ident:
-		obj := e.Obj
+		obj := e.Use
 		// Universal built-in or nil?
 		switch obj := obj.(type) {
 		case *types.Builtin:
@@ -1031,7 +1032,7 @@ func (b *builder) assignStmt(fn *Function, lhss, rhss []types.Expr, isDef bool) 
 		if !isBlankIdent(lhs) {
 			if isDef {
 				ident := lhs.(*types.Ident)
-				if obj := ident.Obj; obj != nil && ident.IsDef {
+				if obj := ident.Def; obj != nil {
 					fn.addNamedLocal(obj)
 					isZero[i] = true
 				}
@@ -2217,7 +2218,7 @@ func (b *builder) buildFuncDecl(pkg *Package, decl *types.FuncDecl) {
 	if isBlankIdent(id) {
 		return // discard
 	}
-	fn := pkg.values[id.Obj].(*Function)
+	fn := pkg.values[id.Def].(*Function)
 	if decl.Recv == nil && id.Name == "init" {
 		var v Call
 		v.Call.Value = fn
@@ -2363,7 +2364,7 @@ func (p *Package) build() {
 // Like ObjectOf, but panics instead of returning nil.
 // Only valid during p's create and build phases.
 func (p *Package) objectOf(id *types.Ident) types.Object {
-	if o := id.Obj; o != nil {
+	if o := id.Obj(); o != nil {
 		return o
 	}
 	panic(fmt.Sprintf("no types.Object for types.Ident %s @ %s",

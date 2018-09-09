@@ -3,8 +3,6 @@ package staticcheck // import "honnef.co/go/tools/staticcheck"
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	htmltemplate "html/template"
 	"net/http"
 	"regexp"
@@ -14,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	texttemplate "text/template"
+
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 
 	. "honnef.co/go/tools/arg"
 	"honnef.co/go/tools/deprecated"
@@ -319,7 +320,7 @@ func (c *Checker) findDeprecated(prog *lint.Program) {
 		}
 
 		for _, name := range names {
-			c.deprecatedObjs[name.Obj] = alt
+			c.deprecatedObjs[name.Obj()] = alt
 		}
 	}
 
@@ -610,7 +611,7 @@ func (c *Checker) CheckWaitgroupAdd(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		fn, ok := sel.Sel.Obj.(*types.Func)
+		fn, ok := sel.Sel.Obj().(*types.Func)
 		if !ok {
 			return true
 		}
@@ -742,7 +743,7 @@ func (c *Checker) CheckTestMainExit(j *lint.Job) {
 			return true
 		}
 
-		arg := node.(*types.FuncDecl).Type.Params.List[0].Names[0].Obj
+		arg := node.(*types.FuncDecl).Type.Params.List[0].Names[0].Obj()
 		callsRun := false
 		fn2 := func(node types.Node) bool {
 			call, ok := node.(*types.CallExpr)
@@ -757,7 +758,7 @@ func (c *Checker) CheckTestMainExit(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if arg != ident.Obj {
+			if arg != ident.Obj() {
 				return true
 			}
 			if sel.Sel.Name == "Run" {
@@ -1031,7 +1032,7 @@ func (c *Checker) CheckEarlyDefer(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if ident.Obj != lhs.Obj {
+			if ident.Obj() != lhs.Obj() {
 				continue
 			}
 			if sel.Sel.Name != "Close" {
@@ -1081,7 +1082,7 @@ func (c *Checker) CheckEmptyCriticalSection(j *lint.Job) {
 			return nil, "", false
 		}
 
-		fn, ok := sel.Sel.Obj.(*types.Func)
+		fn, ok := sel.Sel.Obj().(*types.Func)
 		if !ok {
 			return nil, "", false
 		}
@@ -1477,7 +1478,7 @@ func (c *Checker) CheckLoopCondition(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if x.Obj != lhs.Obj {
+			if x.Obj() != lhs.Obj() {
 				return true
 			}
 			if _, ok := loop.Post.(*types.IncDecStmt); !ok {
@@ -1537,7 +1538,7 @@ func (c *Checker) CheckArgOverwritten(j *lint.Job) {
 			}
 			for _, field := range typ.Params.List {
 				for _, arg := range field.Names {
-					obj := arg.Obj
+					obj := arg.Obj()
 					var ssaobj *ssa.Parameter
 					for _, param := range ssafn.Params {
 						if param.Object() == obj {
@@ -1567,7 +1568,7 @@ func (c *Checker) CheckArgOverwritten(j *lint.Job) {
 							if !ok {
 								continue
 							}
-							if ident.Obj == obj {
+							if ident.Obj() == obj {
 								assigned = true
 								return false
 							}
@@ -1613,7 +1614,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			labels[label.Label.Obj] = label.Stmt
+			labels[label.Label.Obj()] = label.Stmt
 			return true
 		})
 
@@ -1649,11 +1650,11 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 				case *types.BranchStmt:
 					switch stmt.Tok {
 					case token.BREAK:
-						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
+						if stmt.Label == nil || labels[stmt.Label.Obj()] == loop {
 							unconditionalExit = stmt
 						}
 					case token.CONTINUE:
-						if stmt.Label == nil || labels[stmt.Label.Obj] == loop {
+						if stmt.Label == nil || labels[stmt.Label.Obj()] == loop {
 							unconditionalExit = nil
 							return false
 						}
@@ -1675,7 +1676,7 @@ func (c *Checker) CheckIneffectiveLoop(j *lint.Job) {
 						unconditionalExit = nil
 						return false
 					case token.CONTINUE:
-						if branch.Label != nil && labels[branch.Label.Obj] != loop {
+						if branch.Label != nil && labels[branch.Label.Obj()] != loop {
 							return true
 						}
 						unconditionalExit = nil
@@ -2068,9 +2069,9 @@ func isName(j *lint.Job, expr types.Expr, name string) bool {
 	var obj types.Object
 	switch expr := expr.(type) {
 	case *types.Ident:
-		obj = expr.Obj
+		obj = expr.Obj()
 	case *types.SelectorExpr:
-		obj = expr.Sel.Obj
+		obj = expr.Sel.Obj()
 	}
 	return objectName(obj) == name
 }
@@ -2306,7 +2307,7 @@ fnLoop:
 }
 
 func (c *Checker) isDeprecated(j *lint.Job, ident *types.Ident) (bool, string) {
-	obj := ident.Obj
+	obj := ident.Obj()
 	if obj.Pkg() == nil {
 		return false, ""
 	}
@@ -2330,14 +2331,14 @@ func (c *Checker) CheckDeprecated(j *lint.Job) {
 			ssafn = nil
 		}
 		if fn, ok := node.(*types.FuncDecl); ok {
-			ssafn = j.Program.SSA.FuncValue(fn.Name.Obj.(*types.Func))
+			ssafn = j.Program.SSA.FuncValue(fn.Name.Obj().(*types.Func))
 		}
 		sel, ok := node.(*types.SelectorExpr)
 		if !ok {
 			return true
 		}
 
-		obj := sel.Sel.Obj
+		obj := sel.Sel.Obj()
 		if obj.Pkg() == nil {
 			return true
 		}

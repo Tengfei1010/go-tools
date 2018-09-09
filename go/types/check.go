@@ -330,14 +330,13 @@ func (check *Checker) recordCommaOkTypes(x Expr, a [2]Type) {
 
 func (check *Checker) recordDef(id *Ident, obj Object) {
 	assert(id != nil)
-	id.Obj = obj
-	id.IsDef = true
+	id.Def = obj
 }
 
 func (check *Checker) recordUse(id *Ident, obj Object) {
 	assert(id != nil)
 	assert(obj != nil)
-	id.Obj = obj
+	id.Use = obj
 }
 
 func (check *Checker) recordImplicit(node Node, obj Object) {

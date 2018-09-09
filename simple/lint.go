@@ -2,10 +2,11 @@
 package simple // import "honnef.co/go/tools/simple"
 
 import (
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"reflect"
 	"strings"
+
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 
 	. "honnef.co/go/tools/arg"
 	"honnef.co/go/tools/go/types"
@@ -144,7 +145,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 		if lhs.Type() == nil || stmt.Rhs[0].Type() == nil {
 			return true
 		}
-		if lidx.Obj != key.Obj {
+		if lidx.Obj() != key.Obj() {
 			return true
 		}
 		if !types.Identical(lhs.Type(), stmt.Rhs[0].Type()) {
@@ -164,7 +165,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if ridx.Obj != key.Obj {
+			if ridx.Obj() != key.Obj() {
 				return true
 			}
 		} else if rhs, ok := stmt.Rhs[0].(*types.Ident); ok {
@@ -172,7 +173,7 @@ func (c *Checker) LintLoopCopy(j *lint.Job) {
 			if !ok {
 				return true
 			}
-			if rhs.Obj != value.Obj {
+			if rhs.Obj() != value.Obj() {
 				return true
 			}
 		} else {
@@ -534,7 +535,7 @@ func (c *Checker) LintRedundantNilCheckWithLen(j *lint.Job) {
 		if !ok {
 			return false, false
 		}
-		c, ok := id.Obj.(*types.Const)
+		c, ok := id.Obj().(*types.Const)
 		if !ok {
 			return false, false
 		}
@@ -669,11 +670,11 @@ func (c *Checker) LintSlicing(j *lint.Job) {
 		if !ok || fun.Name != "len" {
 			return true
 		}
-		if _, ok := fun.Obj.(*types.Builtin); !ok {
+		if _, ok := fun.Obj().(*types.Builtin); !ok {
 			return true
 		}
 		arg, ok := call.Args[Arg("len.v")].(*types.Ident)
-		if !ok || arg.Obj != s.Obj {
+		if !ok || arg.Obj() != s.Obj() {
 			return true
 		}
 		j.Errorf(n, "should omit second index in slice, s[a:len(s)] is identical to s[a:]")
@@ -691,7 +692,7 @@ func refersTo(j *lint.Job, expr types.Expr, ident *types.Ident) bool {
 		if !ok {
 			return true
 		}
-		if ident.Obj == ident2.Obj {
+		if ident.Obj() == ident2.Obj() {
 			found = true
 			return false
 		}
@@ -738,7 +739,7 @@ func (c *Checker) LintLoopAppend(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		fn, ok := fun.Obj.(*types.Builtin)
+		fn, ok := fun.Obj().(*types.Builtin)
 		if !ok || fn.Name() != "append" {
 			return true
 		}
@@ -762,7 +763,7 @@ func (c *Checker) LintLoopAppend(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if val.Obj != el.Obj {
+		if val.Obj() != el.Obj() {
 			return true
 		}
 		j.Errorf(loop, "should replace loop with %s = append(%s, %s...)",
@@ -982,7 +983,7 @@ func (c *Checker) LintSimplerStructConversion(j *lint.Job) {
 				return true
 			}
 			// All fields must be initialized from the same object
-			if ident != nil && ident.Obj != id.Obj {
+			if ident != nil && ident.Obj() != id.Obj() {
 				return true
 			}
 			typ2, _ = t.(*types.Named)
@@ -1038,7 +1039,7 @@ func (c *Checker) LintTrim(j *lint.Job) {
 
 		switch node1 := node1.(type) {
 		case *types.Ident:
-			return node1.Obj == node2.(*types.Ident).Obj
+			return node1.Obj() == node2.(*types.Ident).Obj()
 		case *types.SelectorExpr:
 			return Render(j, node1) == Render(j, node2)
 		case *types.IndexExpr:
@@ -1250,7 +1251,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		postvar, ok := post.X.(*types.Ident)
-		if !ok || postvar.Obj != initvar.Obj {
+		if !ok || postvar.Obj() != initvar.Obj() {
 			return true
 		}
 		bin, ok := loop.Cond.(*types.BinaryExpr)
@@ -1258,7 +1259,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		binx, ok := bin.X.(*types.Ident)
-		if !ok || binx.Obj != initvar.Obj {
+		if !ok || binx.Obj() != initvar.Obj() {
 			return true
 		}
 		biny, ok := bin.Y.(*types.Ident)
@@ -1287,15 +1288,15 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if bs1.Obj != bs2.Obj {
+		if bs1.Obj() != bs2.Obj() {
 			return true
 		}
-		if _, ok := bs1.Obj.Type().Underlying().(*types.Slice); !ok {
+		if _, ok := bs1.Obj().Type().Underlying().(*types.Slice); !ok {
 			return true
 		}
 
 		index1, ok := lhs.Index.(*types.Ident)
-		if !ok || index1.Obj != initvar.Obj {
+		if !ok || index1.Obj() != initvar.Obj() {
 			return true
 		}
 		index2, ok := rhs.Index.(*types.BinaryExpr)
@@ -1307,7 +1308,7 @@ func (c *Checker) LintLoopSlide(j *lint.Job) {
 			return true
 		}
 		add2, ok := index2.Y.(*types.Ident)
-		if !ok || add2.Obj != initvar.Obj {
+		if !ok || add2.Obj() != initvar.Obj() {
 			return true
 		}
 
@@ -1360,7 +1361,7 @@ func (c *Checker) LintAssertNotNil(j *lint.Job) {
 			return false
 		}
 		xident, ok := xbinop.X.(*types.Ident)
-		if !ok || xident.Obj != ident.Obj {
+		if !ok || xident.Obj() != ident.Obj() {
 			return false
 		}
 		if !xbinop.Y.TV().IsNil() {
@@ -1370,7 +1371,7 @@ func (c *Checker) LintAssertNotNil(j *lint.Job) {
 	}
 	isOKCheck := func(ident *types.Ident, expr types.Expr) bool {
 		yident, ok := expr.(*types.Ident)
-		if !ok || yident.Obj != ident.Obj {
+		if !ok || yident.Obj() != ident.Obj() {
 			return false
 		}
 		return true
@@ -1447,7 +1448,7 @@ func (c *Checker) LintDeclareAssign(j *lint.Job) {
 			if !ok {
 				continue
 			}
-			if vspec.Names[0].Obj != ident.Obj {
+			if vspec.Names[0].Obj() != ident.Obj() {
 				continue
 			}
 
@@ -1630,7 +1631,7 @@ func (c *Checker) LintNilCheckAroundRange(j *lint.Job) {
 		if !ok {
 			return true
 		}
-		if ifXIdent.Obj != rangeXIdent.Obj {
+		if ifXIdent.Obj() != rangeXIdent.Obj() {
 			return true
 		}
 		switch rangeXIdent.Type().(type) {

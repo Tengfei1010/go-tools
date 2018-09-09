@@ -2,10 +2,11 @@ package unused // import "honnef.co/go/tools/unused"
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"path/filepath"
 	"strings"
+
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/types"
@@ -462,11 +463,8 @@ func (c *Checker) processDefs(pkg *lint.Pkg) {
 	}
 	for _, f := range pkg.Syntax {
 		types.Inspect(f, func(node types.Node) bool {
-			if ident, ok := node.(*types.Ident); ok && ident.IsDef {
-				if ident.Obj == nil {
-					return true
-				}
-				objFn(ident.Obj)
+			if ident, ok := node.(*types.Ident); ok && ident.Def != nil {
+				objFn(ident.Def)
 			}
 			return true
 		})
@@ -476,11 +474,8 @@ func (c *Checker) processDefs(pkg *lint.Pkg) {
 func (c *Checker) processUses(pkg *lint.Pkg) {
 	for _, f := range pkg.Syntax {
 		types.Inspect(f, func(node types.Node) bool {
-			if ident, ok := node.(*types.Ident); ok && !ident.IsDef {
-				usedObj := ident.Obj
-				if usedObj == nil {
-					return true
-				}
+			if ident, ok := node.(*types.Ident); ok && ident.Use != nil {
+				usedObj := ident.Use
 				if _, ok := usedObj.(*types.PkgName); ok {
 					return true
 				}
@@ -753,7 +748,7 @@ func (c *Checker) processCgoExported(pkg *lint.Pkg, node types.Node) {
 			if !strings.HasPrefix(cmt.Text, "//go:cgo_export_") {
 				return
 			}
-			obj := node.Name.Obj
+			obj := node.Name.Obj()
 			c.graph.roots = append(c.graph.roots, c.graph.getNode(obj))
 		}
 	}
@@ -773,11 +768,11 @@ func (c *Checker) processVariableDeclaration(pkg *lint.Pkg, node types.Node) {
 				value := spec.Values[i]
 				fn := func(node types.Node) bool {
 					if node3, ok := node.(*types.Ident); ok {
-						obj := node3.Obj
+						obj := node3.Obj()
 						if _, ok := obj.(*types.PkgName); ok {
 							return true
 						}
-						c.graph.markUsedBy(obj, name.Obj)
+						c.graph.markUsedBy(obj, name.Obj())
 					}
 					return true
 				}
@@ -793,7 +788,7 @@ func (c *Checker) processArrayConstants(pkg *lint.Pkg, node types.Node) {
 		if !ok {
 			return
 		}
-		c.graph.markUsedBy(ident.Obj, decl.Type())
+		c.graph.markUsedBy(ident.Obj(), decl.Type())
 	}
 }
 
@@ -811,7 +806,7 @@ func (c *Checker) processKnownReflectMethodCallers(pkg *lint.Pkg, node types.Nod
 		if !ok {
 			return
 		}
-		pkgname, ok := x.Obj.(*types.PkgName)
+		pkgname, ok := x.Obj().(*types.PkgName)
 		if !ok {
 			return
 		}

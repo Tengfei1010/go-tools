@@ -5,9 +5,10 @@ package lintdsl
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
-	"strings"
 
 	"honnef.co/go/tools/go/printer"
 	"honnef.co/go/tools/go/types"
@@ -126,7 +127,7 @@ func SelectorName(expr *types.SelectorExpr) string {
 	sel := expr.Selection
 	if sel == nil {
 		if x, ok := expr.X.(*types.Ident); ok {
-			pkg, ok := x.Obj.(*types.PkgName)
+			pkg, ok := x.Obj().(*types.PkgName)
 			if !ok {
 				// This shouldn't happen
 				return fmt.Sprintf("%s.%s", x.Name, expr.Sel.Name)
@@ -139,7 +140,7 @@ func SelectorName(expr *types.SelectorExpr) string {
 }
 
 func BoolConst(expr types.Expr) bool {
-	val := expr.(*types.Ident).Obj.(*types.Const).Val()
+	val := expr.(*types.Ident).Obj().(*types.Const).Val()
 	return constant.BoolVal(val)
 }
 
@@ -152,7 +153,7 @@ func IsBoolConst(expr types.Expr) bool {
 	if !ok {
 		return false
 	}
-	c, ok := ident.Obj.(*types.Const)
+	c, ok := ident.Obj().(*types.Const)
 	if !ok {
 		return false
 	}
@@ -216,7 +217,7 @@ func CallNameAST(call *types.CallExpr) string {
 	if !ok {
 		return ""
 	}
-	fn, ok := sel.Sel.Obj.(*types.Func)
+	fn, ok := sel.Sel.Obj().(*types.Func)
 	if !ok {
 		return ""
 	}

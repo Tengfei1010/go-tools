@@ -82,51 +82,47 @@ func main() {
 	//      2  .  Name: *types.Ident {
 	//      3  .  .  NamePos: 2:9
 	//      4  .  .  Name: "main"
-	//      5  .  .  IsDef: false
-	//      6  .  }
-	//      7  .  Decls: []types.Decl (len = 1) {
-	//      8  .  .  0: *types.FuncDecl {
-	//      9  .  .  .  Name: *types.Ident {
-	//     10  .  .  .  .  NamePos: 3:6
-	//     11  .  .  .  .  Name: "main"
-	//     12  .  .  .  .  IsDef: false
-	//     13  .  .  .  }
-	//     14  .  .  .  Type: *types.FuncType {
-	//     15  .  .  .  .  Func: 3:1
-	//     16  .  .  .  .  Params: *types.FieldList {
-	//     17  .  .  .  .  .  Opening: 3:10
-	//     18  .  .  .  .  .  Closing: 3:11
-	//     19  .  .  .  .  }
-	//     20  .  .  .  }
-	//     21  .  .  .  Body: *types.BlockStmt {
-	//     22  .  .  .  .  Lbrace: 3:13
-	//     23  .  .  .  .  List: []types.Stmt (len = 1) {
-	//     24  .  .  .  .  .  0: *types.ExprStmt {
-	//     25  .  .  .  .  .  .  X: *types.CallExpr {
-	//     26  .  .  .  .  .  .  .  Fun: *types.Ident {
-	//     27  .  .  .  .  .  .  .  .  NamePos: 4:2
-	//     28  .  .  .  .  .  .  .  .  Name: "println"
-	//     29  .  .  .  .  .  .  .  .  IsDef: false
-	//     30  .  .  .  .  .  .  .  }
-	//     31  .  .  .  .  .  .  .  Lparen: 4:9
-	//     32  .  .  .  .  .  .  .  Args: []types.Expr (len = 1) {
-	//     33  .  .  .  .  .  .  .  .  0: *types.BasicLit {
-	//     34  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
-	//     35  .  .  .  .  .  .  .  .  .  Kind: STRING
-	//     36  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
-	//     37  .  .  .  .  .  .  .  .  }
-	//     38  .  .  .  .  .  .  .  }
-	//     39  .  .  .  .  .  .  .  Ellipsis: -
-	//     40  .  .  .  .  .  .  .  Rparen: 4:25
-	//     41  .  .  .  .  .  .  }
-	//     42  .  .  .  .  .  }
-	//     43  .  .  .  .  }
-	//     44  .  .  .  .  Rbrace: 5:1
-	//     45  .  .  .  }
-	//     46  .  .  }
-	//     47  .  }
-	//     48  }
-
+	//      5  .  }
+	//      6  .  Decls: []types.Decl (len = 1) {
+	//      7  .  .  0: *types.FuncDecl {
+	//      8  .  .  .  Name: *types.Ident {
+	//      9  .  .  .  .  NamePos: 3:6
+	//     10  .  .  .  .  Name: "main"
+	//     11  .  .  .  }
+	//     12  .  .  .  Type: *types.FuncType {
+	//     13  .  .  .  .  Func: 3:1
+	//     14  .  .  .  .  Params: *types.FieldList {
+	//     15  .  .  .  .  .  Opening: 3:10
+	//     16  .  .  .  .  .  Closing: 3:11
+	//     17  .  .  .  .  }
+	//     18  .  .  .  }
+	//     19  .  .  .  Body: *types.BlockStmt {
+	//     20  .  .  .  .  Lbrace: 3:13
+	//     21  .  .  .  .  List: []types.Stmt (len = 1) {
+	//     22  .  .  .  .  .  0: *types.ExprStmt {
+	//     23  .  .  .  .  .  .  X: *types.CallExpr {
+	//     24  .  .  .  .  .  .  .  Fun: *types.Ident {
+	//     25  .  .  .  .  .  .  .  .  NamePos: 4:2
+	//     26  .  .  .  .  .  .  .  .  Name: "println"
+	//     27  .  .  .  .  .  .  .  }
+	//     28  .  .  .  .  .  .  .  Lparen: 4:9
+	//     29  .  .  .  .  .  .  .  Args: []types.Expr (len = 1) {
+	//     30  .  .  .  .  .  .  .  .  0: *types.BasicLit {
+	//     31  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
+	//     32  .  .  .  .  .  .  .  .  .  Kind: STRING
+	//     33  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
+	//     34  .  .  .  .  .  .  .  .  }
+	//     35  .  .  .  .  .  .  .  }
+	//     36  .  .  .  .  .  .  .  Ellipsis: -
+	//     37  .  .  .  .  .  .  .  Rparen: 4:25
+	//     38  .  .  .  .  .  .  }
+	//     39  .  .  .  .  .  }
+	//     40  .  .  .  .  }
+	//     41  .  .  .  .  Rbrace: 5:1
+	//     42  .  .  .  }
+	//     43  .  .  }
+	//     44  .  }
+	//     45  }
 }
 
 // This example illustrates how to remove a variable declaration

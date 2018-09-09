@@ -9,9 +9,10 @@ package ssa
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"sync"
+
+	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
@@ -120,7 +121,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
-						memberFromObject(pkg, id.Obj, nil)
+						memberFromObject(pkg, id.Def, nil)
 					}
 				}
 			}
@@ -129,7 +130,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				for _, id := range spec.(*types.ValueSpec).Names {
 					if !isBlankIdent(id) {
-						memberFromObject(pkg, id.Obj, spec)
+						memberFromObject(pkg, id.Def, spec)
 					}
 				}
 			}
@@ -138,7 +139,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 			for _, spec := range decl.Specs {
 				id := spec.(*types.TypeSpec).Name
 				if !isBlankIdent(id) {
-					memberFromObject(pkg, id.Obj, nil)
+					memberFromObject(pkg, id.Def, nil)
 				}
 			}
 		}
@@ -146,7 +147,7 @@ func membersFromDecl(pkg *Package, decl types.Decl) {
 	case *types.FuncDecl:
 		id := decl.Name
 		if !isBlankIdent(id) {
-			memberFromObject(pkg, id.Obj, decl)
+			memberFromObject(pkg, id.Def, decl)
 		}
 	}
 }

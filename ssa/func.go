@@ -9,12 +9,11 @@ package ssa
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
-
 	"io"
 	"os"
 	"strings"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 
@@ -233,7 +232,7 @@ func (f *Function) createSyntacticParams(recv *types.FieldList, functype *types.
 	if recv != nil {
 		for _, field := range recv.List {
 			for _, n := range field.Names {
-				f.addSpilledParam(n.Obj)
+				f.addSpilledParam(n.Def)
 			}
 			// Anonymous receiver?  No need to spill.
 			if field.Names == nil {
@@ -247,7 +246,7 @@ func (f *Function) createSyntacticParams(recv *types.FieldList, functype *types.
 		n := len(f.Params) // 1 if has recv, 0 otherwise
 		for _, field := range functype.Params.List {
 			for _, n := range field.Names {
-				f.addSpilledParam(n.Obj)
+				f.addSpilledParam(n.Def)
 			}
 			// Anonymous parameter?  No need to spill.
 			if field.Names == nil {
@@ -408,7 +407,7 @@ func (f *Function) addNamedLocal(obj types.Object) *Alloc {
 }
 
 func (f *Function) addLocalForIdent(id *types.Ident) *Alloc {
-	return f.addNamedLocal(id.Obj)
+	return f.addNamedLocal(id.Def)
 }
 
 // addLocal creates an anonymous local variable of type typ, adds it
