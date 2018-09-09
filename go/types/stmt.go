@@ -7,9 +7,10 @@
 package types
 
 import (
+	"sort"
+
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
-	"sort"
 )
 
 func (check *Checker) funcBody(decl *declInfo, name string, sig *Signature, body *BlockStmt, iota constant.Value) {

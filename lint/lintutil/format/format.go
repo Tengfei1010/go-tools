@@ -4,12 +4,12 @@ package format
 import (
 	"encoding/json"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"path/filepath"
 	"text/tabwriter"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/lint"
 )
 

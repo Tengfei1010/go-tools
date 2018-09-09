@@ -9,10 +9,10 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"io/ioutil"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

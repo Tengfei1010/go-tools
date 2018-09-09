@@ -9,19 +9,19 @@ package ssa_test
 import (
 	"bytes"
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
-	"golang.org/x/tools/go/loader"
 	"honnec.go/go/tools/go/parser"
-	
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"
+
+	"golang.org/x/tools/go/loader"
 )
 
 func isEmpty(f *ssa.Function) bool { return f.Blocks == nil }

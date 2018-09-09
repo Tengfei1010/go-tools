@@ -8,9 +8,9 @@ package types
 
 import (
 	"fmt"
-	
-	"honnef.co/go/tools/go/token"
 	"strings"
+
+	"honnef.co/go/tools/go/token"
 )
 
 func assert(p bool) {

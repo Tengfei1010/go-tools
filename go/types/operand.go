@@ -8,7 +8,7 @@ package types
 
 import (
 	"bytes"
-	
+
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
 )

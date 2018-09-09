@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,6 +19,7 @@ import (
 
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

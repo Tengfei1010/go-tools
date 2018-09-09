@@ -16,7 +16,6 @@ import (
 	"strings"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/parser"
 	. "honnef.co/go/tools/go/types"
 )

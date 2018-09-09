@@ -10,17 +10,16 @@ package ssa_test
 
 import (
 	"fmt"
-	exact "honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/ast/astutil"
+	exact "honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"

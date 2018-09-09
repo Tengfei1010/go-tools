@@ -9,11 +9,10 @@ package ssa_test
 import (
 	"fmt"
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"os"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"

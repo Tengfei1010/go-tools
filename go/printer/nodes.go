@@ -10,13 +10,13 @@ package printer
 
 import (
 	"bytes"
-	"honnef.co/go/tools/go/token"
 	"math"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

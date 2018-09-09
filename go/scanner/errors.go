@@ -6,9 +6,10 @@ package scanner
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"sort"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // In an ErrorList, an error is represented by an *Error.

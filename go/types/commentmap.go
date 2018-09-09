@@ -7,8 +7,9 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"sort"
+
+	"honnef.co/go/tools/go/token"
 )
 
 type byPos []*CommentGroup

@@ -7,12 +7,12 @@ package printer_test
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"strings"
 	"testing"
 
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

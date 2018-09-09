@@ -6,6 +6,7 @@ package types
 
 import (
 	"fmt"
+
 	"honnef.co/go/tools/go/token"
 )
 

@@ -6,10 +6,10 @@ package typeutil_test
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"sort"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/typeutil"
 )

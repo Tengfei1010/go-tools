@@ -40,10 +40,11 @@ package ssa
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
-	"honnef.co/go/tools/go/types"
 	"math/big"
 	"os"
+
+	"honnef.co/go/tools/go/token"
+	"honnef.co/go/tools/go/types"
 )
 
 // If true, show diagnostic information at each step of lifting.

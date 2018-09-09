@@ -9,7 +9,6 @@ package testutil // import "honnef.co/go/tools/lint/testutil"
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,6 +21,7 @@ import (
 	"honnef.co/go/tools/config"
 	"honnef.co/go/tools/go/packages"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/lint"
 )
 

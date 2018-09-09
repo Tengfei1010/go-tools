@@ -8,7 +8,6 @@ package ssa
 // expressions.
 
 import (
-	
 	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
@@ -27,8 +26,8 @@ type lvalue interface {
 // An address is an lvalue represented by a true pointer.
 type address struct {
 	addr Value
-	pos  token.Pos // source position
-	expr types.Expr  // source syntax of the value (not address) [debug mode]
+	pos  token.Pos  // source position
+	expr types.Expr // source syntax of the value (not address) [debug mode]
 }
 
 func (a *address) load(fn *Function) Value {

@@ -6,11 +6,12 @@ package format
 
 import (
 	"bytes"
-	"honnef.co/go/tools/go/parser"
-	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 )
 
 const testfile = "format_test.go"

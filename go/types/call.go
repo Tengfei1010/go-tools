@@ -7,7 +7,6 @@
 package types
 
 import (
-	
 	"honnef.co/go/tools/go/token"
 )
 

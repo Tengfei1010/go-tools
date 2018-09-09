@@ -7,7 +7,7 @@ package types
 import (
 	"bytes"
 	"fmt"
-	
+
 	"honnef.co/go/tools/go/token"
 )
 
@@ -58,9 +58,9 @@ func (info *ifaceInfo) String() string {
 // declared methods have a nil scope and src, and only a non-nil
 // fun field.)
 type methodInfo struct {
-	scope *Scope     // scope of interface method; or nil
+	scope *Scope // scope of interface method; or nil
 	src   *Field // syntax tree representation of interface method; or nil
-	fun   *Func      // corresponding fully type-checked method type; or nil
+	fun   *Func  // corresponding fully type-checked method type; or nil
 }
 
 func (info *methodInfo) String() string {

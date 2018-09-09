@@ -8,10 +8,10 @@ package types
 
 import (
 	"fmt"
+	"math"
 
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
-	"math"
 )
 
 /*

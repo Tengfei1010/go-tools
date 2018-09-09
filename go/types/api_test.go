@@ -10,15 +10,14 @@ import (
 	"bytes"
 	"fmt"
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"internal/testenv"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	. "honnef.co/go/tools/go/types"
 )
 

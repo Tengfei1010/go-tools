@@ -9,10 +9,11 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"sort"
 	"strings"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // TODO(gri) Provide scopes with a name or other mechanism so that

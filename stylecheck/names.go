@@ -4,10 +4,10 @@
 package stylecheck
 
 import (
-	"honnef.co/go/tools/go/token"
 	"strings"
 	"unicode"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/lint"
 	. "honnef.co/go/tools/lint/lintdsl"

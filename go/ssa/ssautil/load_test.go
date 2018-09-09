@@ -8,12 +8,11 @@ package ssautil_test
 
 import (
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"testing"
 
-	"honnef.co/go/tools/go/ast"
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa/ssautil"
 )

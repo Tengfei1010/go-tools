@@ -8,10 +8,11 @@ package ssa
 
 import (
 	"fmt"
+	"strconv"
+
 	exact "honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
-	"strconv"
 )
 
 // NewConst returns a new constant of the specified value and type.

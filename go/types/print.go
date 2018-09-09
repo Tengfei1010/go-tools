@@ -8,10 +8,11 @@ package types
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 	"reflect"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // A FieldFilter may be provided to Fprint to control the output.

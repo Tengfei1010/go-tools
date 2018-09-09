@@ -12,11 +12,11 @@ package astutil_test
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"strings"
 	"testing"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/astutil"
 )

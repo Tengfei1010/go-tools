@@ -7,10 +7,11 @@
 package types
 
 import (
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"sort"
 	"strconv"
+
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 )
 
 // ident type-checks identifier e and initializes x with the value or type of e.

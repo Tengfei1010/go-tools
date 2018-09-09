@@ -10,13 +10,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"honnef.co/go/tools/go/scanner"
-	"honnef.co/go/tools/go/token"
 	"log"
 	"os"
 	"sync"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

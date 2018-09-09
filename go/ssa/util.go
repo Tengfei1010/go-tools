@@ -8,10 +8,10 @@ package ssa
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"os"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/go/types/astutil"
 )

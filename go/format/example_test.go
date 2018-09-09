@@ -7,10 +7,11 @@ package format_test
 import (
 	"bytes"
 	"fmt"
+	"log"
+
 	"honnef.co/go/tools/go/format"
 	"honnef.co/go/tools/go/parser"
 	"honnef.co/go/tools/go/token"
-	"log"
 )
 
 func ExampleNode() {

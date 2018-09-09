@@ -22,14 +22,13 @@ import (
 	"fmt"
 	"go/format"
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"log"
 	"regexp"
 	"sort"
 	"strings"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

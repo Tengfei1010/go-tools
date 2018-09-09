@@ -8,8 +8,9 @@
 package types
 
 import (
-	"honnef.co/go/tools/go/token"
 	"testing"
+
+	"honnef.co/go/tools/go/token"
 )
 
 var assignOps = map[token.Token]token.Token{

@@ -23,13 +23,14 @@
 package parser
 
 import (
-	"honnef.co/go/tools/go/scanner"
-	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
 )
 
 const testdata = "testdata"

@@ -30,16 +30,15 @@ package types_test
 import (
 	"flag"
 	"go/importer"
-	"honnef.co/go/tools/go/scanner"
-	"honnef.co/go/tools/go/token"
 	"internal/testenv"
 	"io/ioutil"
 	"regexp"
 	"strings"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/scanner"
+	"honnef.co/go/tools/go/token"
 	. "honnef.co/go/tools/go/types"
 )
 

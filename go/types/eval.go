@@ -8,9 +8,9 @@ package types
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 )
 
 // Eval returns the type and, if constant, the value for the

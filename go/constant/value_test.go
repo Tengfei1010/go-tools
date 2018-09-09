@@ -6,9 +6,10 @@ package constant
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"strings"
 	"testing"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // TODO(gri) expand this test framework

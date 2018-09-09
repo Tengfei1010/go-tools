@@ -5,9 +5,10 @@
 package types
 
 import (
-	"honnef.co/go/tools/go/token"
 	"sort"
 	"strconv"
+
+	"honnef.co/go/tools/go/token"
 )
 
 // SortImports sorts runs of consecutive import lines in import blocks in f.

@@ -6,9 +6,9 @@ package parser_test
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 )
 
 func ExampleParseFile() {

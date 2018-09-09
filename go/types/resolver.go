@@ -6,23 +6,23 @@ package types
 
 import (
 	"fmt"
-	
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"honnef.co/go/tools/go/constant"
+	"honnef.co/go/tools/go/token"
 )
 
 // A declInfo describes a package-level const, type, var, or func declaration.
 type declInfo struct {
-	file  *Scope        // scope of file containing this declaration
-	lhs   []*Var        // lhs of n:1 variable declarations, or nil
+	file  *Scope    // scope of file containing this declaration
+	lhs   []*Var    // lhs of n:1 variable declarations, or nil
 	typ   Expr      // type, or nil
 	init  Expr      // init/orig expression, or nil
 	fdecl *FuncDecl // func declaration, or nil
-	alias bool          // type alias declaration
+	alias bool      // type alias declaration
 
 	// The deps field tracks initialization expression dependencies.
 	deps objSet // lazily initialized

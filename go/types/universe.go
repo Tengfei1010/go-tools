@@ -7,9 +7,10 @@
 package types
 
 import (
+	"strings"
+
 	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/token"
-	"strings"
 )
 
 // The Universe scope contains all predeclared objects of Go.

@@ -5,7 +5,6 @@
 package types
 
 import (
-	
 	"honnef.co/go/tools/go/token"
 )
 
@@ -42,7 +41,7 @@ func (check *Checker) labels(body *BlockStmt) {
 
 // A block tracks label declarations in a block and its enclosing blocks.
 type block struct {
-	parent *block                      // enclosing block
+	parent *block                  // enclosing block
 	lstmt  *LabeledStmt            // labeled statement to which this block belongs, or nil
 	labels map[string]*LabeledStmt // allocated lazily
 }

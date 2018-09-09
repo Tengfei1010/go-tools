@@ -12,7 +12,6 @@ package rta_test
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -20,8 +19,8 @@ import (
 
 	"honnef.co/go/tools/callgraph"
 	"honnef.co/go/tools/callgraph/rta"
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/ssa"
 	"honnef.co/go/tools/ssa/ssautil"

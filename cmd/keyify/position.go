@@ -8,9 +8,10 @@ package main
 
 import (
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"strconv"
 	"strings"
+
+	"honnef.co/go/tools/go/token"
 )
 
 func parseOctothorpDecimal(s string) int {

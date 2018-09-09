@@ -9,20 +9,20 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"honnef.co/go/tools/go/constant"
-	"honnef.co/go/tools/go/token"
 	"log"
 	"os"
 	"path/filepath"
 
 	"honnef.co/go/tools/go/ast"
+	"honnef.co/go/tools/go/ast/astutil"
+	"honnef.co/go/tools/go/constant"
 	"honnef.co/go/tools/go/printer"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 	"honnef.co/go/tools/version"
 
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
-	"honnef.co/go/tools/go/ast/astutil"
 )
 
 var (

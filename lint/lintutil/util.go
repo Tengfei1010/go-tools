@@ -12,7 +12,6 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"honnef.co/go/tools/go/token"
 	"log"
 	"os"
 	"regexp"
@@ -24,6 +23,7 @@ import (
 
 	"honnef.co/go/tools/config"
 	"honnef.co/go/tools/go/packages"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/lint"
 	"honnef.co/go/tools/lint/lintutil/format"
 	"honnef.co/go/tools/version"

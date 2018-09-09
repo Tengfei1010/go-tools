@@ -10,13 +10,12 @@ package types_test
 
 import (
 	"go/importer"
-	"honnef.co/go/tools/go/token"
 	"internal/testenv"
 	"strings"
 	"testing"
 
-	
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	. "honnef.co/go/tools/go/types"
 )
 

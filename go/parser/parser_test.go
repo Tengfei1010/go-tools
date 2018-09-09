@@ -7,11 +7,11 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"os"
 	"strings"
 	"testing"
 
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 

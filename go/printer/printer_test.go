@@ -9,7 +9,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"honnef.co/go/tools/go/token"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"honnef.co/go/tools/go/parser"
+	"honnef.co/go/tools/go/token"
 	"honnef.co/go/tools/go/types"
 )
 
